@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Purrytify</string>
+    <string name="new_songs">New songs</string>
+    <string name="recently_played">Recently played</string>
+    <string name="welcome">Welcome</string>
+    <string name="welcome_to_purrytify">WELCOME to purrytify</string>
 </resources>
