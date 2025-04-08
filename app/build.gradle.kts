@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+    id("dagger.hilt.android.plugin") // Tambahkan ini
+    kotlin("kapt") // Tambahkan ini untuk annotation processing
 }
 
 android {
@@ -36,6 +38,7 @@ android {
         jvmTarget = "11"
     }
     buildFeatures {
+        viewBinding = true
         compose = true
     }
 }
@@ -51,6 +54,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.volley)
+    implementation(libs.androidx.navigation.fragment)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -58,6 +62,28 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    implementation(libs.logging.interceptor)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.material)
+    implementation(libs.glide)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.security.crypto)
+    implementation(libs.ui)
+    implementation(libs.androidx.material)
+    implementation(libs.ui.tooling)
+    implementation(libs.androidx.activity.compose.v140)
+    implementation(libs.coil.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+//    implementation(libs.androidx.lifecycle.livedata.ktx)
+    implementation("androidx.compose.runtime:runtime-livedata:1.7.8")
+    implementation(libs.androidx.activity.compose.v161)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation("com.google.dagger:hilt-android:2.48")
+    kapt("com.google.dagger:hilt-android-compiler:2.48")
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation (libs.androidx.appcompat)
     implementation(libs.coil.compose)
