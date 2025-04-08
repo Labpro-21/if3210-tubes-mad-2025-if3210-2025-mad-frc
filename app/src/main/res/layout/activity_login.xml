@@ -13,7 +13,7 @@
         android:text="@string/welcome_to_purrytify"
         android:textColor="@color/white"
         android:textSize="24sp"
-        android:fontFamily="@font/sans_bold"
+        android:fontFamily="@font/sans"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="50dp" />
 
@@ -64,7 +64,7 @@
         android:paddingEnd="32dp"
         android:paddingTop="12dp"
         android:paddingBottom="12dp"
-        android:fontFamily="@font/sans_bold"
+        android:fontFamily="@font/sans"
         tools:ignore="HardcodedText" />
 
 </RelativeLayout>

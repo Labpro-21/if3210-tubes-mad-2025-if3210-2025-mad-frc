@@ -26,7 +26,7 @@
                 android:textSize="20sp"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="16dp"
-                android:fontFamily="@font/sans_bold" />
+                android:fontFamily="@font/sans" />
 
             <!-- Horizontal ScrollView for New Songs -->
             <HorizontalScrollView
@@ -78,7 +78,7 @@
                 android:textSize="20sp"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="16dp"
-                android:fontFamily="@font/sans_bold" />
+                android:fontFamily="@font/sans" />
 
             <LinearLayout
                 android:layout_width="match_parent"
