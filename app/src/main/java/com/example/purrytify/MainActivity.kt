@@ -7,18 +7,16 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.ViewModelProvider
 import com.example.purrytify.data.SongRepository
-import com.example.purrytify.manager.AppDatabase
+import com.example.purrytify.data.AppDatabase
 import com.example.purrytify.ui.InsertSongPopUp
 import com.example.purrytify.ui.SongScreen
 import com.example.purrytify.ui.theme.PurrytifyTheme
 import com.example.purrytify.viewmodel.SongViewModel
 import com.example.purrytify.viewmodel.SongViewModelFactory
+import com.example.purrytify.ui.navigation.AppNavigation
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,6 +36,8 @@ class MainActivity : ComponentActivity() {
                 }
                 InsertSongPopUp(songViewModel = songViewModel)
             }
+        setContent {
+            AppNavigation()
         }
     }
 }
