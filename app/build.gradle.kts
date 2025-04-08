@@ -3,7 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
-    id("dagger.hilt.android.plugin") // Tambahkan ini
+//    id("dagger.hilt.android.plugin")
+    alias(libs.plugins.hilt)
     kotlin("kapt") // Tambahkan ini untuk annotation processing
 }
 
@@ -77,13 +78,13 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 //    implementation(libs.androidx.lifecycle.livedata.ktx)
-    implementation("androidx.compose.runtime:runtime-livedata:1.7.8")
+//    implementation(libs.androidx.runtime.livedata)
     implementation(libs.androidx.activity.compose.v161)
-    implementation("com.google.dagger:hilt-android:2.48")
-    kapt("com.google.dagger:hilt-android-compiler:2.48")
-    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7") // Tambahkan ini
-    implementation ("androidx.security:security-crypto:1.1.0-alpha03")
+    implementation(libs.hilt.android)
+    kapt(libs.dagger.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose) // Tambahkan ini
+    implementation (libs.androidx.security.crypto.v110alpha03)
 
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation (libs.androidx.appcompat)

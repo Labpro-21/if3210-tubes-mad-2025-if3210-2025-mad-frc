@@ -1,4 +1,4 @@
-package com.example.purrytify.manager
+package com.example.purrytify.data
 
 import android.content.Context
 import androidx.room.Database

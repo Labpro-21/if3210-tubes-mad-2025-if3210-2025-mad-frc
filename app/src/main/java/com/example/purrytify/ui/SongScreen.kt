@@ -26,13 +26,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.purrytify.data.SongRepository
-import com.example.purrytify.manager.AppDatabase
+import com.example.purrytify.data.AppDatabase
 import com.example.purrytify.model.Song
 import com.example.purrytify.viewmodel.SongViewModel
 import com.example.purrytify.viewmodel.SongViewModelFactory
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
-import java.io.File
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.Icon

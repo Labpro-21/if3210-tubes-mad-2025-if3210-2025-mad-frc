@@ -1,4 +1,4 @@
-package com.example.purrytify.manager
+package com.example.purrytify.data
 
 import androidx.room.Dao
 import androidx.room.Insert

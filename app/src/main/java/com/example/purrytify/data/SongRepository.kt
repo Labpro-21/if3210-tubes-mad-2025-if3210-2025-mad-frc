@@ -1,6 +1,5 @@
 package com.example.purrytify.data
 
-import com.example.purrytify.manager.SongDao
 import com.example.purrytify.model.Song
 
 class SongRepository(private val songDao: SongDao) {
