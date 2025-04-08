@@ -7,7 +7,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.purrytify.ui.screens.HomeScreen
 import com.example.purrytify.ui.screens.LibraryScreen
 import com.example.purrytify.ui.screens.LoginScreen
-import com.example.purrytify.ui.screens.ProfileScreenWithViewModel
+import com.example.purrytify.ui.screens.ProfileScreen
 
 // Definisi rute menggunakan sealed class
 sealed class Screen(val route: String) {
@@ -16,6 +16,7 @@ sealed class Screen(val route: String) {
     object Library : Screen("library")
     object Profile : Screen("profile")
 }
+
 
 @Composable
 fun AppNavigation() {
@@ -47,7 +48,7 @@ fun AppNavigation() {
             )
         }
         composable(route = Screen.Profile.route) {
-            ProfileScreenWithViewModel(
+            ProfileScreen(
                 onBack = { navController.popBackStack() }
             )
         }
