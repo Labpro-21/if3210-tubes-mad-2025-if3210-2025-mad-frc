@@ -30,10 +30,7 @@ class ProfileViewModel : ViewModel() {
                 _uiState.value = _uiState.value.copy(
                     username = userProfile.username,
                     email = userProfile.email,
-                    // Karena API mengembalikan URL foto, untuk saat ini kita menetapkan placeholder
-                    profilePhoto = R.drawable.profile_placeholder,
-                    // Jumlah lagu (songsAdded, likedSongs, listenedSongs) belum didapatkan dari API profile,
-                    // jadi diset sebagai 0. Anda bisa mengintegrasikan API lain untuk data tersebut
+                    profilePhoto = userProfile.profilePhoto, // gunakan data dari API
                     songsAdded = 0,
                     likedSongs = 0,
                     listenedSongs = 0
@@ -53,8 +50,8 @@ class ProfileViewModel : ViewModel() {
         _uiState.value = _uiState.value.copy(email = email)
     }
 
-    fun updateProfilePhoto(profilePhoto: Int) {
-        _uiState.value = _uiState.value.copy(profilePhoto = profilePhoto)
+    fun updateProfilePhoto(newProfilePhotoUrl: String) {
+        _uiState.value = _uiState.value.copy(profilePhoto = newProfilePhotoUrl)
     }
 
     fun updateSongsAdded(songsAdded: Int) {
