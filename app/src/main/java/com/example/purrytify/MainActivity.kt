@@ -11,37 +11,33 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.ViewModelProvider
+import com.example.purrytify.data.SongRepository
+import com.example.purrytify.manager.AppDatabase
+import com.example.purrytify.ui.InsertSongPopUp
+import com.example.purrytify.ui.SongScreen
 import com.example.purrytify.ui.theme.PurrytifyTheme
+import com.example.purrytify.viewmodel.SongViewModel
+import com.example.purrytify.viewmodel.SongViewModelFactory
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val songDao = AppDatabase.getDatabase(applicationContext).songDao()
+        val repository = SongRepository(songDao)
+        val viewModelFactory = SongViewModelFactory(repository)
+        val songViewModel = ViewModelProvider(this, viewModelFactory).get(SongViewModel::class.java)
+
         enableEdgeToEdge()
+
         setContent {
             PurrytifyTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                    SongScreen(modifier = Modifier.padding(innerPadding))
                 }
+                InsertSongPopUp(songViewModel = songViewModel)
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    PurrytifyTheme {
-        Greeting("Android")
     }
 }

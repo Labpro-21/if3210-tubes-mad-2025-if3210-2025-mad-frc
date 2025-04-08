@@ -1,0 +1,249 @@
+package com.example.purrytify.ui
+
+import android.content.Context
+import android.media.MediaMetadataRetriever
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.example.purrytify.model.Song
+import com.example.purrytify.viewmodel.SongViewModel
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun InsertSongPopUp(songViewModel: SongViewModel) {
+    val sheetState = rememberModalBottomSheetState()
+    var showSheet by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    if (showSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showSheet = false },
+            sheetState = sheetState
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Upload Song", style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                var selectedPhotoUri by remember { mutableStateOf<Uri?>(null) }
+                var selectedAudioUri by remember { mutableStateOf<Uri?>(null) }
+
+                var title by rememberSaveable { mutableStateOf("") }
+                var artist by rememberSaveable { mutableStateOf("") }
+                var duration by rememberSaveable { mutableStateOf(0L) }
+
+                LaunchedEffect(selectedAudioUri) {
+                    selectedAudioUri?.let { uri ->
+                        val retriever = MediaMetadataRetriever()
+                        retriever.setDataSource(context, uri)
+
+                        val metaTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: ""
+                        val metaArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: ""
+                        val metaduration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
+
+                        if (title.isBlank()) title = metaTitle
+                        if (artist.isBlank()) artist = metaArtist
+                        duration = metaduration
+
+                        retriever.release()
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    UploadBoxWithButton(
+                        selectedUri = selectedPhotoUri,
+                        onFileSelected = { selectedPhotoUri = it },
+                        mimeType = "image/*",
+                        text = "Upload Photo"
+                    )
+                    UploadBoxWithButton(
+                        selectedUri = selectedAudioUri,
+                        onFileSelected = { selectedAudioUri = it },
+                        mimeType = "audio/*",
+                        text = "Upload File"
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Duration: ${duration / 1000} seconds",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text("Title", style = MaterialTheme.typography.titleSmall, modifier = Modifier.align(Alignment.Start))
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+//                    label = { Text("Title") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text("Artist", style = MaterialTheme.typography.titleSmall, modifier = Modifier.align(Alignment.Start))
+                OutlinedTextField(
+                    value = artist,
+                    onValueChange = { artist = it },
+//                    label = { Text("Artist") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Button(onClick = { showSheet = false }, modifier = Modifier.width(150.dp)) {
+                        Text("Cancel", style = MaterialTheme.typography.titleMedium)
+                    }
+                    Button(onClick = {
+                        handleSaveSong(
+                            context = context,
+                            selectedAudioUri = selectedAudioUri,
+                            selectedPhotoUri = selectedPhotoUri,
+                            title = title,
+                            artist = artist,
+                            duration = duration,
+                            songViewModel = songViewModel,
+                            onComplete = { showSheet = false }
+                        )
+                    }, modifier = Modifier.width(150.dp)) {
+                        Text("Save", style = MaterialTheme.typography.titleMedium)
+                    }
+                }
+            }
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        FloatingActionButton(
+            onClick = { showSheet = true },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp)
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Show Popup")
+        }
+    }
+}
+
+@Composable
+fun UploadBoxDisplay(fileUri: Uri?, text: String, mimeType: String) {
+    val context = LocalContext.current
+    val isImage = mimeType.startsWith("image")
+
+    Box(
+        modifier = Modifier
+            .width(150.dp)
+            .height(150.dp)
+            .padding(16.dp)
+            .border(BorderStroke(2.dp, Color.Gray), shape = RoundedCornerShape(8.dp)),
+        contentAlignment = Alignment.Center
+    ) {
+        when {
+            fileUri != null && isImage -> {
+                AsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data(fileUri)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = "Selected Image",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
+            fileUri != null -> {
+                Text("File selected", color = Color.DarkGray)
+            }
+
+            else -> {
+                Text(text, color = Color.Gray)
+            }
+        }
+    }
+}
+
+@Composable
+fun UploadBoxWithButton(
+    selectedUri: Uri?,
+    onFileSelected: (Uri) -> Unit,
+    mimeType: String,
+    text: String
+) {
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { onFileSelected(it) }
+    }
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        UploadBoxDisplay(fileUri = selectedUri, text = text, mimeType = mimeType)
+        Spacer(modifier = Modifier.height(4.dp))
+        Button(onClick = { launcher.launch(mimeType) }) {
+            Text("Choose File")
+        }
+    }
+}
+
+fun handleSaveSong(
+    context: Context,
+    selectedAudioUri: Uri?,
+    selectedPhotoUri: Uri?,
+    title: String,
+    artist: String,
+    duration: Long,
+    songViewModel: SongViewModel,
+    onComplete: () -> Unit
+) {
+    if (selectedAudioUri != null) {
+
+        val song = Song(
+            title = title,
+            artist = artist,
+            duration = duration,
+            artworkPath = selectedPhotoUri.toString(),
+            audioPath = selectedAudioUri.toString()
+        )
+
+        songViewModel.addSong(song)
+    }
+
+    onComplete() // misalnya untuk menutup sheet atau update UI
+}
+

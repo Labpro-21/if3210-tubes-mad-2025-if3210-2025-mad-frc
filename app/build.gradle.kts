@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -49,6 +50,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.volley)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -56,4 +58,39 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation (libs.androidx.appcompat)
+    implementation(libs.coil.compose)
+    implementation (libs.androidx.material.icons.extended)
+
+
+    val roomVersion = "2.6.1"
+
+    implementation(libs.androidx.room.runtime)
+
+    // If this project uses any Kotlin source, use Kotlin Symbol Processing (KSP)
+    // See Add the KSP plugin to your project
+    ksp(libs.androidx.room.compiler)
+
+    // If this project only uses Java source, use the Java annotationProcessor
+    // No additional plugins are necessary
+    annotationProcessor(libs.androidx.room.compiler)
+
+    // optional - Kotlin Extensions and Coroutines support for Room
+    implementation(libs.androidx.room.ktx)
+
+    // optional - RxJava2 support for Room
+    implementation(libs.androidx.room.rxjava2)
+
+    // optional - RxJava3 support for Room
+    implementation(libs.androidx.room.rxjava3)
+
+    // optional - Guava support for Room, including Optional and ListenableFuture
+    implementation(libs.androidx.room.guava)
+
+    // optional - Test helpers
+    testImplementation(libs.androidx.room.testing)
+
+    // optional - Paging 3 Integration
+    implementation(libs.androidx.room.paging)
 }

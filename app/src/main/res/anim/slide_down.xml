@@ -1,0 +1,5 @@
+<!-- res/anim/slide_down.xml -->
+<translate xmlns:android="http://schemas.android.com/apk/res/android"
+    android:fromYDelta="0"
+    android:toYDelta="100%p"
+    android:duration="300" />

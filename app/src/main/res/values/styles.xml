@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Your custom SlideUpDialog style -->
+    <style name="SlideUpDialog" parent="Theme.AppCompat.Light.Dialog">
+        <item name="android:windowAnimationStyle">@style/SlideUpAnimation</item>
+    </style>
+
+    <!-- Animation style -->
+    <style name="SlideUpAnimation">
+        <item name="android:windowEnterAnimation">@anim/slide_up</item>
+        <item name="android:windowExitAnimation">@anim/slide_down</item>
+    </style>
+
+</resources>
