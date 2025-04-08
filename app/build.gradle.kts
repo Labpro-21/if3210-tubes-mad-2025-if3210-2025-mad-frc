@@ -77,9 +77,9 @@ dependencies {
 //    implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation("androidx.compose.runtime:runtime-livedata:1.7.8")
     implementation(libs.androidx.activity.compose.v161)
-    implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation("com.google.dagger:hilt-android:2.48")
     kapt("com.google.dagger:hilt-android-compiler:2.48")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
-
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7") // Tambahkan ini
+    implementation ("androidx.security:security-crypto:1.1.0-alpha03")
 }
