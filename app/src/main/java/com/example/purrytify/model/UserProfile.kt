@@ -8,7 +8,4 @@ data class UserProfile(
     val location: String,
     val createdAt: String,
     val updatedAt: String,
-    val songsAdded: Int,
-    val likedSongs: Int,
-    val listenedSongs: Int
 )
