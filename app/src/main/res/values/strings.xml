@@ -4,4 +4,6 @@
     <string name="recently_played">Recently played</string>
     <string name="welcome">Welcome</string>
     <string name="welcome_to_purrytify">WELCOME to purrytify</string>
+    <string name="hello_from_the_bottom">Hello from the bottom!</string>
+    <string name="close">Close</string>
 </resources>

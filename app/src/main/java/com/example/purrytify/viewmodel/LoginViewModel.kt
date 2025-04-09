@@ -1,84 +1,52 @@
 package com.example.purrytify.viewmodel
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.State
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.purrytify.model.LoginResponseNetwork
-import com.example.purrytify.network.RetrofitInstance
-import com.example.purrytify.utils.TokenManager
+import com.example.purrytify.model.LoginUiState
+import com.example.purrytify.model.LoginResponse
+import com.example.purrytify.repository.LoginRepository
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
-import java.io.IOException
 
 class LoginViewModel(
-    private val tokenManager: TokenManager
+    private val repository: LoginRepository = LoginRepository()
 ) : ViewModel() {
 
-    private val _loginState = MutableLiveData<LoginState>()
-    val loginState: LiveData<LoginState> = _loginState
+    // State untuk email, password, dan data UI login
+    private val _uiState = mutableStateOf(LoginUiState())
+    val uiState: State<LoginUiState> get() = _uiState
 
-    sealed class LoginState {
-        object Loading : LoginState()
-        data class Success(val response: LoginResponseNetwork) : LoginState()
-        data class Error(val message: String) : LoginState()
+    // State untuk loading API
+    var isLoading = mutableStateOf(false)
+        private set
+
+    // State hasil login berisi Result dari LoginResponse
+    var loginResult = mutableStateOf<Result<LoginResponse>?>(null)
+        private set
+
+    // Update email ketika pengguna mengetik
+    fun updateEmail(email: String) {
+        _uiState.value = _uiState.value.copy(email = email)
     }
 
-    fun loginUser(email: String, password: String) {
-        if (!isValidCredentials(email, password)) {
-            _loginState.value = LoginState.Error("Format email atau password salah")
-            return
-        }
+    // Update password ketika pengguna mengetik
+    fun updatePassword(password: String) {
+        _uiState.value = _uiState.value.copy(password = password)
+    }
 
-        _loginState.value = LoginState.Loading
-
+    // Memanggil repository untuk melakukan login
+    fun login() {
         viewModelScope.launch {
-            try {
-                val response = RetrofitInstance.apiService.login(
-                    email = email,
-                    password = password
-                )
-
-                when {
-                    response.isSuccessful && response.body() != null -> {
-                        val loginResponse = response.body()!!
-                        tokenManager.saveTokens(
-                            accessToken = loginResponse.accessToken,
-                            refreshToken = loginResponse.refreshToken
-                        )
-                        _loginState.postValue(LoginState.Success(loginResponse))
-                    }
-
-                    response.code() == 401 -> {
-                        _loginState.postValue(LoginState.Error("Autentikasi gagal: NIM atau password salah"))
-                    }
-
-                    else -> {
-                        _loginState.postValue(LoginState.Error("Error ${response.code()}: ${response.message()}"))
-                    }
-                }
-            } catch (e: HttpException) {
-                handleHttpException(e)
-            } catch (e: IOException) {
-                _loginState.postValue(LoginState.Error("Koneksi jaringan bermasalah"))
-            } catch (e: Exception) {
-                _loginState.postValue(LoginState.Error("Terjadi kesalahan tak terduga"))
-            }
+            isLoading.value = true
+            val result = repository.login(_uiState.value.email, _uiState.value.password)
+            loginResult.value = result
+            isLoading.value = false
         }
     }
 
-    private fun isValidCredentials(email: String, password: String): Boolean {
-        val nimRegex = """^\d+@std\.stei\.itb\.ac\.id${'$'}""".toRegex()
-        return email.matches(nimRegex) && password.matches(Regex("""^\d+${'$'}"""))
-    }
-
-    private fun handleHttpException(e: HttpException) {
-        val errorMessage = when (e.code()) {
-            400 -> "Request tidak valid"
-            403 -> "Akses ditolak"
-            500 -> "Server mengalami masalah"
-            else -> "Error HTTP ${e.code()}"
-        }
-        _loginState.postValue(LoginState.Error(errorMessage))
+    // Mengosongkan hasil login agar dialog tidak terus tampil
+    fun clearLoginResult() {
+        loginResult.value = null
     }
 }
