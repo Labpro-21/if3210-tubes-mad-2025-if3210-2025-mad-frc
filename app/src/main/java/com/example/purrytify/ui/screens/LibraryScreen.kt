@@ -40,29 +40,29 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.core.net.toUri
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import android.net.Uri
-import androidx.lifecycle.ViewModelProvider
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import com.example.purrytify.ui.InsertSongPopUp
 
 
 @Composable
 fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
-
-
-
     val context = LocalContext.current
     val db = remember { AppDatabase.getDatabase(context) }
     val repository = remember { SongRepository(db.songDao()) }
 
+    val viewModel: SongViewModel = viewModel(factory = SongViewModelFactory(repository))
 
-    val viewModel: SongViewModel = viewModel(
-        factory = SongViewModelFactory(repository)
-    )
+    val allSongs by viewModel.songs.collectAsState()
+    val likedSongs by viewModel.likedSongs.collectAsState()
+    var currentSongId by remember { mutableStateOf(0) }
 
-    val songs by viewModel.songs.collectAsState()
+    // Tab state
+    val tabs = listOf("All Songs", "Liked Songs")
+    val (selectedTabIndex, setSelectedTabIndex) = remember { mutableIntStateOf(0) }
 
-    // 👉 State untuk modal dan lagu yang dipilih
     val (showPlayer, setShowPlayer) = remember { mutableStateOf(false) }
     val (selectedSong, setSelectedSong) = remember { mutableStateOf<Song?>(null) }
 
@@ -70,38 +70,53 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
 
     Column(modifier = modifier.padding(16.dp)) {
         Text(
-            text = "All Songs",
-            style = MaterialTheme.typography.headlineMedium,
+            text = "Your Library",
+            style = MaterialTheme.typography.headlineLarge,
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        if (songs.isEmpty()) {
-            Text("No songs found.", color = Color.Gray)
+        TabRow(selectedTabIndex = selectedTabIndex) {
+            tabs.forEachIndexed { index, title ->
+                Tab(
+                    selected = selectedTabIndex == index,
+                    onClick = { setSelectedTabIndex(index) },
+                    text = { Text(title) }
+                )
+            }
+        }
+
+        val displayedSongs = if (selectedTabIndex == 0) allSongs else likedSongs
+
+        if (displayedSongs.isEmpty()) {
+            Text("No songs found.", color = Color.Gray, modifier = Modifier.padding(16.dp))
         } else {
             LazyColumn {
-                items(songs) { song ->
-                    SongItem(song = song, onClick = {
+                items(displayedSongs) { song ->
+                    SongItem(song = song) {
+                        val index = allSongs.indexOf(song)
+                        currentSongId = index
                         setSelectedSong(song)
                         setShowPlayer(true)
-                    })
+                    }
                 }
             }
         }
     }
 
-
-    // 👉 Modal Bottom Sheet
     selectedSong?.let { song ->
         PlayerModalBottomSheet(
             showSheet = showPlayer,
             onDismiss = { setShowPlayer(false) },
-            songTitle = song.title,
-            artistName = song.artist,
-            artworkUri = song.artworkPath?.toUri(),
-            songUri = song.audioPath.toUri(),
+            song = song,
             isPlaying = true,
-            progress = 0.0f // bisa update dari ViewModel nanti
+            progress = 0.0f,
+            onSongChange = { newId ->
+                currentSongId = (newId + allSongs.size) % allSongs.size
+                setSelectedSong(allSongs[currentSongId])
+
+            }
         )
+
     }
 }
 
@@ -156,8 +171,9 @@ fun SongItem(song: Song, onClick: () -> Unit) {
 }
 
 
-fun formatDuration(seconds: Long): String {
-    val minutes = seconds / 60000
+fun formatDuration(miliseconds: Long): String {
+    val seconds = miliseconds/1000
+    val minutes = seconds / 60
     val remainingSeconds = seconds % 60
     return String.format("%02d:%02d", minutes, remainingSeconds)
 }
