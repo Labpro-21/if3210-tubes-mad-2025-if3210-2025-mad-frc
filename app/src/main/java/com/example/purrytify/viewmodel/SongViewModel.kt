@@ -32,6 +32,12 @@ class SongViewModel(private val repository: SongRepository) : ViewModel() {
         }
     }
 
+    fun getNewSongs() {
+        viewModelScope.launch {
+            _songs.value = repository.getNewSongs()
+        }
+    }
+
     private fun loadSongs() {
         viewModelScope.launch {
             _songs.value = repository.getAllSongs()

@@ -16,4 +16,8 @@ interface SongDao {
     @Query("DELETE FROM Song WHERE id = :songId")
     suspend fun deleteSong(songId: String)
 
+    @Query("SELECT * FROM Song ORDER BY id DESC LIMIT 5")
+    suspend fun getNewSongs(): List<Song>
+
+
 }

@@ -6,4 +6,5 @@ class SongRepository(private val songDao: SongDao) {
     suspend fun insertSong(song: Song) = songDao.insertSong(song)
     suspend fun getAllSongs(): List<Song> = songDao.getAllSongs()
     suspend fun deleteSong(id: String) = songDao.deleteSong(id)
+    suspend fun getNewSongs(): List<Song> = songDao.getNewSongs()
 }
