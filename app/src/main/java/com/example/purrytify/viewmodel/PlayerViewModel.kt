@@ -28,12 +28,10 @@ class PlayerViewModel @Inject constructor(
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying = _isPlaying.asStateFlow()
 
-    private val _progress = MutableStateFlow(0f)
+    private val _progress = MutableStateFlow(1f)
     val progress = _progress.asStateFlow()
 
     val isLooping = MutableStateFlow(false)
-
-    private var duration = 1L
 
     private var currentUri: Uri? = null
 
@@ -50,27 +48,32 @@ class PlayerViewModel @Inject constructor(
                 delay(500)
                 if (_exoPlayer.isPlaying) {
                     val currentPosition = _exoPlayer.currentPosition
-                    val duration = _exoPlayer.duration.takeIf { it > 0 } ?: 1L
-                    _progress.value = currentPosition.toFloat() / duration
+                    _progress.value = (currentPosition / 1000).toFloat()
                 }
             }
         }
     }
 
 
-//    fun prepare(uri: Uri) {
-//        _exoPlayer.setMediaItem(MediaItem.fromUri(uri))
-//        _exoPlayer.prepare()
-//    }
-
-    fun prepareAndPlay(uri: Uri) {
+    fun prepareAndPlay(uri: Uri, onSongComplete: () -> Unit = {}) {
         if (currentUri == uri) return
         currentUri = uri
+
         _exoPlayer.setMediaItem(MediaItem.fromUri(uri))
         _exoPlayer.prepare()
         _exoPlayer.play()
         _isPlaying.value = true
+
+        _exoPlayer.addListener(object : Player.Listener {
+            override fun onPlaybackStateChanged(state: Int) {
+                if (state == Player.STATE_ENDED) {
+                    _isPlaying.value = false
+                    onSongComplete()
+                }
+            }
+        })
     }
+
 
 
     fun playPause() {
@@ -82,15 +85,15 @@ class PlayerViewModel @Inject constructor(
         _isPlaying.value = _exoPlayer.isPlaying
     }
 
-    fun seekTo(percent: Float) {
-        val duration = _exoPlayer.duration.takeIf { it > 0 } ?: 1L
-        _exoPlayer.seekTo((percent * duration).toLong())
+    fun seekTo(seconds: Float) {
+//        val duration = _exoPlayer.duration.takeIf { it > 0 } ?: 1L
+        _exoPlayer.seekTo((seconds*1000).toLong())
     }
 
-
-    fun updateProgress(value: Float) {
-        _progress.value = value
-    }
+//
+//    fun updateProgress(value: Float) {
+//        _progress.value = value
+//    }
 
     override fun onCleared() {
         super.onCleared()

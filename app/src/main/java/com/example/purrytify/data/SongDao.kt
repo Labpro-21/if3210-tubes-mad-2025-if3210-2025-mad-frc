@@ -30,4 +30,8 @@ interface SongDao {
     @Query("SELECT * FROM Song WHERE id = :songId")
     fun getSongById(songId: Int): Song
 
+    @Query("UPDATE Song SET liked = NOT liked WHERE id = :songId")
+    suspend fun toggleLike(songId: Int)
+
+
 }

@@ -40,13 +40,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.core.net.toUri
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import android.net.Uri
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModelProvider
 import com.example.purrytify.ui.InsertSongPopUp
 
 
@@ -110,11 +107,7 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
         PlayerModalBottomSheet(
             showSheet = showPlayer,
             onDismiss = { setShowPlayer(false) },
-            songId = currentSongId,
-            songTitle = song.title,
-            artistName = song.artist,
-            artworkUri = song.artworkPath?.toUri(),
-            songUri = song.audioPath.toUri(),
+            song = song,
             isPlaying = true,
             progress = 0.0f,
             onSongChange = { newId ->
@@ -178,8 +171,9 @@ fun SongItem(song: Song, onClick: () -> Unit) {
 }
 
 
-fun formatDuration(seconds: Long): String {
-    val minutes = seconds / 60000
+fun formatDuration(miliseconds: Long): String {
+    val seconds = miliseconds/1000
+    val minutes = seconds / 60
     val remainingSeconds = seconds % 60
     return String.format("%02d:%02d", minutes, remainingSeconds)
 }
