@@ -45,36 +45,41 @@ android {
 }
 
 dependencies {
-
+    // Core & Compose
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
+//    implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation(libs.volley)
-    implementation(libs.androidx.navigation.fragment)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
+    implementation(libs.coil.compose)
+    implementation(libs.androidx.material.icons.extended)
+
+    // Navigation
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.hilt.navigation.compose)
+
+    // ViewModel & Lifecycle
+//    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.runtime.livedata) // still needed
+
+    // Networking
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.logging.interceptor)
+    implementation(libs.volley)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.glide)
     implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.security.crypto)
+//    implementation(libs.androidx.security.crypto)
     implementation(libs.ui)
     implementation(libs.androidx.material)
     implementation(libs.ui.tooling)
-    implementation(libs.androidx.activity.compose.v140)
+//    implementation(libs.androidx.activity.compose.v140)
     implementation(libs.coil.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 //    implementation(libs.androidx.lifecycle.livedata.ktx)
@@ -91,34 +96,30 @@ dependencies {
     implementation(libs.coil.compose)
     implementation (libs.androidx.material.icons.extended)
 
+    // Hilt Dependency Injection
+//    implementation(libs.dagger.hilt.android)
+//    implementation(libs.androidx.security.crypto.ktx)
+    kapt(libs.dagger.hilt.compiler)
 
-    val roomVersion = "2.6.1"
-
+    // Room Database
     implementation(libs.androidx.room.runtime)
-
-    // If this project uses any Kotlin source, use Kotlin Symbol Processing (KSP)
-    // See Add the KSP plugin to your project
-    ksp(libs.androidx.room.compiler)
-
-    // If this project only uses Java source, use the Java annotationProcessor
-    // No additional plugins are necessary
-    annotationProcessor(libs.androidx.room.compiler)
-
-    // optional - Kotlin Extensions and Coroutines support for Room
     implementation(libs.androidx.room.ktx)
-
-    // optional - RxJava2 support for Room
+    ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.rxjava2)
-
-    // optional - RxJava3 support for Room
     implementation(libs.androidx.room.rxjava3)
-
-    // optional - Guava support for Room, including Optional and ListenableFuture
     implementation(libs.androidx.room.guava)
-
-    // optional - Test helpers
+    implementation(libs.androidx.room.paging)
     testImplementation(libs.androidx.room.testing)
 
-    // optional - Paging 3 Integration
-    implementation(libs.androidx.room.paging)
+    // Testing
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.ui.test.junit4)
+    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.test.manifest)
+
+    implementation(libs.androidx.media3.exoplayer)        // Core ExoPlayer
+    implementation(libs.androidx.media3.ui)               // PlayerView
 }

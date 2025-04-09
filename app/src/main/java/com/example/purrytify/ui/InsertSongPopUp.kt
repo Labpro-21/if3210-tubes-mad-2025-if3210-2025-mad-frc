@@ -1,6 +1,7 @@
 package com.example.purrytify.ui
 
 import android.content.Context
+import android.content.Intent
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -27,7 +28,7 @@ import com.example.purrytify.viewmodel.SongViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun InsertSongPopUp(songViewModel: SongViewModel) {
+fun InsertSongPopUp(songViewModel: SongViewModel,modifier: Modifier = Modifier) {
     val sheetState = rememberModalBottomSheetState()
     var showSheet by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -206,20 +207,32 @@ fun UploadBoxWithButton(
     mimeType: String,
     text: String
 ) {
+    val context = LocalContext.current
+
     val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
+        contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
-        uri?.let { onFileSelected(it) }
+        uri?.let {
+            val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            try {
+                context.contentResolver.takePersistableUriPermission(it, takeFlags)
+            } catch (e: SecurityException) {
+                e.printStackTrace()
+            }
+
+            onFileSelected(it)
+        }
     }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         UploadBoxDisplay(fileUri = selectedUri, text = text, mimeType = mimeType)
         Spacer(modifier = Modifier.height(4.dp))
-        Button(onClick = { launcher.launch(mimeType) }) {
+        Button(onClick = { launcher.launch(arrayOf(mimeType)) }) { // array karena OpenDocument
             Text("Choose File")
         }
     }
 }
+
 
 fun handleSaveSong(
     context: Context,
