@@ -25,6 +25,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.purrytify.model.Song
 import com.example.purrytify.viewmodel.SongViewModel
+import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -251,7 +252,8 @@ fun handleSaveSong(
             artist = artist,
             duration = duration,
             artworkPath = selectedPhotoUri.toString(),
-            audioPath = selectedAudioUri.toString()
+            audioPath = selectedAudioUri.toString(),
+            lastPlayed = Date()
         )
 
         songViewModel.addSong(song)

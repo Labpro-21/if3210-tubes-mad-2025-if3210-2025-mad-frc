@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Repeat
+import androidx.compose.material.icons.filled.RepeatOne
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
@@ -53,12 +54,15 @@ import com.example.purrytify.viewmodel.PlayerViewModelFactory
 @Composable
 fun PlayerScreen(
     modifier: Modifier = Modifier,
+    songId:Int,
     songTitle: String = "Song Title",
     artistName: String = "Artist Name",
     artworkUri: Uri? = null,
     songUri: Uri,
     isPlaying: Boolean = true,
     progress: Float = 0.3f, // 30% played
+    onNext:()-> Unit,
+    onPrevious:()-> Unit,
 ) {
     val context = LocalContext.current
     val appContext = LocalContext.current.applicationContext as Application
@@ -68,6 +72,7 @@ fun PlayerScreen(
     )
 
     val isPlaying by viewModel.isPlaying.collectAsState()
+    val isLooping by viewModel.isLooping.collectAsState()
     val progress by viewModel.progress.collectAsState()
 
     LaunchedEffect(songUri) {
@@ -118,7 +123,6 @@ fun PlayerScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Progress Bar
         Slider(
             value = progress,
             onValueChange = { viewModel.seekTo(it) },
@@ -136,7 +140,7 @@ fun PlayerScreen(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text("1:15", style = MaterialTheme.typography.labelSmall)
-            Text("3:45", style = MaterialTheme.typography.labelSmall)
+//            Text(viewModel., style = MaterialTheme.typography.labelSmall)
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -150,7 +154,7 @@ fun PlayerScreen(
             IconButton(onClick = { /* Shuffle */ }) {
                 Icon(Icons.Default.Shuffle, contentDescription = "Shuffle")
             }
-            IconButton(onClick = { /* Previous */ }) {
+            IconButton(onClick = { onPrevious() }) {
                 Icon(Icons.Default.SkipPrevious, contentDescription = "Previous")
             }
 
@@ -173,11 +177,13 @@ fun PlayerScreen(
             }
 
 
-            IconButton(onClick = { /* Next */ }) {
+            IconButton(onClick = { onNext() }) {
                 Icon(Icons.Default.SkipNext, contentDescription = "Next")
             }
-            IconButton(onClick = { /* Repeat */ }) {
-                Icon(Icons.Default.Repeat, contentDescription = "Repeat")
+            IconButton(onClick = { viewModel.toggleLoop() }) {
+                Icon(
+                    imageVector = if (isLooping) Icons.Default.RepeatOne else Icons.Default.Repeat,
+                    contentDescription = "Repeat")
             }
         }
     }
@@ -188,12 +194,14 @@ fun PlayerScreen(
 fun PlayerModalBottomSheet(
     showSheet: Boolean,
     onDismiss: () -> Unit,
+    songId: Int,
     songTitle: String,
     artistName: String,
     artworkUri: Uri?,
     songUri: Uri,
     isPlaying: Boolean,
-    progress: Float
+    progress: Float,
+    onSongChange: (Int) -> Unit
 ) {
     if (showSheet) {
         ModalBottomSheet(
@@ -202,12 +210,15 @@ fun PlayerModalBottomSheet(
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
         ) {
             PlayerScreen(
+                songId = songId,
                 songTitle = songTitle,
                 artistName = artistName,
                 artworkUri = artworkUri,
                 songUri = songUri,
                 isPlaying = isPlaying,
-                progress = progress
+                progress = progress,
+                onNext = { onSongChange(songId + 1) },
+                onPrevious = { onSongChange(songId - 1) }
             )
         }
     }

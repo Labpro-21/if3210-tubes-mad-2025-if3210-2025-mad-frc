@@ -3,6 +3,7 @@ package com.example.purrytify.model
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import java.util.Date
 
 @Entity(tableName= "song")
 data class Song(
@@ -11,5 +12,7 @@ data class Song(
     @ColumnInfo(name="artist") val artist: String,
     @ColumnInfo(name="duration") val duration: Long,
     @ColumnInfo(name="artworkPath") val artworkPath: String?,
-    @ColumnInfo(name="audioPath") val audioPath: String
+    @ColumnInfo(name="audioPath") val audioPath: String,
+    @ColumnInfo(name="lastPlayed") val lastPlayed: Date,
+    @ColumnInfo(name="liked") val liked: Boolean=false,
 )
