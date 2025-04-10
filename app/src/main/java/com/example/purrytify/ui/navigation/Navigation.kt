@@ -5,6 +5,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.purrytify.ui.screens.HomeScreenContent
+import com.example.purrytify.ui.screens.HomeScreenWithBottomNav
 import com.example.purrytify.ui.screens.LibraryScreen
 import com.example.purrytify.ui.screens.LoginScreen
 import com.example.purrytify.ui.screens.ProfileScreen
@@ -38,7 +39,7 @@ fun AppNavigation() {
             )
         }
         composable(route = Screen.Home.route) {
-            HomeScreenContent(
+            HomeScreenWithBottomNav(
                 onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
             )

@@ -37,6 +37,11 @@ import com.example.purrytify.viewmodel.PlayerViewModel
 import com.example.purrytify.viewmodel.PlayerViewModelFactory
 import com.example.purrytify.viewmodel.SongViewModel
 import com.example.purrytify.viewmodel.SongViewModelFactory
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 
 @Composable
 fun HomeScreenContent(
@@ -204,6 +209,69 @@ fun BottomPlayerSection(isPlaying: Boolean = true) {
             )
         }
     }
+}
+
+@Composable
+fun BottomNavBar(
+    currentRoute: String,
+    onItemSelected: (String) -> Unit
+) {
+    NavigationBar {
+        NavigationBarItem(
+            selected = currentRoute == "home",
+            onClick = { onItemSelected("home") },
+            icon = { Icon(imageVector = Icons.Default.Home, contentDescription = "Home") },
+            label = { Text("Home") }
+        )
+        NavigationBarItem(
+            selected = currentRoute == "library",
+            onClick = { onItemSelected("library") },
+            icon = { Icon(imageVector = Icons.Default.Folder, contentDescription = "Library") },
+            label = { Text("Library") }
+        )
+        NavigationBarItem(
+            selected = currentRoute == "profile",
+            onClick = { onItemSelected("profile") },
+            icon = { Icon(imageVector = Icons.Default.Person, contentDescription = "Profile") },
+            label = { Text("Profile") }
+        )
+    }
+}
+
+@Composable
+fun HomeScreenWithBottomNav(
+    onNavigateToLibrary: () -> Unit,
+    onNavigateToProfile: () -> Unit
+) {
+    // Scaffold dengan bottomBar di bagian paling bawah
+    Scaffold(
+        bottomBar = {
+            BottomNavBar(currentRoute = "home", onItemSelected = { route ->
+                when (route) {
+                    "library" -> onNavigateToLibrary()
+                    "profile" -> onNavigateToProfile()
+                    // "home" tidak nge-navigate ulang.
+                }
+            })
+        }
+    ) { innerPadding ->
+        // Sisipkan padding Scaffold agar tidak tertutup navigation bar
+        Box(modifier = Modifier.padding(innerPadding)) {
+            HomeScreenContent(
+                onNavigateToLibrary = onNavigateToLibrary,
+                onNavigateToProfile = onNavigateToProfile
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun HomeScreenWithBottomNavPreview() {
+    HomeScreenWithBottomNav(
+        onNavigateToLibrary = {},
+        onNavigateToProfile = {}
+    )
 }
 
 @Preview(showBackground = true)
