@@ -31,9 +31,12 @@ import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.purrytify.R
+import com.example.purrytify.data.AppDatabase
+import com.example.purrytify.data.SongRepository
 import com.example.purrytify.viewmodel.PlayerViewModel
 import com.example.purrytify.viewmodel.PlayerViewModelFactory
 import com.example.purrytify.viewmodel.SongViewModel
+import com.example.purrytify.viewmodel.SongViewModelFactory
 
 @Composable
 fun HomeScreenContent(
@@ -56,11 +59,12 @@ fun HomeScreenContent(
     }
 
     // ViewModel untuk player
-    val playerViewModel: PlayerViewModel = viewModel(factory = PlayerViewModelFactory(appContext))
-    val isPlaying by playerViewModel.isPlaying.collectAsState()
-
-    // ViewModel untuk song
-    val songViewModel: SongViewModel = viewModel()
+    val db = AppDatabase.getDatabase(appContext)
+    val songDao = db.songDao()
+    val repository = SongRepository(songDao)
+    val songViewModel: SongViewModel = viewModel(
+        factory = SongViewModelFactory(repository)
+    )
     val newSongsFromDb by songViewModel.newSongs.collectAsState()
     val recentlyPlayedFromDb by songViewModel.recentlyPlayed.collectAsState()
 
@@ -142,7 +146,7 @@ fun HomeScreenContent(
         }
         Spacer(modifier = Modifier.height(16.dp))
         // Bottom Player Section
-        BottomPlayerSection(isPlaying)
+        BottomPlayerSection()
     }
 }
 
