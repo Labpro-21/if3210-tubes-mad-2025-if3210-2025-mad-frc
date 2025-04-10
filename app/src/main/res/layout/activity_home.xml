@@ -1,4 +1,5 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/black">
@@ -26,7 +27,7 @@
                 android:textSize="20sp"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="16dp"
-                android:fontFamily="@font/sans" />
+                android:fontFamily="@font/sans_regular" />
 
             <!-- Horizontal ScrollView for New Songs -->
             <HorizontalScrollView
@@ -51,7 +52,7 @@
                         <ImageView
                             android:layout_width="100dp"
                             android:layout_height="100dp"
-                            android:src="@drawable/album_cover"
+                            android:src="@drawable/album_cover1"
                             android:scaleType="centerCrop" />
 
                         <TextView
@@ -78,7 +79,7 @@
                 android:textSize="20sp"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="16dp"
-                android:fontFamily="@font/sans" />
+                android:fontFamily="@font/sans_regular" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -98,7 +99,7 @@
                     <ImageView
                         android:layout_width="50dp"
                         android:layout_height="50dp"
-                        android:src="@drawable/song_cover"
+                        android:src="@drawable/album_cover1"
                         android:scaleType="centerCrop" />
 
                     <LinearLayout
@@ -144,7 +145,7 @@
         <ImageView
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:src="@drawable/song_cover"
+            android:src="@drawable/album_cover1"
             android:scaleType="centerCrop" />
 
         <LinearLayout
@@ -176,8 +177,7 @@
             android:layout_height="24dp"
             android:layout_marginStart="10dp"
             android:layout_marginEnd="8dp"
-            android:src="@drawable/ic_play"
-            android:tint="@color/white" />
+            android:src="@drawable/ic_play" />
     </LinearLayout>
 
     <LinearLayout
@@ -188,7 +188,7 @@
         android:orientation="horizontal"
         android:background="@color/dark_gray"
         android:padding="8dp"
-        android:gravity="center" >
+        android:gravity="center">
 
         <!-- Home Button -->
         <LinearLayout
@@ -203,8 +203,8 @@
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/ic_home"
-                android:tint="@color/white" />
+                android:src="@drawable/ic_play"
+                app:tint="@color/white" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -228,8 +228,8 @@
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/ic_library"
-                android:tint="@color/white" />
+                android:src="@drawable/ic_play"
+                app:tint="@color/white" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -253,8 +253,8 @@
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/ic_profile"
-                android:tint="@color/white" />
+                android:src="@drawable/ic_play"
+                app:tint="@color/white" />
 
             <TextView
                 android:layout_width="wrap_content"
