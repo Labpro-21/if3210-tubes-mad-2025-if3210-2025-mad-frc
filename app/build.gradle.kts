@@ -82,4 +82,6 @@ dependencies {
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7") // Tambahkan ini
     implementation ("androidx.security:security-crypto:1.1.0-alpha03")
+    implementation("androidx.work:work-runtime-ktx:2.7.1")
+
 }
