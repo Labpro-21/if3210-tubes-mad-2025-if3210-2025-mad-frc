@@ -46,7 +46,8 @@ import androidx.compose.material3.NavigationBarItem
 @Composable
 fun HomeScreenContent(
     onNavigateToLibrary: () -> Unit,
-    onNavigateToProfile: () -> Unit
+    onNavigateToProfile: () -> Unit,
+    songViewModel: SongViewModel
 ) {
     val context = LocalContext.current
     val appContext = if (!LocalInspectionMode.current)
@@ -64,12 +65,6 @@ fun HomeScreenContent(
     }
 
     // ViewModel untuk player
-    val db = AppDatabase.getDatabase(appContext)
-    val songDao = db.songDao()
-    val repository = SongRepository(songDao)
-    val songViewModel: SongViewModel = viewModel(
-        factory = SongViewModelFactory(repository)
-    )
     val newSongsFromDb by songViewModel.newSongs.collectAsState()
     val recentlyPlayedFromDb by songViewModel.recentlyPlayed.collectAsState()
 
@@ -88,26 +83,35 @@ fun HomeScreenContent(
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(8.dp))
-        LazyRow {
-            // Gunakan data dari database
-            items(newSongsFromDb) { song ->
-                Column(
-                    modifier = Modifier.padding(end = 16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Image(
-                        painter = rememberAsyncImagePainter(song.artworkPath?.toUri()),
-                        contentDescription = "Artwork",
-                        modifier = Modifier
-                            .size(64.dp)
-                            .clip(RoundedCornerShape(8.dp)),
-                        contentScale = ContentScale.Crop
-                    )
-                    Text(
-                        text = song.title,
-                        color = Color.White,
-                        fontSize = 14.sp
-                    )
+        if (newSongsFromDb.isEmpty()) {
+            // Tampilkan pesan fallback untuk New Songs
+            Text(
+                text = "No new songs yet",
+                color = Color.White,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(8.dp)
+            )
+        } else {
+            LazyRow {
+                items(newSongsFromDb) { song ->
+                    Column(
+                        modifier = Modifier.padding(end = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Image(
+                            painter = rememberAsyncImagePainter(song.artworkPath?.toUri()),
+                            contentDescription = "Artwork",
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                        Text(
+                            text = song.title,
+                            color = Color.White,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
             }
         }
@@ -120,31 +124,41 @@ fun HomeScreenContent(
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Column {
-            recentlyPlayedFromDb.forEach { song ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Image(
-                        painter = rememberAsyncImagePainter(song.artworkPath?.toUri()),
-                        contentDescription = song.title,
-                        modifier = Modifier.size(50.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column {
-                        Text(
-                            text = song.title,
-                            color = Color.White,
-                            fontSize = 14.sp
+        if (recentlyPlayedFromDb.isEmpty()) {
+            // Tampilkan pesan fallback untuk Recently Played
+            Text(
+                text = "No recently played songs, start listening now",
+                color = Color.White,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(8.dp)
+            )
+        } else {
+            Column {
+                recentlyPlayedFromDb.forEach { song ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Image(
+                            painter = rememberAsyncImagePainter(song.artworkPath?.toUri()),
+                            contentDescription = song.title,
+                            modifier = Modifier.size(50.dp)
                         )
-                        Text(
-                            text = song.artist,
-                            color = Color.Gray,
-                            fontSize = 12.sp
-                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text(
+                                text = song.title,
+                                color = Color.White,
+                                fontSize = 14.sp
+                            )
+                            Text(
+                                text = song.artist,
+                                color = Color.Gray,
+                                fontSize = 12.sp
+                            )
+                        }
                     }
                 }
             }
@@ -241,7 +255,9 @@ fun BottomNavBar(
 @Composable
 fun HomeScreenWithBottomNav(
     onNavigateToLibrary: () -> Unit,
-    onNavigateToProfile: () -> Unit
+    onNavigateToProfile: () -> Unit,
+//    mengambil parameter songViewModel dari HomeScreen
+    songViewModel: SongViewModel
 ) {
     // Scaffold dengan bottomBar di bagian paling bawah
     Scaffold(
@@ -259,26 +275,9 @@ fun HomeScreenWithBottomNav(
         Box(modifier = Modifier.padding(innerPadding)) {
             HomeScreenContent(
                 onNavigateToLibrary = onNavigateToLibrary,
-                onNavigateToProfile = onNavigateToProfile
+                onNavigateToProfile = onNavigateToProfile,
+                songViewModel = songViewModel
             )
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun HomeScreenWithBottomNavPreview() {
-    HomeScreenWithBottomNav(
-        onNavigateToLibrary = {},
-        onNavigateToProfile = {}
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun HomeScreenPreview() {
-    HomeScreenContent(
-        onNavigateToLibrary = {},
-        onNavigateToProfile = {}
-    )
 }
