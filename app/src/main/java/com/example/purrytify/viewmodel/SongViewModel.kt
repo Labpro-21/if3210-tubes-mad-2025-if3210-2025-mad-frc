@@ -42,8 +42,14 @@ class SongViewModel(private val repository: SongRepository) : ViewModel() {
     private fun loadSongs() {
         viewModelScope.launch {
             repository.getAllSongsOrdered().collect { _songs.value = it}
+        }
+        viewModelScope.launch {
             repository.getAllLikedSongs().collect { _liked_songs.value = it}
+        }
+        viewModelScope.launch {
             repository.getNewSongs().collect { _newSongs.value = it}
+        }
+        viewModelScope.launch {
             repository.getRecentlyPlayed().collect { _recentlyPlayed.value = it}
         }
     }

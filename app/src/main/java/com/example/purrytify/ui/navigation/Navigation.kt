@@ -53,7 +53,6 @@ fun AppNavigation() {
             HomeScreenWithBottomNav(
                 onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-//                menambahkan songviewModel ke HomeScreenContent
                 songViewModel = songViewModel
             )
         }
