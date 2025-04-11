@@ -9,6 +9,7 @@ import com.example.purrytify.model.ProfileUiState
 import com.example.purrytify.repository.ProfileRepository
 import com.example.purrytify.utils.TokenManager
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 class ProfileViewModel(private val tokenManager: TokenManager) : ViewModel() {
 
@@ -25,6 +26,7 @@ class ProfileViewModel(private val tokenManager: TokenManager) : ViewModel() {
                     username = userProfile.username,
                     email = userProfile.email,
                     profilePhoto = userProfile.profilePhoto,
+                    country = parseCountryCode(userProfile.location),
                     songsAdded = 0,   // Sesuaikan jika ada data
                     likedSongs = 0,
                     listenedSongs = 0
@@ -32,6 +34,15 @@ class ProfileViewModel(private val tokenManager: TokenManager) : ViewModel() {
             }.onFailure { throwable ->
                 Log.e("ProfileViewModel", "Gagal fetch profile", throwable)
             }
+        }
+    }
+
+    private fun parseCountryCode(code: String): String {
+        return try {
+            // Membuat Locale dengan kode negara (pastikan kode sudah sesuai dengan ISO 3166-1 alpha-2)
+            Locale("", code.uppercase()).displayCountry
+        } catch (e: Exception) {
+            code // Jika terjadi error, kembalikan kode aslinya
         }
     }
 }
