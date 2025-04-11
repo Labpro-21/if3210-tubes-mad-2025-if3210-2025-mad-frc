@@ -1,17 +1,28 @@
 package com.example.purrytify.ui.screens
 
 import android.content.Context
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.purrytify.viewmodel.LoginViewModel
+import com.example.purrytify.R
 import com.example.purrytify.utils.TokenManager
+import com.example.purrytify.viewmodel.LoginViewModel
 
 @Composable
 fun LoginScreen(
@@ -26,24 +37,20 @@ fun LoginScreen(
     }
 
     val context = LocalContext.current
-    // Buat instance TokenManager untuk menyimpan token secara konsisten
     val tokenManager = remember { TokenManager(context) }
     val uiState = viewModel.uiState.value
     val isLoading = viewModel.isLoading.value
     val loginResult = viewModel.loginResult.value
 
-    // Jika login berhasil, simpan token di TokenManager dan panggil callback navigasi
+    // Jika login sukses, simpan token dan panggil callback
     LaunchedEffect(loginResult) {
         loginResult?.let { result ->
             if (result.isSuccess) {
                 result.getOrNull()?.let { loginResponse ->
-                    // Simpan token menggunakan TokenManager
                     tokenManager.saveTokens(
                         loginResponse.accessToken,
                         loginResponse.refreshToken
                     )
-                    println("Saved Access Token: ${tokenManager.getAccessToken()}")
-                    // Panggil callback untuk navigasi
                     onLoginSuccess(loginResponse.accessToken)
                     viewModel.clearLoginResult()
                 }
@@ -52,61 +59,134 @@ fun LoginScreen(
     }
 
     Scaffold { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(Color(0xFF121212)) // Latar belakang hitam #121212
                 .padding(paddingValues)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
         ) {
-            Text(text = "Login", style = MaterialTheme.typography.h4)
-            Spacer(modifier = Modifier.height(24.dp))
-
-            OutlinedTextField(
-                value = uiState.email,
-                onValueChange = { viewModel.updateEmail(it) },
-                label = { Text("Email") },
-                modifier = Modifier.fillMaxWidth()
+            // Gambar latar (jika diperlukan)
+            Image(
+                painter = painterResource(id = R.drawable.bg_login),
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopCenter),
+                contentScale = ContentScale.Crop
             )
-            Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = uiState.password,
-                onValueChange = { viewModel.updatePassword(it) },
-                label = { Text("Password") },
-                visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = { viewModel.login() },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading
+            // Kolom berisi logo, slogan, dan form login.
+            // Kolom ini diletakkan lebih ke bawah dengan padding tambahan.
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = 16.dp)
+                    .offset(y=-180.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Login")
-            }
+                // Logo nya ngawur rek putih semua pas di insert
+//                Icon(
+//                    painter = painterResource(id = R.drawable.logo),
+//                    contentDescription = "Purrytify Icon",
+//                    modifier = Modifier.size(64.dp),
+//                    tint = Color.White
+//                )
 
-            if (isLoading) {
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Slogan/Jargon - ditempatkan di tengah secara horizontal
+                Text(
+                    text = "Millions of Songs. Only on Purritify.",
+                    style = TextStyle(
+                        color = Color.White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.W700
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // Input Email
+                OutlinedTextField(
+                    value = uiState.email,
+                    onValueChange = { viewModel.updateEmail(it) },
+                    label = {
+                        Text("Email", color = Color.White)
+                    },
+                    placeholder = { Text("Email", color = Color(0xFFB3B3B3)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        textColor = Color.White,
+                        backgroundColor = Color(0xFF212121),
+                        placeholderColor = Color(0xFFB3B3B3),
+                        focusedBorderColor = Color(0xFF535353),
+                        unfocusedBorderColor = Color(0xFF535353),
+                        focusedLabelColor = Color.White,
+                        unfocusedLabelColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(4.dp)
+                )
+
                 Spacer(modifier = Modifier.height(16.dp))
-                CircularProgressIndicator()
-            }
 
-            // Tampilkan dialog error jika login gagal
-            loginResult?.let { result ->
-                if (result.isFailure) {
-                    val error = result.exceptionOrNull()?.message ?: "Unknown error"
-                    AlertDialog(
-                        onDismissRequest = { viewModel.clearLoginResult() },
-                        title = { Text("Login Failed") },
-                        text = { Text(error) },
-                        confirmButton = {
-                            Button(onClick = { viewModel.clearLoginResult() }) {
-                                Text("OK")
+                // Input Password
+                OutlinedTextField(
+                    value = uiState.password,
+                    onValueChange = { viewModel.updatePassword(it) },
+                    label = {
+                        Text("Password", color = Color.White)
+                    },
+                    placeholder = { Text("Password", color = Color(0xFFB3B3B3)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        textColor = Color.White,
+                        backgroundColor = Color(0xFF212121),
+                        placeholderColor = Color(0xFFB3B3B3),
+                        focusedBorderColor = Color(0xFF535353),
+                        unfocusedBorderColor = Color(0xFF535353),
+                        focusedLabelColor = Color.White,
+                        unfocusedLabelColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(4.dp)
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Tombol Login
+                Button(
+                    onClick = { viewModel.login() },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading,
+                    shape = RoundedCornerShape(50),
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF1db955)) // Ganti warna hijau sesuai kebutuhan
+                ) {
+                    Text("Log In")
+                }
+
+                // Loading indicator
+                if (isLoading) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    CircularProgressIndicator()
+                }
+
+                // Dialog error
+                loginResult?.let { result ->
+                    if (result.isFailure) {
+                        val error = result.exceptionOrNull()?.message ?: "Unknown error"
+                        AlertDialog(
+                            onDismissRequest = { viewModel.clearLoginResult() },
+                            title = { Text("Login Failed") },
+                            text = { Text(error) },
+                            confirmButton = {
+                                Button(onClick = { viewModel.clearLoginResult() }) {
+                                    Text("OK")
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
