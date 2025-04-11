@@ -85,9 +85,22 @@ dependencies {
 //    implementation(libs.androidx.lifecycle.livedata.ktx)
 //    implementation(libs.androidx.runtime.livedata)
     implementation(libs.androidx.activity.compose.v161)
-    implementation("com.google.dagger:hilt-android:2.48")
+    implementation("com.google.dagger:hilt-android:2.49")
     kapt("com.google.dagger:hilt-android-compiler:2.48")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
-    implementation ("androidx.security:security-crypto:1.1.0-alpha03")
+    implementation ("androidx.security:security-crypto:1.1.0-alpha07")
+
+    // Room Database
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.rxjava2)
+    implementation(libs.androidx.room.rxjava3)
+    implementation(libs.androidx.room.guava)
+    implementation(libs.androidx.room.paging)
+    testImplementation(libs.androidx.room.testing)
+
+    implementation(libs.androidx.media3.exoplayer)        // Core ExoPlayer
+    implementation(libs.androidx.media3.ui)               // PlayerView
 }
