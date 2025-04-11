@@ -61,7 +61,14 @@ fun AppNavigation() {
         composable(route = Screen.Profile.route) {
             ProfileScreen(
                 isConnected = isConnected,
-                onBack = { navController.popBackStack() }
+                onLogout = {
+                    // Implementasi onLogout:
+                    tokenManager.clearTokens()
+                    // Navigasi kembali ke layar login
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0)
+                    }
+                }
             )
         }
     }
