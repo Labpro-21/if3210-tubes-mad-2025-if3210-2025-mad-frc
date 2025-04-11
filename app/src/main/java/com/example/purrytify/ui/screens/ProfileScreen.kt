@@ -7,8 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,33 +17,40 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.purrytify.R
 import com.example.purrytify.viewmodel.ProfileViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.purrytify.viewmodel.ProfileViewModelFactory
+import com.example.purrytify.utils.TokenManager
 
 @Composable
-fun ProfileScreen(onBack: () -> Unit) {
+fun ProfileScreen(isConnected: Boolean,onBack: () -> Unit) {
     val context = LocalContext.current
-    val profileViewModel: ProfileViewModel = viewModel()
 
-    // Ambil token yang disimpan dan dapatkan profile dari API
+    // Membuat TokenManager dari context
+    val tokenManager = remember { TokenManager(context) }
+    // Mendapatkan ProfileViewModel melalui factory agar dapat menyuntikkan TokenManager
+    val profileViewModel: ProfileViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        factory = ProfileViewModelFactory(tokenManager)
+    )
+
+    var showNoInternetDialog by remember { mutableStateOf(!isConnected) }
+
+    if (showNoInternetDialog) {
+        NoInternetDialog(onDismiss = { showNoInternetDialog = false })
+    }
+
+    // Panggil API profile ketika komposisi pertama kali dijalankan
     LaunchedEffect(Unit) {
-        val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
-        val token = prefs.getString("accessToken", null)
-        token?.let {
-            profileViewModel.fetchUserProfile(it)
-        }
+        profileViewModel.fetchUserProfile()
     }
 
     val uiState = profileViewModel.uiState.value
 
-    ProfileScreen(
+
+    ProfileContent(
         username = uiState.username,
         email = uiState.email,
-        // Jika API mengembalikan nama file foto, buat URL dengan format yang sesuai
-        profilePhotoUrl = if (uiState.profilePhoto.isNotEmpty()) {
+        profilePhotoUrl = if (uiState.profilePhoto.isNotBlank())
             "http://34.101.226.132:3000/uploads/profile-picture/${uiState.profilePhoto}"
-        } else {
-            null
-        },
+        else null,
         songsAdded = uiState.songsAdded,
         likedSongs = uiState.likedSongs,
         listenedSongs = uiState.listenedSongs,
@@ -53,7 +59,7 @@ fun ProfileScreen(onBack: () -> Unit) {
 }
 
 @Composable
-fun ProfileScreen(
+fun ProfileContent(
     username: String,
     email: String,
     profilePhotoUrl: String?,
@@ -98,6 +104,7 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // Statistik: songs added, liked songs, listened songs
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly

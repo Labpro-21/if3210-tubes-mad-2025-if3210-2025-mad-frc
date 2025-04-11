@@ -1,40 +1,50 @@
 package com.example.purrytify.ui.screens
 
+import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.purrytify.viewmodel.LoginViewModel
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.platform.LocalContext
-import android.content.Context
+import com.example.purrytify.utils.TokenManager
 
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel = viewModel(),
-    onLoginSuccess: (accessToken: String) -> Unit = {}
+    onLoginSuccess: (accessToken: String) -> Unit = {},
+    isConnected: Boolean
 ) {
+    var showNoInternetDialog by remember { mutableStateOf(!isConnected) }
+
+    if (showNoInternetDialog) {
+        NoInternetDialog(onDismiss = { showNoInternetDialog = false })
+    }
+
     val context = LocalContext.current
+    // Buat instance TokenManager untuk menyimpan token secara konsisten
+    val tokenManager = remember { TokenManager(context) }
     val uiState = viewModel.uiState.value
     val isLoading = viewModel.isLoading.value
     val loginResult = viewModel.loginResult.value
 
-    // Mengamati loginResult dan jika sukses, simpan token dan panggil callback
+    // Jika login berhasil, simpan token di TokenManager dan panggil callback navigasi
     LaunchedEffect(loginResult) {
         loginResult?.let { result ->
             if (result.isSuccess) {
-                result.getOrNull()?.let { response ->
-                    // Simpan token menggunakan SharedPreferences
-                    val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
-                    prefs.edit().putString("accessToken", response.accessToken).apply()
-
-                    // Panggil callback untuk navigasi ke Home
-                    onLoginSuccess(response.accessToken)
+                result.getOrNull()?.let { loginResponse ->
+                    // Simpan token menggunakan TokenManager
+                    tokenManager.saveTokens(
+                        loginResponse.accessToken,
+                        loginResponse.refreshToken
+                    )
+                    println("Saved Access Token: ${tokenManager.getAccessToken()}")
+                    // Panggil callback untuk navigasi
+                    onLoginSuccess(loginResponse.accessToken)
                     viewModel.clearLoginResult()
                 }
             }
@@ -83,9 +93,9 @@ fun LoginScreen(
                 CircularProgressIndicator()
             }
 
-            // Tampilkan dialog jika login gagal (opsional)
+            // Tampilkan dialog error jika login gagal
             loginResult?.let { result ->
-                if(result.isFailure){
+                if (result.isFailure) {
                     val error = result.exceptionOrNull()?.message ?: "Unknown error"
                     AlertDialog(
                         onDismissRequest = { viewModel.clearLoginResult() },
@@ -101,10 +111,4 @@ fun LoginScreen(
             }
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun LoginScreenPreview() {
-    LoginScreen()
 }
