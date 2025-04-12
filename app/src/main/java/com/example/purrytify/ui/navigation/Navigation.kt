@@ -11,9 +11,9 @@ import androidx.navigation.compose.rememberNavController
 import com.example.purrytify.data.AppDatabase
 import com.example.purrytify.data.SongRepository
 import com.example.purrytify.ui.screens.HomeScreenWithBottomNav
-import com.example.purrytify.ui.screens.LibraryScreen
+import com.example.purrytify.ui.screens.LibraryScreenWithBottomNav
 import com.example.purrytify.ui.screens.LoginScreen
-import com.example.purrytify.ui.screens.ProfileScreen
+import com.example.purrytify.ui.screens.ProfileScreenWithBottomNav
 import com.example.purrytify.viewmodel.SongViewModel
 import com.example.purrytify.viewmodel.SongViewModelFactory
 
@@ -71,22 +71,18 @@ fun AppNavigation() {
             )
         }
         composable(route = Screen.Library.route) {
-            LibraryScreen(
+            LibraryScreenWithBottomNav(
                 onBack = { navController.popBackStack() },
-                songViewModel = songViewModel
+                songViewModel = songViewModel,
+                onNavigateToHome = { navController.navigate(Screen.Home.route) },
+                onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
             )
         }
         composable(route = Screen.Profile.route) {
-            ProfileScreen(
-                isConnected = isConnected,
-                onLogout = {
-                    // Implementasi onLogout:
-                    tokenManager.clearTokens()
-                    // Navigasi kembali ke layar login
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0)
-                    }
-                }
+            ProfileScreenWithBottomNav(
+                onBack = { navController.popBackStack() },
+                onNavigateToHome = { navController.navigate(Screen.Home.route) },
+                onNavigateToLibrary = { navController.navigate(Screen.Library.route) }
             )
         }
     }

@@ -42,6 +42,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import com.example.purrytify.ui.navBar.BottomNavBar
 
 @Composable
 fun HomeScreenContent(
@@ -163,14 +164,14 @@ fun HomeScreenContent(
                 }
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
-        // Bottom Player Section
-        BottomPlayerSection()
     }
 }
 
 @Composable
-fun BottomPlayerSection(isPlaying: Boolean = true) {
+fun BottomPlayerSection(
+    isPlaying: Boolean = true,
+    onPlayPause: () -> Unit = {}
+) {
     val context = LocalContext.current
     val appContext = if (!LocalInspectionMode.current)
         context.applicationContext as? Application
@@ -178,7 +179,10 @@ fun BottomPlayerSection(isPlaying: Boolean = true) {
 
     if (appContext == null) {
         Box(
-            modifier = Modifier.fillMaxWidth().background(Color.DarkGray).padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.DarkGray)
+                .padding(16.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(text = "Preview Mode - Player tidak aktif", color = Color.White)
@@ -186,8 +190,12 @@ fun BottomPlayerSection(isPlaying: Boolean = true) {
         return
     }
     val viewModel: PlayerViewModel = viewModel(factory = PlayerViewModelFactory(appContext))
+    // Jika Anda sudah memiliki onPlayPause, Anda bisa gunakan callback onPlayPause di sini.
     Row(
-        modifier = Modifier.fillMaxWidth().background(Color.DarkGray).padding(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.DarkGray)
+            .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
@@ -209,11 +217,13 @@ fun BottomPlayerSection(isPlaying: Boolean = true) {
             )
         }
         IconButton(
-            onClick = { viewModel.playPause() },
-            modifier = Modifier.size(72.dp).background(
-                color = MaterialTheme.colorScheme.primary,
-                shape = CircleShape
-            )
+            onClick = { onPlayPause() },
+            modifier = Modifier
+                .size(72.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = CircleShape
+                )
         ) {
             Icon(
                 imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
@@ -226,52 +236,33 @@ fun BottomPlayerSection(isPlaying: Boolean = true) {
 }
 
 @Composable
-fun BottomNavBar(
-    currentRoute: String,
-    onItemSelected: (String) -> Unit
-) {
-    NavigationBar {
-        NavigationBarItem(
-            selected = currentRoute == "home",
-            onClick = { onItemSelected("home") },
-            icon = { Icon(imageVector = Icons.Default.Home, contentDescription = "Home") },
-            label = { Text("Home") }
-        )
-        NavigationBarItem(
-            selected = currentRoute == "library",
-            onClick = { onItemSelected("library") },
-            icon = { Icon(imageVector = Icons.Default.Folder, contentDescription = "Library") },
-            label = { Text("Library") }
-        )
-        NavigationBarItem(
-            selected = currentRoute == "profile",
-            onClick = { onItemSelected("profile") },
-            icon = { Icon(imageVector = Icons.Default.Person, contentDescription = "Profile") },
-            label = { Text("Profile") }
-        )
-    }
-}
-
-@Composable
 fun HomeScreenWithBottomNav(
     onNavigateToLibrary: () -> Unit,
     onNavigateToProfile: () -> Unit,
-//    mengambil parameter songViewModel dari HomeScreen
-    songViewModel: SongViewModel
+    songViewModel: SongViewModel,
+    isPlaying: Boolean = true,
+    onPlayPause: () -> Unit = {}
 ) {
-    // Scaffold dengan bottomBar di bagian paling bawah
     Scaffold(
         bottomBar = {
-            BottomNavBar(currentRoute = "home", onItemSelected = { route ->
-                when (route) {
-                    "library" -> onNavigateToLibrary()
-                    "profile" -> onNavigateToProfile()
-                    // "home" tidak nge-navigate ulang.
-                }
-            })
+            Column {
+                BottomPlayerSection(
+                    isPlaying = isPlaying,
+                    onPlayPause = onPlayPause
+                )
+                BottomNavBar(
+                    currentRoute = "home",
+                    onItemSelected = { route ->
+                        when (route) {
+                            "library" -> onNavigateToLibrary()
+                            "profile" -> onNavigateToProfile()
+                            // "home" tidak perlu action
+                        }
+                    }
+                )
+            }
         }
     ) { innerPadding ->
-        // Sisipkan padding Scaffold agar tidak tertutup navigation bar
         Box(modifier = Modifier.padding(innerPadding)) {
             HomeScreenContent(
                 onNavigateToLibrary = onNavigateToLibrary,
