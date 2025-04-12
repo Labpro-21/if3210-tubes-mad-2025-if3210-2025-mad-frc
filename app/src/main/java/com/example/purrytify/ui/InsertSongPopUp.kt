@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -224,7 +225,16 @@ fun UploadBoxDisplay(fileUri: Uri?, text: String, mimeType: String) {
             }
 
             fileUri != null -> {
-                Text("File selected", color = Color.DarkGray)
+                val fileName = getFileNameFromUri(context,fileUri)
+                Text(
+                    text = "File selected:\n${fileName}",
+                    color = Color.DarkGray,
+                    fontSize = MaterialTheme.typography.bodySmall.fontSize,
+                    modifier = Modifier
+                        .padding(horizontal = 4.dp)
+                        .fillMaxWidth()
+                )
+
             }
 
             else -> {
@@ -285,12 +295,13 @@ fun handleSaveSong(
         val currentUserId = sessionManager.getUserId()
         val songToSave = Song(
             id = song?.id ?: 0, // Gunakan ID dari song yang ada atau 0 untuk lagu baru
-            title = title,
-            artist = artist,
+            title = if (title.isBlank()) "Unnamed Song" else title,
+            artist = if (artist.isBlank()) "Unnamed Artist" else artist,
             duration = duration,
             artworkPath = selectedPhotoUri.toString(),
             audioPath = selectedAudioUri.toString(),
-            lastPlayed = Date(),
+            addedDate = Date(),
+            lastPlayed = null,
             userId = currentUserId,
         )
 
@@ -303,4 +314,15 @@ fun handleSaveSong(
 
     onComplete() // misalnya untuk menutup sheet atau update UI
 }
+
+fun getFileNameFromUri(context: Context, uri: Uri): String {
+    val returnCursor = context.contentResolver.query(uri, null, null, null, null)
+    returnCursor?.use {
+        val nameIndex = it.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+        it.moveToFirst()
+        return it.getString(nameIndex)
+    }
+    return "Unknown file"
+}
+
 

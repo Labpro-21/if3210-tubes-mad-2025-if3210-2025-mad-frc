@@ -110,20 +110,32 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
         if (displayedSongs.isEmpty()) {
             Text("No songs found.", color = Color.Gray, modifier = Modifier.padding(16.dp))
         } else {
-            LazyColumn {
-                items(displayedSongs) { song ->
-                    SongItem(
-                        song = song,
-                        onClick = {
-                            songViewModel.setCurrentSong(song)
-                            playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
-                        },
-                        onToggleLike = { song ->
-                            songViewModel.toggleLikeSong(song)
-                        }
-                    )
+//            LazyColumn {
+//                items(displayedSongs) { song ->
+//                    SongItem(
+//                        song = song,
+//                        onClick = {
+//                            songViewModel.setCurrentSong(song)
+//                            playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
+//                        },
+//                        onToggleLike = { song ->
+//                            songViewModel.toggleLikeSong(song)
+//                        }
+//                    )
+//                }
+//            }
+            SongRecyclerView(
+                songs = displayedSongs,
+                onSongClick = { song ->
+                    val index = allSongs.indexOf(song)
+                    currentSongId = index
+                    setSelectedSong(song)
+                    setShowPlayer(true)
+                },
+                onToggleLike = { song ->
+                    songViewModel.toggleLikeSong(song)
                 }
-            }
+            )
         }
     }
 

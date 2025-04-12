@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.Date
 
 class SongViewModel(private val repository: SongRepository,userId: Int) : ViewModel() {
 
@@ -49,7 +50,7 @@ class SongViewModel(private val repository: SongRepository,userId: Int) : ViewMo
     fun loadSongs(userId:Int) {
         Log.d("SongViewModel", "Loading songs for userId: $userId")
         viewModelScope.launch {
-            repository.getAllSongsOrdered(userId).collect { songList ->
+            repository.getAllSongs(userId).collect { songList ->
                 _songs.value = songList
 
                 // Update _current_song jika ID-nya masih ada di list
@@ -99,6 +100,14 @@ class SongViewModel(private val repository: SongRepository,userId: Int) : ViewMo
 
     fun setCurrentSong(song:Song){
         _current_song.value = song
+        updateLastPlayed(song)
+    }
+
+    fun updateLastPlayed(song:Song){
+        viewModelScope.launch {
+            repository.updateLastPlayed(song.id,Date())
+            loadSongs(song.userId)
+        }
     }
 
 

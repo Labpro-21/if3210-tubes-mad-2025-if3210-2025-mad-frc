@@ -25,8 +25,19 @@ class SongRecyclerViewAdapter(
         val likeButton = view.findViewById<ImageView>(R.id.like_button)
 
         fun bind(song: Song) {
-            title.text = song.title
-            artist.text = song.artist
+            val displayTitle = if (song.title.length > 23) {
+                song.title.take(20) + "..."
+            } else {
+                song.title
+            }
+            title.text = displayTitle
+            val displayArtist = if (song.artist.length > 23) {
+                song.artist.take(20) + "..."
+            } else {
+                song.artist
+            }
+            artist.text = displayArtist
+
 
             likeButton.setImageResource(
                 if (song.liked) R.drawable.baseline_favorite_24 else R.drawable.baseline_favorite_border_24

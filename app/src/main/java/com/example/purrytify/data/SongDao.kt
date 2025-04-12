@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import com.example.purrytify.model.Song
 import kotlinx.coroutines.flow.Flow
+import java.util.Date
 
 @Dao
 interface SongDao {
@@ -12,7 +13,7 @@ interface SongDao {
     suspend fun insertSong(song: Song)
 
     @Query("SELECT * FROM Song WHERE user_id = :userId")
-    suspend fun getAllSongs(userId:Int): List<Song>
+    fun getAllSongs(userId:Int): Flow<List<Song>>
 
     @Query("DELETE FROM Song WHERE id = :songId")
     suspend fun deleteSong(songId: Int)
@@ -32,9 +33,12 @@ interface SongDao {
     @Query("UPDATE Song SET liked = NOT liked WHERE id = :songId")
     suspend fun toggleLike(songId: Int)
 
-    @Query("SELECT * FROM Song WHERE user_id = :userId ORDER BY lastPlayed DESC LIMIT 5")
+    @Query("SELECT * FROM Song WHERE user_id = :userId ORDER BY addedDate DESC LIMIT 5")
     fun getNewSongs(userId:Int): Flow<List<Song>>
 
     @Query("SELECT * FROM Song WHERE lastPlayed IS NOT NULL AND user_id = :userId ORDER BY lastPlayed DESC LIMIT 5")
     fun getRecentlyPlayed(userId:Int): Flow<List<Song>>
+
+    @Query("UPDATE Song SET lastPlayed = :lastPlayed WHERE id = :songId")
+    suspend fun updateLastPlayed(songId: Int,lastPlayed: Date)
 }
