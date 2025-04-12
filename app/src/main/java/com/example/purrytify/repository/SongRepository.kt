@@ -9,13 +9,13 @@ import java.util.Date
 class SongRepository(private val songDao: SongDao, private val userDao: UserDao) {
     suspend fun getSong(songId: Int) = songDao.getSongById(songId)
     suspend fun insertSong(song: Song) {
-        songDao.insertSong(song)
         userDao.incrementSongs(song.userId)
+        songDao.insertSong(song)
     }
     suspend fun getAllSongs(userId: Int): Flow<List<Song>> = songDao.getAllSongs(userId)
     suspend fun deleteSong(id: Int){
-        songDao.deleteSong(id)
         userDao.decrementSongs(getSong(id).userId)
+        songDao.deleteSong(id)
     }
 
     suspend fun getAllLikedSongs(userId: Int): Flow<List<Song>> = songDao.getAllLikedSongs(userId)
