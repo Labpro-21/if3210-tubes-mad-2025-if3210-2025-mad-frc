@@ -50,7 +50,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import com.example.purrytify.ui.InsertSongPopUp
-import com.example.purrytify.viewmodel.PlayerMode
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
