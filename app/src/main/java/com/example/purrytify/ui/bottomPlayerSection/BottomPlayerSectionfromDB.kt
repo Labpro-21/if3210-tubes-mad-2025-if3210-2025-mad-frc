@@ -42,7 +42,6 @@ fun BottomPlayerSectionFromDB(
     onPlayPause: () -> Unit,
     onSectionClick: () -> Unit
 ) {
-    // Responsiveness berdasarkan lebar layar
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp
     val imageSize = if (screenWidth > 360) 48.dp else 64.dp
@@ -80,7 +79,7 @@ fun BottomPlayerSectionFromDB(
         return
     }
 
-    // Bungkus seluruh konten kecuali play/pause button dengan clickable
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -121,7 +120,6 @@ fun BottomPlayerSectionFromDB(
                     fontSize = 12.sp
                 )
             }
-            // Tombol play/pause, diletakkan di luar area clickable parent
             IconButton(
                 onClick = { onPlayPause() },
                 modifier = Modifier

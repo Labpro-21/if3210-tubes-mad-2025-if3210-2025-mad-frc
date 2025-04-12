@@ -283,7 +283,6 @@ fun HomeScreenResponsive(
 ) {
     val configuration = LocalConfiguration.current
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR)
-    // Peroleh appContext (untuk keperluan komponen yang membutuhkannya)
     val context = LocalContext.current
     val appContext = context.applicationContext as? Application
 
@@ -305,7 +304,6 @@ fun HomeScreenResponsive(
                     currentRoute = "home",
                     onItemSelected = { route ->
                         when (route) {
-                            "home" -> { /* sudah aktif */ }
                             "library" -> onNavigateToLibrary()
                             "profile" -> onNavigateToProfile()
                         }
@@ -317,7 +315,7 @@ fun HomeScreenResponsive(
                     songViewModel = songViewModel,
                     isPlaying = playerViewModel.isPlaying.collectAsState().value,
                     onPlayPause = { playerViewModel.playPause() },
-                    onSectionClick = { /* Misalnya buka modal player jika diinginkan */ }
+                    onSectionClick = { }
                 )
             }
             // Konten utama (New Songs dan Recently Played)
@@ -360,8 +358,6 @@ fun HomeScreenResponsive(
                                         .padding(end = 16.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-                                    // Tampilkan artwork dan judul lagu
-                                    // (Sesuaikan tampilan sesuai kebutuhan)
                                     androidx.compose.foundation.Image(
                                         painter = rememberAsyncImagePainter(song.artworkPath?.toUri()),
                                         contentDescription = "Artwork",
@@ -436,7 +432,6 @@ fun HomeScreenResponsive(
             }
         }
     } else {
-        // Portrait: gunakan layout Homescreen dengan BottomNavBar seperti sebelumnya
         HomeScreenWithBottomNav(
             onNavigateToLibrary = onNavigateToLibrary,
             onNavigateToProfile = onNavigateToProfile,
