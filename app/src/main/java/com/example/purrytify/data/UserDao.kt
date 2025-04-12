@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface UserDao {
+    
     @Insert
     suspend fun insertSong(song: Song)
 
