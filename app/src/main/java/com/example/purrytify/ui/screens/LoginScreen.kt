@@ -15,7 +15,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,7 +35,6 @@ fun LoginScreen(
     isConnected: Boolean
 ) {
     var showNoInternetDialog by remember { mutableStateOf(!isConnected) }
-
     if (showNoInternetDialog) {
         NoInternetDialog(onDismiss = { showNoInternetDialog = false })
     }
@@ -41,6 +44,13 @@ fun LoginScreen(
     val uiState = viewModel.uiState.value
     val isLoading = viewModel.isLoading.value
     val loginResult = viewModel.loginResult.value
+
+    // State untuk error message di tiap field
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+
+    // Untuk toggle tampilan password
+    var passwordVisible by remember { mutableStateOf(false) }
 
     // Jika login sukses, simpan token dan panggil callback
     LaunchedEffect(loginResult) {
@@ -53,6 +63,21 @@ fun LoginScreen(
                     )
                     onLoginSuccess(loginResponse.accessToken)
                     viewModel.clearLoginResult()
+                    // Bersihkan error jika ada
+                    emailError = null
+                    passwordError = null
+                }
+            } else {
+                // Jika login gagal, periksa pesan error
+                val errorText = result.exceptionOrNull()?.message ?: "Unknown error"
+                when {
+                    errorText.contains("400", ignoreCase = true) ->
+                        emailError = "Invalid input"
+                    errorText.contains("401", ignoreCase = true) ->
+                        passwordError = "Invalid credential"
+                    else -> {
+                        // Bisa juga menampilkan error umum di dialog
+                    }
                 }
             }
         }
@@ -62,10 +87,9 @@ fun LoginScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF121212)) // Latar belakang hitam #121212
+                .background(Color(0xFF121212))
                 .padding(paddingValues)
         ) {
-            // Gambar latar (jika diperlukan)
             Image(
                 painter = painterResource(id = R.drawable.bg_login),
                 contentDescription = null,
@@ -75,27 +99,15 @@ fun LoginScreen(
                 contentScale = ContentScale.Crop
             )
 
-            // Kolom berisi logo, slogan, dan form login.
-            // Kolom ini diletakkan lebih ke bawah dengan padding tambahan.
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
                     .padding(horizontal = 16.dp)
-                    .offset(y=-180.dp),
+                    .offset(y = -120.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Logo nya ngawur rek putih semua pas di insert
-//                Icon(
-//                    painter = painterResource(id = R.drawable.logo),
-//                    contentDescription = "Purrytify Icon",
-//                    modifier = Modifier.size(64.dp),
-//                    tint = Color.White
-//                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Slogan/Jargon - ditempatkan di tengah secara horizontal
+                // Slogan/Jargon
                 Text(
                     text = "Millions of Songs. Only on Purritify.",
                     style = TextStyle(
@@ -112,10 +124,11 @@ fun LoginScreen(
                 // Input Email
                 OutlinedTextField(
                     value = uiState.email,
-                    onValueChange = { viewModel.updateEmail(it) },
-                    label = {
-                        Text("Email", color = Color.White)
+                    onValueChange = {
+                        viewModel.updateEmail(it)
+                        emailError = null  // reset error saat berubah
                     },
+                    label = { Text("Email", color = Color.White) },
                     placeholder = { Text("Email", color = Color(0xFFB3B3B3)) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = TextFieldDefaults.outlinedTextFieldColors(
@@ -129,16 +142,28 @@ fun LoginScreen(
                     ),
                     shape = RoundedCornerShape(4.dp)
                 )
+                // Tampilkan error untuk email jika ada
+                emailError?.let { errorMsg ->
+                    Text(
+                        text = errorMsg,
+                        color = Color.Red,
+                        style = TextStyle(fontSize = 12.sp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 16.dp, top = 4.dp)
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Input Password
+                // Input Password dengan toggle icon
                 OutlinedTextField(
                     value = uiState.password,
-                    onValueChange = { viewModel.updatePassword(it) },
-                    label = {
-                        Text("Password", color = Color.White)
+                    onValueChange = {
+                        viewModel.updatePassword(it)
+                        passwordError = null
                     },
+                    label = { Text("Password", color = Color.White) },
                     placeholder = { Text("Password", color = Color(0xFFB3B3B3)) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = TextFieldDefaults.outlinedTextFieldColors(
@@ -150,8 +175,29 @@ fun LoginScreen(
                         focusedLabelColor = Color.White,
                         unfocusedLabelColor = Color.White
                     ),
-                    shape = RoundedCornerShape(4.dp)
+                    shape = RoundedCornerShape(4.dp),
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                                tint = Color.White
+                            )
+                        }
+                    }
                 )
+                // Tampilkan error untuk password jika ada
+                passwordError?.let { errorMsg ->
+                    Text(
+                        text = errorMsg,
+                        color = Color.Red,
+                        style = TextStyle(fontSize = 12.sp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 16.dp, top = 4.dp)
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -161,32 +207,14 @@ fun LoginScreen(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !isLoading,
                     shape = RoundedCornerShape(50),
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF1db955)) // Ganti warna hijau sesuai kebutuhan
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF1db955))
                 ) {
                     Text("Log In")
                 }
 
-                // Loading indicator
                 if (isLoading) {
                     Spacer(modifier = Modifier.height(16.dp))
                     CircularProgressIndicator()
-                }
-
-                // Dialog error
-                loginResult?.let { result ->
-                    if (result.isFailure) {
-                        val error = result.exceptionOrNull()?.message ?: "Unknown error"
-                        AlertDialog(
-                            onDismissRequest = { viewModel.clearLoginResult() },
-                            title = { Text("Login Failed") },
-                            text = { Text(error) },
-                            confirmButton = {
-                                Button(onClick = { viewModel.clearLoginResult() }) {
-                                    Text("OK")
-                                }
-                            }
-                        )
-                    }
                 }
             }
         }
