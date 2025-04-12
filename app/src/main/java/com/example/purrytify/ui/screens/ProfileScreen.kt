@@ -118,57 +118,50 @@ fun ProfileContent(
                         .clip(CircleShape)
                 )
             }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column {
-                Text(text = username, style = MaterialTheme.typography.h5)
-                Text(text = email, style = MaterialTheme.typography.body1)
+            Spacer(modifier = Modifier.height(16.dp))
+            // Username dengan align center
+            Text(
+                text = username,
+                style = TextStyle(
+                    color = Color.White,
+                    fontSize = 28.sp
+                    // Tambahkan fontFamily Poppins jika tersedia
+                ),
+                textAlign = TextAlign.Center
+            )
+            // Teks negara dengan ukuran lebih kecil dan berwarna #B3B3B3
+            Text(
+                text = country,
+                style = TextStyle(
+                    color = Color(0xFFB3B3B3),
+                    fontSize = 14.sp
+                ),
+                modifier = Modifier.padding(top = 4.dp),
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(32.dp))
+            // Tombol Log Out dengan teks putih dan background #3E3F3F
+            Button(
+                onClick = onLogout,
+                modifier = Modifier.fillMaxWidth(0.5f),
+                shape = RoundedCornerShape(24.dp),
+                colors = androidx.compose.material.ButtonDefaults.buttonColors(
+                    backgroundColor = Color(0xFF3E3F3F)
+                )
+            ) {
+                Text(text = "Log Out", color = Color.White)
+            }
+            Spacer(modifier = Modifier.height(32.dp))
+            // Statistik: Songs, Liked, Listened - sejajar secara horizontal
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                StatItem(count = songsAdded, label = "SONGS")
+                StatItem(count = likedSongs, label = "LIKED")
+                StatItem(count = listenedSongs, label = "LISTENED")
             }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        // Username dengan align center
-        Text(
-            text = username,
-            style = TextStyle(
-                color = Color.White,
-                fontSize = 28.sp
-                // Tambahkan fontFamily Poppins jika tersedia
-            ),
-            textAlign = TextAlign.Center
-        )
-        // Teks negara dengan ukuran lebih kecil dan berwarna #B3B3B3
-        Text(
-            text = country,
-            style = TextStyle(
-                color = Color(0xFFB3B3B3),
-                fontSize = 14.sp
-            ),
-            modifier = Modifier.padding(top = 4.dp),
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-        // Tombol Log Out dengan teks putih dan background #3E3F3F
-        Button(
-            onClick = onLogout,
-            modifier = Modifier.fillMaxWidth(0.5f),
-            shape = RoundedCornerShape(24.dp),
-            colors = androidx.compose.material.ButtonDefaults.buttonColors(
-                backgroundColor = Color(0xFF3E3F3F)
-            )
-        ) {
-            Text(text = "Log Out", color = Color.White)
-        }
-        Spacer(modifier = Modifier.height(32.dp))
-        // Statistik: Songs, Liked, Listened - sejajar secara horizontal
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            StatItem(count = songsAdded, label = "SONGS")
-            StatItem(count = likedSongs, label = "LIKED")
-            StatItem(count = listenedSongs, label = "LISTENED")
-        }
-        
     }
 }
 
@@ -197,7 +190,8 @@ fun StatItem(count: Int, label: String) {
 fun ProfileScreenWithBottomNav(
     onNavigateToHome: () -> Unit,
     onNavigateToLibrary: () -> Unit,
-    onBack: () -> Unit
+    isConnected: Boolean,
+    onLogout: () -> Unit
 ) {
     Scaffold(
         bottomBar = {
@@ -214,7 +208,7 @@ fun ProfileScreenWithBottomNav(
         }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
-            ProfileScreen(onBack = onBack)
+            ProfileScreen(isConnected = isConnected, onLogout = onLogout)
         }
     }
 }
