@@ -48,15 +48,11 @@ import com.example.purrytify.ui.InsertSongPopUp
 
 
 @Composable
-fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
+fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewModel: SongViewModel) {
     val context = LocalContext.current
-    val db = remember { AppDatabase.getDatabase(context) }
-    val repository = remember { SongRepository(db.songDao()) }
 
-    val viewModel: SongViewModel = viewModel(factory = SongViewModelFactory(repository))
-
-    val allSongs by viewModel.songs.collectAsState()
-    val likedSongs by viewModel.likedSongs.collectAsState()
+    val allSongs by songViewModel.songs.collectAsState()
+    val likedSongs by songViewModel.likedSongs.collectAsState()
     var currentSongId by remember { mutableStateOf(0) }
 
     // Tab state
@@ -66,7 +62,7 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     val (showPlayer, setShowPlayer) = remember { mutableStateOf(false) }
     val (selectedSong, setSelectedSong) = remember { mutableStateOf<Song?>(null) }
 
-    InsertSongPopUp(viewModel)
+    InsertSongPopUp(songViewModel)
 
     Column(modifier = modifier.padding(16.dp)) {
         Text(
