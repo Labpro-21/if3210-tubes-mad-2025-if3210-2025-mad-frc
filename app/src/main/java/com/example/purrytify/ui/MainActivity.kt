@@ -14,6 +14,11 @@ import com.example.purrytify.viewmodel.SongViewModelFactory
 import com.example.purrytify.ui.navigation.AppNavigation
 import com.example.purrytify.ui.screens.LibraryScreen
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+
 
 
 class MainActivity : ComponentActivity() {
@@ -33,7 +38,9 @@ class MainActivity : ComponentActivity() {
 //                LibraryScreen()
 //            }
         setContent {
-            AppNavigation()
+            PurrytifyTheme {
+                AppNavigation()
+            }
         }
     }
 }
