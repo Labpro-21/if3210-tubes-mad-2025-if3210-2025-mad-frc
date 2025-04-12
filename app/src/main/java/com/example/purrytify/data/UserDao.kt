@@ -1,37 +1,38 @@
 package com.example.purrytify.data
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
-import com.example.purrytify.model.Song
+import androidx.room.Update
+import com.example.purrytify.model.User
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface UserDao {
-//
-//    @Insert
-//    suspend fun insertSong(song: Song)
-//
-//    @Query("SELECT * FROM Song")
-//    suspend fun getAllSongs(): List<Song>
-//
-//    @Query("DELETE FROM Song WHERE id = :songId")
-//    suspend fun deleteSong(songId: Int)
-//
-//    @Query("SELECT * FROM Song WHERE liked = 1 ORDER BY lastPlayed")
-//    fun getAllLikedSongs(): Flow<List<Song>>
-//
-//
-//    @Query("SELECT * FROM Song ORDER BY lastPlayed")
-//    fun getAllSongsOrdered(): Flow<List<Song>>
-//
-//    @Query("UPDATE Song SET artist = :newArtist, title = :newTitle, artworkPath = :newArtwork WHERE id = :songId")
-//    suspend fun updateSong(songId: Int, newArtist: String, newTitle: String, newArtwork: String)
-//
-//    @Query("SELECT * FROM Song WHERE id = :songId")
-//    suspend fun getSongById(songId: Int): Song
-//
-//    @Query("UPDATE Song SET liked = NOT liked WHERE id = :songId")
-//    suspend fun toggleLike(songId: Int)
+    @Insert
+    suspend fun insertUser(user: User)
+
+    @Query("SELECT * FROM user WHERE id = :id LIMIT 1")
+    suspend fun getUserById(id: Int): User?
+
+    @Query("SELECT * FROM user")
+    fun getAllUsers(): Flow<List<User>>
+
+    @Update
+    suspend fun updateUser(user: User)
+
+    @Delete
+    suspend fun deleteUser(user: User)
+
+    @Query("SELECT * FROM user WHERE email = :email LIMIT 1")
+    suspend fun getUserByEmail(email: String): User?
+
+//    get user id by email
+    @Query("SELECT id FROM user WHERE email = :email LIMIT 1")
+    suspend fun getUserIdByEmail(email: String): Int?
+
+    @Query("SELECT EXISTS(SELECT 1 FROM user WHERE email = :email)")
+    suspend fun isEmailRegistered(email: String): Boolean
 
 }

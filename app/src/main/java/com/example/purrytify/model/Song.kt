@@ -3,9 +3,20 @@ package com.example.purrytify.model
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.ForeignKey
 import java.util.Date
 
-@Entity(tableName= "song")
+@Entity(
+    tableName = "song",
+    foreignKeys = [
+        ForeignKey(
+            entity = User::class,
+            parentColumns = ["id"],
+            childColumns = ["user_id"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ]
+)
 data class Song(
     @PrimaryKey(autoGenerate = true) val id: Int=0,
     @ColumnInfo(name="title") val title: String,
@@ -15,4 +26,5 @@ data class Song(
     @ColumnInfo(name="audioPath") val audioPath: String,
     @ColumnInfo(name="lastPlayed") val lastPlayed: Date,
     @ColumnInfo(name="liked") val liked: Boolean=false,
+    @ColumnInfo(name="user_id") val userId: Int,
 )
