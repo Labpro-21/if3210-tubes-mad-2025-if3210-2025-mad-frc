@@ -39,7 +39,6 @@ fun BottomPlayerSectionFromDB(
     isPlaying: Boolean,
     onPlayPause: () -> Unit
 ) {
-    // Untuk mengambil Application dengan benar via Activity
     val context = LocalContext.current
     val appContext = if (!LocalInspectionMode.current) (context as? Activity)?.application else null
 
@@ -55,7 +54,7 @@ fun BottomPlayerSectionFromDB(
         }
         return
     }
-    // Ambil current song dari SongViewModel
+
     val currentSong by songViewModel.current_song.collectAsState()
 
     if (currentSong == null) {
@@ -108,7 +107,7 @@ fun BottomPlayerSectionFromDB(
             )
         }
         IconButton(
-            onClick = onPlayPause,
+            onClick = { onPlayPause() }, // Pastikan callback ini memanggil playPause() pada PlayerViewModel
             modifier = Modifier
                 .size(72.dp)
                 .background(MaterialTheme.colorScheme.primary, shape = CircleShape)

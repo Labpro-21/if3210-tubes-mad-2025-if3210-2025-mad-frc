@@ -177,103 +177,28 @@ fun HomeScreenContent(
 }
 
 @Composable
-fun BottomPlayerSection(
-    isPlaying: Boolean = true,
-    onPlayPause: () -> Unit = {}
-) {
-    val context = LocalContext.current
-    val appContext = if (!LocalInspectionMode.current)
-        context.applicationContext as? Application
-    else null
-
-    if (appContext == null) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.DarkGray)
-                .padding(16.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(text = "Preview Mode - Player tidak aktif", color = Color.White)
-        }
-        return
-    }
-    val viewModel: PlayerViewModel = viewModel(factory = PlayerViewModelFactory(appContext))
-    // Jika Anda sudah memiliki onPlayPause, Anda bisa gunakan callback onPlayPause di sini.
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.DarkGray)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.album_cover1),
-            contentDescription = "Currently Playing",
-            modifier = Modifier.size(50.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = "Starboy",
-                color = Color.White,
-                fontSize = 14.sp
-            )
-            Text(
-                text = "The Weeknd",
-                color = Color.Gray,
-                fontSize = 12.sp
-            )
-        }
-        IconButton(
-            onClick = { onPlayPause() },
-            modifier = Modifier
-                .size(72.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.primary,
-                    shape = CircleShape
-                )
-        ) {
-            Icon(
-                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                contentDescription = "Play/Pause",
-                tint = Color.White,
-                modifier = Modifier.size(36.dp)
-            )
-        }
-    }
-}
-
-@Composable
 fun HomeScreenWithBottomNav(
     onNavigateToLibrary: () -> Unit,
     onNavigateToProfile: () -> Unit,
     songViewModel: SongViewModel,
-    playerViewModel: PlayerViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
-        factory = PlayerViewModelFactory(
-            (LocalContext.current as Activity).application
-        )
-    ),
-    isPlaying: Boolean = true,
-    onPlayPause: () -> Unit = { playerViewModel.playPause() }
+    playerViewModel: PlayerViewModel, // menggunakan instance yang sama
+    modifier: Modifier = Modifier
 ) {
+    val isPlaying by playerViewModel.isPlaying.collectAsState()
     Scaffold(
         bottomBar = {
             Column {
-                // Bottom player section yang mengambil current song dari database via SongViewModel
                 BottomPlayerSectionFromDB(
                     songViewModel = songViewModel,
                     isPlaying = isPlaying,
-                    onPlayPause = onPlayPause
+                    onPlayPause = { playerViewModel.playPause() }
                 )
-                // Bottom navigation bar (reusable)
                 BottomNavBar(
                     currentRoute = "home",
                     onItemSelected = { route ->
                         when (route) {
                             "library" -> onNavigateToLibrary()
                             "profile" -> onNavigateToProfile()
-                            // "home" sudah aktif
                         }
                     }
                 )
@@ -281,7 +206,6 @@ fun HomeScreenWithBottomNav(
         }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
-            // Konten utama HomeScreen
             HomeScreenContent(
                 onNavigateToLibrary = onNavigateToLibrary,
                 onNavigateToProfile = onNavigateToProfile,

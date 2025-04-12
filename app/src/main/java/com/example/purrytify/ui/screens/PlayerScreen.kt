@@ -69,11 +69,12 @@ fun PlayerScreen(
     onNext: () -> Unit,
     onPrevious: () -> Unit,
     songViewModel: SongViewModel,
+    playerViewModel: PlayerViewModel
 ) {
     val context = LocalContext.current
     val appContext = context.applicationContext as Application
 
-    val playerViewModel: PlayerViewModel = viewModel(factory = PlayerViewModelFactory(appContext))
+//    val playerViewModel: PlayerViewModel = viewModel(factory = PlayerViewModelFactory(appContext))
     val currentSong by songViewModel.current_song.collectAsState()
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     val isLooping by playerViewModel.isLooping.collectAsState()
@@ -245,6 +246,7 @@ fun PlayerModalBottomSheet(
     progress: Float,
     songViewModel: SongViewModel,
     onSongChange: (Int) -> Unit,
+    playerViewModel: PlayerViewModel
 ) {
     if (showSheet) {
         val isExpanded = sheetState.currentValue == SheetValue.Expanded
@@ -261,6 +263,7 @@ fun PlayerModalBottomSheet(
                 onNext = { onSongChange(song.id) },
                 onPrevious = { onSongChange(song.id - 2) },
                 songViewModel = songViewModel,
+                playerViewModel = playerViewModel
             )
         }
     }
