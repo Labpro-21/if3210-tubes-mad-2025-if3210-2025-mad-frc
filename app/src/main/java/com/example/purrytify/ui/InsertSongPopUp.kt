@@ -208,6 +208,8 @@ fun handleSaveSong(
     onComplete: () -> Unit
 ) {
     if (selectedAudioUri != null) {
+        val sessionManager = SessionManager(context)
+        val currentUserId = sessionManager.getUserId()
         val songToSave = Song(
             id = song?.id ?: 0, // Gunakan ID dari song yang ada atau 0 untuk lagu baru
             title = title,
@@ -216,6 +218,8 @@ fun handleSaveSong(
             artworkPath = selectedPhotoUri.toString(),
             audioPath = selectedAudioUri.toString(),
             lastPlayed = Date(),
+            userId = currentUserId,
+
         )
 
         if (song != null) {
@@ -298,34 +302,3 @@ fun UploadBoxWithButton(
         }
     }
 }
-
-
-fun handleSaveSong(
-    context: Context,
-    selectedAudioUri: Uri?,
-    selectedPhotoUri: Uri?,
-    title: String,
-    artist: String,
-    duration: Long,
-    songViewModel: SongViewModel,
-    onComplete: () -> Unit
-) {
-    if (selectedAudioUri != null) {
-        val sessionManager = SessionManager(context)
-        val currentUserId = sessionManager.getUserId()
-        val song = Song(
-            title = title,
-            artist = artist,
-            duration = duration,
-            artworkPath = selectedPhotoUri.toString(),
-            audioPath = selectedAudioUri.toString(),
-            lastPlayed = Date(),
-            userId = currentUserId,
-        )
-
-        songViewModel.addSong(song)
-    }
-
-    onComplete() // misalnya untuk menutup sheet atau update UI
-}
-

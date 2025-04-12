@@ -40,7 +40,7 @@ fun BottomPlayerSectionFromDB(
     songViewModel: SongViewModel,
     isPlaying: Boolean,
     onPlayPause: () -> Unit,
-    onSectionClick: () -> Unit  // Callback untuk membuka modal player
+    onSectionClick: () -> Unit
 ) {
     // Responsiveness berdasarkan lebar layar
     val configuration = LocalConfiguration.current
