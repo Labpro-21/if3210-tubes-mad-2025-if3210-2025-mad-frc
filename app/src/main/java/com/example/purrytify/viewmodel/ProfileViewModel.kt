@@ -6,7 +6,7 @@ import androidx.compose.runtime.State
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.purrytify.model.ProfileUiState
-import com.example.purrytify.data.UserRepository
+import com.example.purrytify.repository.UserRepository
 import com.example.purrytify.repository.ProfileRepository
 import com.example.purrytify.utils.SessionManager
 import com.example.purrytify.utils.TokenManager

@@ -2,7 +2,7 @@ package com.example.purrytify.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.example.purrytify.data.UserRepository
+import com.example.purrytify.repository.UserRepository
 import com.example.purrytify.utils.SessionManager
 import com.example.purrytify.utils.TokenManager
 
