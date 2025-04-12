@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
@@ -53,13 +54,26 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
+import com.example.purrytify.ui.navBar.VerticalNavBar
+import android.content.res.Configuration
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Scaffold
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import com.example.purrytify.model.Song
 
 @Composable
 fun HomeScreenContent(
     onNavigateToLibrary: () -> Unit,
     onNavigateToProfile: () -> Unit,
     songViewModel: SongViewModel,
-    playerViewModel: PlayerViewModel  // tambahkan parameter ini
+    playerViewModel: PlayerViewModel,
+    newSongsFromDb: List<Song>,
+    recentlyPlayedFromDb: List<Song>
 ) {
     val context = LocalContext.current
     val appContext = if (!LocalInspectionMode.current)
@@ -68,117 +82,124 @@ fun HomeScreenContent(
 
     if (appContext == null) {
         Box(
-            modifier = Modifier.fillMaxSize().background(Color.Black),
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black),
             contentAlignment = Alignment.Center
         ) {
-            Text(text = "Preview Mode - AppContext tidak tersedia", color = Color.White)
+            Text(
+                text = "Preview Mode - AppContext tidak tersedia",
+                color = Color.White
+            )
         }
         return
     }
 
-    val newSongsFromDb by songViewModel.newSongs.collectAsState()
-    val recentlyPlayedFromDb by songViewModel.recentlyPlayed.collectAsState()
-
-    Column(
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
+            .background(Color.Black),
+        contentPadding = PaddingValues(16.dp)
     ) {
-        // Bagian New Songs dari database
-        Text(
-            text = "New songs",
-            color = Color.White,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        if (newSongsFromDb.isEmpty()) {
-            // Tampilkan pesan fallback untuk New Songs
+        item {
+            // Header untuk New Songs
             Text(
-                text = "No new songs yet",
+                text = "New songs",
                 color = Color.White,
-                fontSize = 14.sp,
-                modifier = Modifier.padding(8.dp)
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
             )
-        } else {
-            LazyRow {
-                items(newSongsFromDb) { song ->
-                    Column(
-                        modifier = Modifier
-                            .clickable {
-                                songViewModel.setCurrentSong(song)
-                                playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
-                            }
-                            .padding(end = 16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Image(
-                            painter = rememberAsyncImagePainter(song.artworkPath?.toUri()),
-                            contentDescription = "Artwork",
-                            modifier = Modifier
-                                .size(64.dp)
-                                .clip(RoundedCornerShape(8.dp)),
-                            contentScale = ContentScale.Crop
-                        )
-                        Text(
-                            text = song.title,
-                            color = Color.White,
-                            fontSize = 14.sp
-                        )
-                    }
-                }
-            }
+            Spacer(modifier = Modifier.height(8.dp))
         }
-        Spacer(modifier = Modifier.height(16.dp))
-        // Bagian Recently Played dari database
-        Text(
-            text = "Recently played",
-            color = Color.White,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        if (recentlyPlayedFromDb.isEmpty()) {
-            // Tampilkan pesan fallback untuk Recently Played
-            Text(
-                text = "No recently played songs, start listening now",
-                color = Color.White,
-                fontSize = 14.sp,
-                modifier = Modifier.padding(8.dp)
-            )
+        if (newSongsFromDb.isEmpty()) {
+            item {
+                Text(
+                    text = "No new songs yet",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
         } else {
-            Column {
-                recentlyPlayedFromDb.forEach { song ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                songViewModel.setCurrentSong(song)
-                                playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
-                            }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Image(
-                            painter = rememberAsyncImagePainter(song.artworkPath?.toUri()),
-                            contentDescription = song.title,
-                            modifier = Modifier.size(50.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Column {
+            item {
+                LazyRow {
+                    items(newSongsFromDb) { song ->
+                        Column(
+                            modifier = Modifier
+                                .clickable {
+                                    songViewModel.setCurrentSong(song)
+                                    playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
+                                }
+                                .padding(end = 16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Image(
+                                painter = rememberAsyncImagePainter(song.artworkPath?.toUri()),
+                                contentDescription = "Artwork",
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(RoundedCornerShape(8.dp)),
+                                contentScale = ContentScale.Crop
+                            )
                             Text(
                                 text = song.title,
                                 color = Color.White,
                                 fontSize = 14.sp
                             )
-                            Text(
-                                text = song.artist,
-                                color = Color.Gray,
-                                fontSize = 12.sp
-                            )
                         }
+                    }
+                }
+            }
+        }
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+            // Header untuk Recently Played
+            Text(
+                text = "Recently played",
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+        if (recentlyPlayedFromDb.isEmpty()) {
+            item {
+                Text(
+                    text = "No recently played songs, start listening now",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
+        } else {
+            items(recentlyPlayedFromDb) { song ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            songViewModel.setCurrentSong(song)
+                            playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
+                        }
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = rememberAsyncImagePainter(song.artworkPath?.toUri()),
+                        contentDescription = song.title,
+                        modifier = Modifier.size(50.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = song.title,
+                            color = Color.White,
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            text = song.artist,
+                            color = Color.Gray,
+                            fontSize = 12.sp
+                        )
                     }
                 }
             }
@@ -193,7 +214,9 @@ fun HomeScreenWithBottomNav(
     onNavigateToProfile: () -> Unit,
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    newSongsFromDb: List<Song>,
+    recentlyPlayedFromDb: List<Song>
 ) {
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     // State untuk membuka modal bottom sheet
@@ -243,8 +266,184 @@ fun HomeScreenWithBottomNav(
                 onNavigateToLibrary = onNavigateToLibrary,
                 onNavigateToProfile = onNavigateToProfile,
                 songViewModel = songViewModel,
-                playerViewModel = playerViewModel // pastikan teroper di sini
+                playerViewModel = playerViewModel,
+                newSongsFromDb = newSongsFromDb,
+                recentlyPlayedFromDb = recentlyPlayedFromDb
             )
         }
+    }
+}
+
+@Composable
+fun HomeScreenResponsive(
+    onNavigateToLibrary: () -> Unit,
+    onNavigateToProfile: () -> Unit,
+    songViewModel: SongViewModel,
+    playerViewModel: PlayerViewModel
+) {
+    val configuration = LocalConfiguration.current
+
+    // Peroleh appContext (untuk keperluan komponen yang membutuhkannya)
+    val context = LocalContext.current
+    val appContext = context.applicationContext as? Application
+
+    val newSongsFromDb by songViewModel.newSongs.collectAsState()
+    val recentlyPlayedFromDb by songViewModel.recentlyPlayed.collectAsState()
+
+    if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        // Landscape: Tampilan dengan navbar vertikal di sisi kiri dan konten di sisi kanan
+        Row(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(200.dp)
+                    .background(color = androidx.compose.ui.graphics.Color.Black)
+                    .padding(8.dp)
+            ) {
+                // Navbar vertikal
+                VerticalNavBar(
+                    currentRoute = "home",
+                    onItemSelected = { route ->
+                        when (route) {
+                            "home" -> { /* sudah aktif */ }
+                            "library" -> onNavigateToLibrary()
+                            "profile" -> onNavigateToProfile()
+                        }
+                    }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                // Bottom player di bagian bawah navbar
+                BottomPlayerSectionFromDB(
+                    songViewModel = songViewModel,
+                    isPlaying = playerViewModel.isPlaying.collectAsState().value,
+                    onPlayPause = { playerViewModel.playPause() },
+                    onSectionClick = { /* Misalnya buka modal player jika diinginkan */ }
+                )
+            }
+            // Konten utama (New Songs dan Recently Played)
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black),
+                contentPadding = PaddingValues(16.dp)
+            ) {
+                item {
+                    // Header untuk New Songs
+                    Text(
+                        text = "New songs",
+                        color = Color.White,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                // Item header untuk kasus tidak ada data
+                if (newSongsFromDb.isEmpty()) {
+                    item {
+                        Text(
+                            text = "No new songs yet",
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
+                } else {
+                    item {
+                        LazyRow {
+                            items(newSongsFromDb) { song ->
+                                Column(
+                                    modifier = Modifier
+                                        .clickable {
+                                            songViewModel.setCurrentSong(song)
+                                            playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
+                                        }
+                                        .padding(end = 16.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    // Tampilkan artwork dan judul lagu
+                                    // (Sesuaikan tampilan sesuai kebutuhan)
+                                    androidx.compose.foundation.Image(
+                                        painter = rememberAsyncImagePainter(song.artworkPath?.toUri()),
+                                        contentDescription = "Artwork",
+                                        modifier = Modifier
+                                            .size(64.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                    )
+                                    Text(
+                                        text = song.title,
+                                        color = Color.White,
+                                        fontSize = 14.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                // Header untuk Recently Played
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Recently played",
+                        color = Color.White,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                // Data Recently Played
+                if (recentlyPlayedFromDb.isEmpty()) {
+                    item {
+                        Text(
+                            text = "No recently played songs, start listening now",
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
+                } else {
+                    items(recentlyPlayedFromDb) { song ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    songViewModel.setCurrentSong(song)
+                                    playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
+                                }
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            androidx.compose.foundation.Image(
+                                painter = rememberAsyncImagePainter(song.artworkPath?.toUri()),
+                                contentDescription = song.title,
+                                modifier = Modifier.size(50.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = song.title,
+                                    color = Color.White,
+                                    fontSize = 14.sp
+                                )
+                                Text(
+                                    text = song.artist,
+                                    color = Color.Gray,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        // Portrait: gunakan layout Homescreen dengan BottomNavBar seperti sebelumnya
+        HomeScreenWithBottomNav(
+            onNavigateToLibrary = onNavigateToLibrary,
+            onNavigateToProfile = onNavigateToProfile,
+            songViewModel = songViewModel,
+            playerViewModel = playerViewModel,
+            newSongsFromDb = newSongsFromDb,
+            recentlyPlayedFromDb = recentlyPlayedFromDb
+        )
     }
 }

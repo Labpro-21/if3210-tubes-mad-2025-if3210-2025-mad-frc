@@ -72,7 +72,7 @@ fun AppNavigation() {
             )
         }
         composable(route = Screen.Home.route) {
-            HomeScreenWithBottomNav(
+            HomeScreenResponsive(
                 onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                 songViewModel = songViewModel,

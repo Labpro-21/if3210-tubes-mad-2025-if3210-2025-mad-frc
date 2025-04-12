@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.platform.LocalConfiguration
 
 
 @Composable
@@ -39,8 +40,15 @@ fun BottomPlayerSectionFromDB(
     songViewModel: SongViewModel,
     isPlaying: Boolean,
     onPlayPause: () -> Unit,
-    onSectionClick: () -> Unit  // Callback untuk membuka PlayerModalBottomSheet
+    onSectionClick: () -> Unit  // Callback untuk membuka modal player
 ) {
+    // Responsiveness berdasarkan lebar layar
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp
+    val imageSize = if (screenWidth > 360) 48.dp else 64.dp
+    val iconButtonSize = if (screenWidth > 360) 56.dp else 72.dp
+    val iconSize = if (screenWidth > 360) 24.dp else 36.dp
+
     val context = LocalContext.current
     val appContext = if (!LocalInspectionMode.current) (context as? Activity)?.application else null
 
@@ -89,7 +97,7 @@ fun BottomPlayerSectionFromDB(
                     painter = rememberAsyncImagePainter(currentSong!!.artworkPath!!.toUri()),
                     contentDescription = currentSong!!.title,
                     modifier = Modifier
-                        .size(64.dp)
+                        .size(imageSize)
                         .clip(RoundedCornerShape(8.dp))
                 )
             else
@@ -97,7 +105,7 @@ fun BottomPlayerSectionFromDB(
                     imageVector = Icons.Default.MusicNote,
                     contentDescription = "No artwork",
                     tint = Color.White.copy(alpha = 0.7f),
-                    modifier = Modifier.size(64.dp)
+                    modifier = Modifier.size(imageSize)
                 )
 
             Spacer(modifier = Modifier.width(8.dp))
@@ -113,19 +121,18 @@ fun BottomPlayerSectionFromDB(
                     fontSize = 12.sp
                 )
             }
-            // IconButton play/pause diletakkan di luar area clickable parent dengan Modifier.clickable tidak diterapkan,
-            // sehingga ketika ditekan, hanya onPlayPause yang terpanggil.
+            // Tombol play/pause, diletakkan di luar area clickable parent
             IconButton(
                 onClick = { onPlayPause() },
                 modifier = Modifier
-                    .size(72.dp)
+                    .size(iconButtonSize)
                     .background(MaterialTheme.colorScheme.primary, shape = CircleShape)
             ) {
                 Icon(
                     imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                     contentDescription = "Play/Pause",
                     tint = Color.White,
-                    modifier = Modifier.size(36.dp)
+                    modifier = Modifier.size(iconSize)
                 )
             }
         }

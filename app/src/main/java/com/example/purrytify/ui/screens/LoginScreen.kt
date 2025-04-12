@@ -27,6 +27,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.purrytify.R
 import com.example.purrytify.utils.TokenManager
 import com.example.purrytify.viewmodel.LoginViewModel
+import com.example.purrytify.ui.LockScreenOrientation
+import android.content.pm.ActivityInfo
 
 @Composable
 fun LoginScreen(
@@ -34,6 +36,7 @@ fun LoginScreen(
     onLoginSuccess: (accessToken: String) -> Unit = {},
     isConnected: Boolean
 ) {
+    LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
     var showNoInternetDialog by remember { mutableStateOf(!isConnected) }
     if (showNoInternetDialog) {
         NoInternetDialog(onDismiss = { showNoInternetDialog = false })

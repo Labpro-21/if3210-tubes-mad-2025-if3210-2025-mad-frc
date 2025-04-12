@@ -29,6 +29,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import com.example.purrytify.ui.navBar.BottomNavBar
+import com.example.purrytify.ui.LockScreenOrientation
+import android.content.pm.ActivityInfo
 
 @Composable
 fun ProfileScreen(
@@ -81,6 +83,7 @@ fun ProfileContent(
     listenedSongs: Int,
     onLogout: () -> Unit
 ) {
+    LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
     // Background gradasi dari #006175 ke #121212
     Box(
         modifier = Modifier
