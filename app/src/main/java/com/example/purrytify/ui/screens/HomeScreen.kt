@@ -45,6 +45,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import com.example.purrytify.ui.navBar.BottomNavBar
 import android.app.Activity
+import android.content.pm.ActivityInfo
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -65,6 +66,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.purrytify.model.Song
+import com.example.purrytify.ui.LockScreenOrientation
 
 @Composable
 fun HomeScreenContent(
@@ -280,7 +282,7 @@ fun HomeScreenResponsive(
     playerViewModel: PlayerViewModel
 ) {
     val configuration = LocalConfiguration.current
-
+    LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR)
     // Peroleh appContext (untuk keperluan komponen yang membutuhkannya)
     val context = LocalContext.current
     val appContext = context.applicationContext as? Application
