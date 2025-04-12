@@ -45,6 +45,7 @@ import androidx.compose.material3.NavigationBarItem
 import com.example.purrytify.ui.navBar.BottomNavBar
 import android.app.Activity
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -57,7 +58,8 @@ import androidx.compose.ui.platform.LocalInspectionMode
 fun HomeScreenContent(
     onNavigateToLibrary: () -> Unit,
     onNavigateToProfile: () -> Unit,
-    songViewModel: SongViewModel
+    songViewModel: SongViewModel,
+    playerViewModel: PlayerViewModel  // tambahkan parameter ini
 ) {
     val context = LocalContext.current
     val appContext = if (!LocalInspectionMode.current)
@@ -74,7 +76,6 @@ fun HomeScreenContent(
         return
     }
 
-    // ViewModel untuk player
     val newSongsFromDb by songViewModel.newSongs.collectAsState()
     val recentlyPlayedFromDb by songViewModel.recentlyPlayed.collectAsState()
 
@@ -105,7 +106,12 @@ fun HomeScreenContent(
             LazyRow {
                 items(newSongsFromDb) { song ->
                     Column(
-                        modifier = Modifier.padding(end = 16.dp),
+                        modifier = Modifier
+                            .clickable {
+                                songViewModel.setCurrentSong(song)
+                                playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
+                            }
+                            .padding(end = 16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Image(
@@ -148,6 +154,10 @@ fun HomeScreenContent(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .clickable {
+                                songViewModel.setCurrentSong(song)
+                                playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
+                            }
                             .padding(vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -212,7 +222,7 @@ fun HomeScreenWithBottomNav(
                     songViewModel = songViewModel,
                     isPlaying = isPlaying,
                     onPlayPause = { playerViewModel.playPause() },
-                    onSectionClick = { showPlayerSheet = true }  // Buka modal bottom sheet saat area diklik
+                    onSectionClick = { showPlayerSheet = true }
                 )
                 BottomNavBar(
                     currentRoute = "home",
@@ -230,7 +240,8 @@ fun HomeScreenWithBottomNav(
             HomeScreenContent(
                 onNavigateToLibrary = onNavigateToLibrary,
                 onNavigateToProfile = onNavigateToProfile,
-                songViewModel = songViewModel
+                songViewModel = songViewModel,
+                playerViewModel = playerViewModel // pastikan teroper di sini
             )
         }
     }
