@@ -129,7 +129,9 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
                 onSongClick = { song ->
                     val index = allSongs.indexOf(song)
                     currentSongId = index
-                    setSelectedSong(song)
+//                    setSelectedSong(song)
+                    songViewModel.setCurrentSong(song)
+                    playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
                     setShowPlayer(true)
                 },
                 onToggleLike = { song ->

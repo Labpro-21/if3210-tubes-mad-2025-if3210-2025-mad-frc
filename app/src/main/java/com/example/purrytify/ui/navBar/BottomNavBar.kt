@@ -100,7 +100,6 @@ fun VerticalNavBar(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Gunakan item yang sama, lalu atur agar tampil vertikal
         NavBarItem(
             icon = Icons.Default.Home,
             label = "Home",

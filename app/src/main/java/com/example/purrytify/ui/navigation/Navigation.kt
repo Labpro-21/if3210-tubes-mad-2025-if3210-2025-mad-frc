@@ -1,6 +1,7 @@
  package com.example.purrytify.ui.navigation
 
 import android.app.Activity
+import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -45,7 +46,11 @@ fun AppNavigation() {
     val db = AppDatabase.getDatabase(context)
     val repository = remember { SongRepository(db.songDao(), db.userDao()) }
 
-    val songViewModel: SongViewModel = viewModel(factory = SongViewModelFactory(repository,sessionManager.getUserId()))
+    val userId = sessionManager.getUserId() ?: 0
+    val songViewModel: SongViewModel = viewModel(
+        key = "songViewModel_${userId}",
+        factory = SongViewModelFactory(repository, userId)
+    )
     val networkViewModel: NetworkViewModel = viewModel()
     val isConnected by networkViewModel.isConnected.observeAsState(initial = true)
     println("Is Connected: $isConnected")
@@ -57,7 +62,7 @@ fun AppNavigation() {
     }
 
     val playerViewModel: PlayerViewModel = viewModel<PlayerViewModel>(
-        factory = PlayerViewModelFactory((context as androidx.activity.ComponentActivity).application)
+        factory = PlayerViewModelFactory((context as ComponentActivity).application)
     )
 
 
@@ -72,7 +77,6 @@ fun AppNavigation() {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                     songViewModel.loadSongs(sessionManager.getUserId())
-
                 }
             )
         }
@@ -105,7 +109,9 @@ fun AppNavigation() {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Profile.route) { inclusive = true }
                     }
-                }
+                    songViewModel.reset()
+                },
+                songViewModel = songViewModel
             )
         }
     }
