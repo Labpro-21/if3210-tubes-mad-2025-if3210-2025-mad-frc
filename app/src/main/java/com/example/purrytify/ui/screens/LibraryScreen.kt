@@ -53,6 +53,7 @@ import com.example.purrytify.ui.InsertSongPopUp
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import com.example.purrytify.ui.SongRecyclerView
 import com.example.purrytify.ui.navBar.BottomNavBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -101,20 +102,32 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
         if (displayedSongs.isEmpty()) {
             Text("No songs found.", color = Color.Gray, modifier = Modifier.padding(16.dp))
         } else {
-            LazyColumn {
-                items(displayedSongs) { song ->
-                    SongItem(song = song, onClick =  {
-                        val index = allSongs.indexOf(song)
-                        currentSongId = index
-                        setSelectedSong(song)
-                        setShowPlayer(true)
-                        },
-                        onToggleLike = {song ->
-                            songViewModel.toggleLikeSong(song)
-                        }
-                    )
+//            LazyColumn {
+//                items(displayedSongs) { song ->
+//                    SongItem(song = song, onClick =  {
+//                        val index = allSongs.indexOf(song)
+//                        currentSongId = index
+//                        setSelectedSong(song)
+//                        setShowPlayer(true)
+//                        },
+//                        onToggleLike = {song ->
+//                            songViewModel.toggleLikeSong(song)
+//                        }
+//                    )
+//                }
+//            }
+            SongRecyclerView(
+                songs = displayedSongs,
+                onSongClick = { song ->
+                    val index = allSongs.indexOf(song)
+                    currentSongId = index
+                    setSelectedSong(song)
+                    setShowPlayer(true)
+                },
+                onToggleLike = { song ->
+                    songViewModel.toggleLikeSong(song)
                 }
-            }
+            )
         }
     }
 
