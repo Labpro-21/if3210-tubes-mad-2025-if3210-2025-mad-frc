@@ -38,6 +38,9 @@ import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.Icon
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material3.IconButton
 import androidx.core.net.toUri
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.material3.Tab
@@ -88,12 +91,16 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
         } else {
             LazyColumn {
                 items(displayedSongs) { song ->
-                    SongItem(song = song) {
+                    SongItem(song = song, onClick =  {
                         val index = allSongs.indexOf(song)
                         currentSongId = index
                         setSelectedSong(song)
                         setShowPlayer(true)
-                    }
+                        },
+                        onToggleLike = {song ->
+                            viewModel.toggleLikeSong(song)
+                        }
+                    )
                 }
             }
         }
@@ -106,10 +113,14 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
             song = song,
             isPlaying = true,
             progress = 0.0f,
+            songViewModel = viewModel,
             onSongChange = { newId ->
                 currentSongId = (newId + allSongs.size) % allSongs.size
                 setSelectedSong(allSongs[currentSongId])
 
+            },
+            onToggleLike = {
+                viewModel.toggleLikeSong(song)
             }
         )
 
@@ -118,7 +129,7 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
 
 
 @Composable
-fun SongItem(song: Song, onClick: () -> Unit) {
+fun SongItem(song: Song, onClick: () -> Unit, onToggleLike:(Song) -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -160,6 +171,14 @@ fun SongItem(song: Song, onClick: () -> Unit) {
                     formatDuration(song.duration),
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.Gray
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+
+            IconButton(onClick = { onToggleLike(song) }) {
+                Icon(
+                    imageVector = if (song.liked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = "Toggle Like"
                 )
             }
         }
