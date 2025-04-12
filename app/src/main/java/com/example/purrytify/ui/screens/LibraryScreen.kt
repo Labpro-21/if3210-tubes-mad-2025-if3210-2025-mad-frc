@@ -51,6 +51,9 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import com.example.purrytify.ui.InsertSongPopUp
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import com.example.purrytify.ui.navBar.BottomNavBar
 
 @OptIn(ExperimentalMaterial3Api::class)
