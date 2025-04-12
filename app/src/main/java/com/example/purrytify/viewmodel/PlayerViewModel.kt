@@ -8,6 +8,7 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.Log
 import androidx.media3.exoplayer.ExoPlayer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
@@ -77,12 +78,26 @@ class PlayerViewModel @Inject constructor(
 
 
     fun playPause() {
+        Log.d("PlayerViewModel", "playPause() invoked. isPlaying before: ${_exoPlayer.isPlaying}")
+
+        if (_exoPlayer.currentMediaItem == null) {
+            if (currentUri != null) {
+                _exoPlayer.setMediaItem(MediaItem.fromUri(currentUri!!))
+                _exoPlayer.prepare()
+            } else {
+                Log.d("PlayerViewModel", "No media item or currentUri available")
+                return
+            }
+        }
+
         if (_exoPlayer.isPlaying) {
             _exoPlayer.pause()
         } else {
             _exoPlayer.play()
         }
+        
         _isPlaying.value = _exoPlayer.isPlaying
+        Log.d("PlayerViewModel", "playPause() finished. isPlaying now: ${_exoPlayer.isPlaying}")
     }
 
     fun seekTo(seconds: Float) {
