@@ -80,9 +80,15 @@ fun AppNavigation() {
         }
         composable(route = Screen.Profile.route) {
             ProfileScreenWithBottomNav(
-                onBack = { navController.popBackStack() },
                 onNavigateToHome = { navController.navigate(Screen.Home.route) },
-                onNavigateToLibrary = { navController.navigate(Screen.Library.route) }
+                onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
+                isConnected = isConnected,
+                onLogout = {
+                    tokenManager.clearTokens()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Profile.route) { inclusive = true }
+                    }
+                }
             )
         }
     }
