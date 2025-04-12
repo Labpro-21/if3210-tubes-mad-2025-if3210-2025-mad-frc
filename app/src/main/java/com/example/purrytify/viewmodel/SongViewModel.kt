@@ -99,8 +99,18 @@ class SongViewModel(private val repository: SongRepository,userId: Int) : ViewMo
     }
 
     fun setCurrentSong(song:Song){
-        _current_song.value = song
-        updateLastPlayed(song)
+        viewModelScope.launch {
+            // Ambil data terbaru dari DB
+            val dbSong = repository.getSong(song.id)
+            // Jika lastPlayed masih null, berarti baru pertama kali diputar
+            if (dbSong.lastPlayed == null) {
+                repository.incrementListenedSongs(song.userId)
+            }
+            // Update lastPlayed
+            repository.updateLastPlayed(song.id, Date())
+            // Setelah loadSongs selesai, perbarui state current_song
+            _current_song.value = repository.getSong(song.id)
+        }
     }
 
     fun updateLastPlayed(song:Song){
