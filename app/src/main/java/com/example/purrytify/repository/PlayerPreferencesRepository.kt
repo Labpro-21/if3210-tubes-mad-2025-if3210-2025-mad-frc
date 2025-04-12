@@ -1,4 +1,4 @@
-package com.example.purrytify.repository.
+package com.example.purrytify.repository
 
 import android.content.Context
 import androidx.datastore.core.DataStore
