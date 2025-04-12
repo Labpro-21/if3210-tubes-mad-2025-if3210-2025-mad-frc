@@ -5,7 +5,7 @@
 </p>
 
 <h2 align="center">Description</h2>
-初めまして！ Welcome to FRC's Purrytify, your go-to app for enjoying music in a simple and delightful way. Purrytify lets you explore new songs, revisit your recently played tracks, and manage your favorite tunes effortlessly. With a clean and intuitive interface, the app is designed to make your music experience enjoyable and seamless. Whether you're discovering fresh beats or reliving your favorite melodies, Purrytify is here to accompany your musical journey. Let's press play and enjoy the rhythm together!
+おおおーす！ Welcome to FRC's Purrytify, your go-to app for enjoying music in a simple and delightful way. Purrytify lets you explore new songs, revisit your recently played tracks, and manage your favorite tunes effortlessly. With a clean and intuitive interface, the app is designed to make your music experience enjoyable and seamless. Whether you're discovering fresh beats or reliving your favorite melodies, Purrytify is here to accompany your musical journey. Let's press play and enjoy the rhythm together!
 
 <h2 align="center">Used Lybraries</h2>
 Well... it's not a short list tho, so you can see it here if you want [Libraries](/markdown/LIBRARIES.md), just make sure to not get overwhemled okay?
