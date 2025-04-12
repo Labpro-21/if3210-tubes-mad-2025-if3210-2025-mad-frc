@@ -1,6 +1,7 @@
 package com.example.purrytify.ui.screens
 
 import android.app.Activity
+import android.content.pm.ActivityInfo
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -56,8 +57,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import com.example.purrytify.ui.SongRecyclerView
 import com.example.purrytify.ui.navBar.BottomNavBar
+import com.example.purrytify.ui.LockScreenOrientation
 import com.example.purrytify.viewmodel.PlayerViewModel
 import com.example.purrytify.viewmodel.PlayerViewModelFactory
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -107,32 +110,20 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
         if (displayedSongs.isEmpty()) {
             Text("No songs found.", color = Color.Gray, modifier = Modifier.padding(16.dp))
         } else {
-//            LazyColumn {
-//                items(displayedSongs) { song ->
-//                    SongItem(song = song, onClick =  {
-//                        val index = allSongs.indexOf(song)
-//                        currentSongId = index
-//                        setSelectedSong(song)
-//                        setShowPlayer(true)
-//                        },
-//                        onToggleLike = {song ->
-//                            songViewModel.toggleLikeSong(song)
-//                        }
-//                    )
-//                }
-//            }
-            SongRecyclerView(
-                songs = displayedSongs,
-                onSongClick = { song ->
-                    val index = allSongs.indexOf(song)
-                    currentSongId = index
-                    setSelectedSong(song)
-                    setShowPlayer(true)
-                },
-                onToggleLike = { song ->
-                    songViewModel.toggleLikeSong(song)
+            LazyColumn {
+                items(displayedSongs) { song ->
+                    SongItem(
+                        song = song,
+                        onClick = {
+                            songViewModel.setCurrentSong(song)
+                            playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
+                        },
+                        onToggleLike = { song ->
+                            songViewModel.toggleLikeSong(song)
+                        }
+                    )
                 }
-            )
+            }
         }
     }
 
@@ -232,6 +223,7 @@ fun LibraryScreenWithBottomNav(
     playerViewModel: PlayerViewModel,
     modifier: Modifier = Modifier
 ) {
+    LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     var showPlayerSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(

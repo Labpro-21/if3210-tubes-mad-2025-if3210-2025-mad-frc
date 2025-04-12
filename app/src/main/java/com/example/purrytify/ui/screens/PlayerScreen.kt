@@ -62,6 +62,8 @@ import com.example.purrytify.ui.InsertSongPopUp
 import com.example.purrytify.ui.SongSettingsModal
 import com.example.purrytify.viewmodel.PlayerViewModelFactory
 import com.example.purrytify.viewmodel.SongViewModel
+import com.example.purrytify.ui.LockScreenOrientation
+import android.content.pm.ActivityInfo
 
 
 @Composable
@@ -245,6 +247,7 @@ fun PlayerModalBottomSheet(
     onSongChange: (Int) -> Unit,
     playerViewModel: PlayerViewModel
 ) {
+    LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
     val shouldClose by playerViewModel.shouldClosePlayerSheet.collectAsState()
     if (showSheet) {
         LaunchedEffect(shouldClose) {

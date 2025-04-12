@@ -29,6 +29,8 @@ import com.example.purrytify.repository.LoginRepository
 import com.example.purrytify.repository.UserRepository
 import com.example.purrytify.utils.TokenManager
 import com.example.purrytify.viewmodel.LoginViewModel
+import com.example.purrytify.ui.LockScreenOrientation
+import android.content.pm.ActivityInfo
 import com.example.purrytify.viewmodel.LoginViewModelFactory
 import kotlinx.coroutines.delay
 
@@ -45,6 +47,7 @@ fun LoginScreen(
     onLoginSuccess: (accessToken: String) -> Unit = {},
     isConnected: Boolean
 ) {
+    LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
     var showNoInternetDialog by remember { mutableStateOf(!isConnected) }
     if (showNoInternetDialog) {
         NoInternetDialog(onDismiss = { showNoInternetDialog = false })
