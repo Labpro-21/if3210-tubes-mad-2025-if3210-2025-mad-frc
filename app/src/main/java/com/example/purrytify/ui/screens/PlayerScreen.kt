@@ -264,8 +264,8 @@ fun PlayerModalBottomSheet(
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
         ) {
             PlayerScreen(
-                onNext = { onSongChange(song.id) },
-                onPrevious = { onSongChange(song.id - 2) },
+                onNext = { onSongChange(song.id+1) },
+                onPrevious = { onSongChange(song.id - 1) },
                 songViewModel = songViewModel,
                 playerViewModel = playerViewModel
             )
