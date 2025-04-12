@@ -15,15 +15,15 @@ class SongViewModel(private val repository: SongRepository) : ViewModel() {
 
     private val _songs = MutableStateFlow<List<Song>>(emptyList())
     private val _liked_songs = MutableStateFlow<List<Song>>(emptyList())
-    private val _newSongs = MutableStateFlow<List<Song>>(emptyList())
-    private val _recentlyPlayed = MutableStateFlow<List<Song>>(emptyList())
     private val _current_song = MutableStateFlow<Song?>(null)
+    private val _new_songs = MutableStateFlow<List<Song>>(emptyList())
+    private val _recently_played = MutableStateFlow<List<Song>>(emptyList())
 
     val songs: StateFlow<List<Song>> = _songs.asStateFlow()
     val likedSongs : StateFlow<List<Song>> = _liked_songs.asStateFlow()
-    val newSongs : StateFlow<List<Song>> = _newSongs.asStateFlow()
-    val recentlyPlayed : StateFlow<List<Song>> = _recentlyPlayed.asStateFlow()
     val current_song : StateFlow<Song?> = _current_song.asStateFlow()
+    val newSongs : StateFlow<List<Song>> = _new_songs.asStateFlow()
+    val recentlyPlayed : StateFlow<List<Song>> = _recently_played.asStateFlow()
 
     init {
         loadSongs()
@@ -43,7 +43,6 @@ class SongViewModel(private val repository: SongRepository) : ViewModel() {
         }
     }
 
-
     private fun loadSongs() {
         viewModelScope.launch {
             repository.getAllSongsOrdered().collect { songList ->
@@ -60,6 +59,14 @@ class SongViewModel(private val repository: SongRepository) : ViewModel() {
         viewModelScope.launch {
             repository.getAllLikedSongs().collect { _liked_songs.value = it }
         }
+
+        viewModelScope.launch {
+            repository.getNewSongs().collect { _new_songs.value = it }
+        }
+
+        viewModelScope.launch {
+            repository.getRecentlyPlayed().collect { _recently_played.value = it }
+        }
     }
 
 
@@ -73,21 +80,23 @@ class SongViewModel(private val repository: SongRepository) : ViewModel() {
             loadSongs()
 
         }
+    }
+
+    fun updateSong(song: Song){
+        val id = song.id
+        val newArtist = song.artist
+        val newTitle = song.title
+        val newArtwork = song.artworkPath
         viewModelScope.launch {
-            repository.getNewSongs().collect { _newSongs.value = it}
-        }
-        viewModelScope.launch {
-            repository.getRecentlyPlayed().collect { _recentlyPlayed.value = it}
+            repository.updateSong(id,newArtist,newTitle,newArtwork)
+            loadSongs()
         }
     }
 
-//    fun getSong(songId:Int){
-//        viewModelScope.launch{
-//            repository.getSong(songId)
-//        }
-//    }
+    fun setCurrentSong(song:Song){
+        _current_song.value = song
+    }
 
-//    fun updateLastPlayed()
 
 
 }
