@@ -242,8 +242,6 @@ fun LibraryScreenWithBottomNav(
             showSheet = showPlayerSheet,
             onDismiss = { showPlayerSheet = false },
             song = songViewModel.current_song.collectAsState(initial = null).value ?: return,
-            isPlaying = isPlaying,
-            progress = playerViewModel.progress.collectAsState().value,
             songViewModel = songViewModel,
             onSongChange = { /* logika perubahan lagu */ },
             playerViewModel = playerViewModel,
