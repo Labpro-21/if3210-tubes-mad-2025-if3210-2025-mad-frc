@@ -65,7 +65,6 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     val likedSongs by viewModel.likedSongs.collectAsState()
     val currentSong by viewModel.current_song.collectAsState()
     var currentSongId by remember { mutableStateOf(0) }
-    val playerMode = remember { mutableStateOf(PlayerMode.MINI) }
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = false, // allow partially expanded state
         confirmValueChange = { true } // allow transition freely
@@ -124,7 +123,6 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
             sheetState = sheetState,
             showSheet = showPlayer,
             onDismiss = {
-                playerMode.value = PlayerMode.MINI
                 setShowPlayer(false) },
             song = song,
             isPlaying = true,
