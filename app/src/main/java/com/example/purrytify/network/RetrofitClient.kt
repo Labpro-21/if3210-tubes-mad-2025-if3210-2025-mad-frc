@@ -49,4 +49,23 @@ object RetrofitClient {
             .build()
             .create(ApiService::class.java)
     }
+
+    // Fungsi baru untuk keperluan verifikasi token (tanpa authenticator atau TokenManager)
+    fun verifyApiService(token: String): ApiService {
+        val client = OkHttpClient.Builder()
+            .addInterceptor { chain ->
+                val newRequest = chain.request().newBuilder()
+                    .header("Authorization", "Bearer $token")
+                    .build()
+                chain.proceed(newRequest)
+            }
+            .build()
+
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(ApiService::class.java)
+    }
 }

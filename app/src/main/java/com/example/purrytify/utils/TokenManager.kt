@@ -44,7 +44,7 @@ class TokenManager(context: Context) {
 
     fun getTokenExpiry(): Long = encryptedPrefs.getLong(TOKEN_EXPIRY_KEY, 0L)
 
-    fun isTokenValid(): Boolean = System.currentTimeMillis() < getTokenExpiry()
+    fun isTokenValid(): Boolean = System.currentTimeMillis() < getTokenExpiry() && !getAccessToken().isNullOrEmpty()
 
     fun isLoggedIn(): Boolean = !getAccessToken().isNullOrEmpty() && isTokenValid()
 
