@@ -20,7 +20,6 @@ interface SongDao {
     @Query("SELECT * FROM Song WHERE liked = 1 ORDER BY lastPlayed")
     fun getAllLikedSongs(): Flow<List<Song>>
 
-
     @Query("SELECT * FROM Song ORDER BY lastPlayed")
     fun getAllSongsOrdered(): Flow<List<Song>>
 
@@ -33,5 +32,9 @@ interface SongDao {
     @Query("UPDATE Song SET liked = NOT liked WHERE id = :songId")
     suspend fun toggleLike(songId: Int)
 
+    @Query("SELECT * FROM Song ORDER BY lastPlayed DESC LIMIT 5")
+    fun getRecentlyPlayed(): Flow<List<Song>>
 
+    @Query("SELECT * FROM Song WHERE lastPlayed IS NOT NULL ORDER BY lastPlayed DESC LIMIT 5")
+    fun getNewSongs(): Flow<List<Song>>
 }

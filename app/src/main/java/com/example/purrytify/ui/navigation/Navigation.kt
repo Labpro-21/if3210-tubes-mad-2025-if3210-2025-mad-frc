@@ -1,15 +1,28 @@
-package com.example.purrytify.ui.navigation
+ package com.example.purrytify.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.purrytify.ui.screens.HomeScreen
-import com.example.purrytify.ui.screens.LibraryScreen
+import com.example.purrytify.data.AppDatabase
+import com.example.purrytify.data.SongRepository
+import com.example.purrytify.ui.screens.HomeScreenWithBottomNav
+import com.example.purrytify.ui.screens.LibraryScreenWithBottomNav
 import com.example.purrytify.ui.screens.LoginScreen
-import com.example.purrytify.ui.screens.ProfileScreen
+import com.example.purrytify.ui.screens.ProfileScreenWithBottomNav
+import com.example.purrytify.viewmodel.SongViewModel
+import com.example.purrytify.viewmodel.SongViewModelFactory
 
-// Definisi rute menggunakan sealed class
+ // Definisi rute menggunakan sealed class
+import com.example.purrytify.ui.screens.*
+import com.example.purrytify.viewmodel.NetworkViewModel
+import com.example.purrytify.utils.TokenManager
+import androidx.compose.runtime.livedata.observeAsState
+
 sealed class Screen(val route: String) {
     object Login : Screen("login")
     object Home : Screen("home")
@@ -18,39 +31,64 @@ sealed class Screen(val route: String) {
     object Player : Screen("player")
 }
 
-
 @Composable
 fun AppNavigation() {
+    val context = LocalContext.current
+    val tokenManager = remember { TokenManager(context) }
     val navController = rememberNavController()
+    val db = AppDatabase.getDatabase(context)
+    val repository = remember { SongRepository(db.songDao()) }
 
-    NavHost(
-        navController = navController,
-        startDestination = Screen.Login.route
-    ) {
+    val songViewModel: SongViewModel = viewModel(factory = SongViewModelFactory(repository))
+    val networkViewModel: NetworkViewModel = viewModel()
+    val isConnected by networkViewModel.isConnected.observeAsState(initial = true)
+    println("Is Connected: $isConnected")
+
+    // Tentukan startDestination berdasarkan status login dan koneksi internet
+    val startDestination = when {
+        tokenManager.isLoggedIn() -> Screen.Home.route
+        else -> Screen.Login.route
+    }
+
+    NavHost(navController = navController, startDestination = startDestination) {
+        println("is Connected: $isConnected")
         composable(route = Screen.Login.route) {
             LoginScreen(
-                onLoginSuccess = {
+                isConnected = isConnected,
+                onLoginSuccess = { accessToken ->
+                    // Setelah login, navigasi ke Home dan hapus Login dari backstack
                     navController.navigate(Screen.Home.route) {
-                        // Pastikan agar Login dihapus dari backstack, sehingga pengguna tidak kembali ke halaman login
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 }
             )
         }
         composable(route = Screen.Home.route) {
-            HomeScreen(
+            HomeScreenWithBottomNav(
                 onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
+                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                songViewModel = songViewModel
             )
         }
         composable(route = Screen.Library.route) {
-            LibraryScreen(
-                onBack = { navController.popBackStack() }
+            LibraryScreenWithBottomNav(
+                onBack = { navController.popBackStack() },
+                songViewModel = songViewModel,
+                onNavigateToHome = { navController.navigate(Screen.Home.route) },
+                onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
             )
         }
         composable(route = Screen.Profile.route) {
-            ProfileScreen(
-                onBack = { navController.popBackStack() }
+            ProfileScreenWithBottomNav(
+                onNavigateToHome = { navController.navigate(Screen.Home.route) },
+                onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
+                isConnected = isConnected,
+                onLogout = {
+                    tokenManager.clearTokens()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Profile.route) { inclusive = true }
+                    }
+                }
             )
         }
     }

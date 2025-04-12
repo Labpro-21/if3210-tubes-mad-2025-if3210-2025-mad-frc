@@ -85,21 +85,11 @@ dependencies {
 //    implementation(libs.androidx.lifecycle.livedata.ktx)
 //    implementation(libs.androidx.runtime.livedata)
     implementation(libs.androidx.activity.compose.v161)
-    implementation(libs.hilt.android)
-    kapt(libs.dagger.hilt.compiler)
-    implementation(libs.androidx.hilt.navigation.compose)
-    implementation(libs.androidx.lifecycle.viewmodel.compose) // Tambahkan ini
-    implementation (libs.androidx.security.crypto.v110alpha03)
-
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation (libs.androidx.appcompat)
-    implementation(libs.coil.compose)
-    implementation (libs.androidx.material.icons.extended)
-
-    // Hilt Dependency Injection
-//    implementation(libs.dagger.hilt.android)
-//    implementation(libs.androidx.security.crypto.ktx)
-    kapt(libs.dagger.hilt.compiler)
+    implementation("com.google.dagger:hilt-android:2.49")
+    kapt("com.google.dagger:hilt-android-compiler:2.48")
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    implementation ("androidx.security:security-crypto:1.1.0-alpha07")
 
     // Room Database
     implementation(libs.androidx.room.runtime)
@@ -111,15 +101,7 @@ dependencies {
     implementation(libs.androidx.room.paging)
     testImplementation(libs.androidx.room.testing)
 
-    // Testing
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
-
     implementation(libs.androidx.media3.exoplayer)        // Core ExoPlayer
     implementation(libs.androidx.media3.ui)               // PlayerView
+    implementation("androidx.compose.material:material-icons-extended:<version>")
 }

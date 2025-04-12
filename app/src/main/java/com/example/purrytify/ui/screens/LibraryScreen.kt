@@ -50,19 +50,20 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import com.example.purrytify.ui.InsertSongPopUp
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import com.example.purrytify.ui.navBar.BottomNavBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
+fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewModel: SongViewModel) {
     val context = LocalContext.current
-    val db = remember { AppDatabase.getDatabase(context) }
-    val repository = remember { SongRepository(db.songDao()) }
 
-    val viewModel: SongViewModel = viewModel(factory = SongViewModelFactory(repository))
 
-    val allSongs by viewModel.songs.collectAsState()
-    val likedSongs by viewModel.likedSongs.collectAsState()
-    val currentSong by viewModel.current_song.collectAsState()
+    val currentSong by songViewModel.current_song.collectAsState()
+    val allSongs by songViewModel.songs.collectAsState()
+    val likedSongs by songViewModel.likedSongs.collectAsState()
     var currentSongId by remember { mutableStateOf(0) }
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = false, // allow partially expanded state
@@ -75,7 +76,7 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     val (showPlayer, setShowPlayer) = remember { mutableStateOf(false) }
     val (selectedSong, setSelectedSong) = remember { mutableStateOf<Song?>(null) }
 
-    InsertSongPopUp(viewModel)
+    InsertSongPopUp(songViewModel)
 
 
     Column(modifier = modifier.padding(16.dp)) {
@@ -109,7 +110,7 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                         setShowPlayer(true)
                         },
                         onToggleLike = {song ->
-                            viewModel.toggleLikeSong(song)
+                            songViewModel.toggleLikeSong(song)
                         }
                     )
                 }
@@ -126,7 +127,7 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
             song = song,
             isPlaying = true,
             progress = 0.0f,
-            songViewModel = viewModel,
+            songViewModel = songViewModel,
             onSongChange = { newId ->
                 currentSongId = (newId + allSongs.size) % allSongs.size
                 setSelectedSong(allSongs[currentSongId])
@@ -204,3 +205,34 @@ fun formatDuration(miliseconds: Long): String {
     return String.format("%02d:%02d", minutes, remainingSeconds)
 }
 
+@Composable
+fun LibraryScreenWithBottomNav(
+    onNavigateToHome: () -> Unit,
+    onNavigateToProfile: () -> Unit,
+    songViewModel: SongViewModel,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Scaffold(
+        bottomBar = {
+            BottomNavBar(
+                currentRoute = "library",
+                onItemSelected = { route ->
+                    when (route) {
+                        "home" -> onNavigateToHome()
+                        "profile" -> onNavigateToProfile()
+                        // Jika route-nya "library", sedang aktif, tidak perlu action.
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
+        Box(modifier = Modifier.padding(innerPadding)) {
+            // Panggil konten LibraryScreen yang sudah ada di LibraryScreen.kt
+            LibraryScreen(
+                onBack = onBack,
+                songViewModel = songViewModel,
+            )
+        }
+    }
+}

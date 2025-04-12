@@ -17,9 +17,13 @@ class SongViewModel(private val repository: SongRepository) : ViewModel() {
     private val _liked_songs = MutableStateFlow<List<Song>>(emptyList())
     private val _current_song = MutableStateFlow<Song?>(null)
 
+    val current_song : StateFlow<Song?> = _current_song.asStateFlow()
+    private val _newSongs = MutableStateFlow<List<Song>>(emptyList())
+    private val _recentlyPlayed = MutableStateFlow<List<Song>>(emptyList())
     val songs: StateFlow<List<Song>> = _songs.asStateFlow()
     val likedSongs : StateFlow<List<Song>> = _liked_songs.asStateFlow()
-    val current_song : StateFlow<Song?> = _current_song.asStateFlow()
+    val newSongs : StateFlow<List<Song>> = _newSongs.asStateFlow()
+    val recentlyPlayed : StateFlow<List<Song>> = _recentlyPlayed.asStateFlow()
 
     init {
         loadSongs()
@@ -38,6 +42,7 @@ class SongViewModel(private val repository: SongRepository) : ViewModel() {
             loadSongs()
         }
     }
+
 
     private fun loadSongs() {
         viewModelScope.launch {
@@ -67,6 +72,12 @@ class SongViewModel(private val repository: SongRepository) : ViewModel() {
             Log.d("SongViewModel", "Updated liked songs: ${likedSongs.value}")
             loadSongs()
 
+        }
+        viewModelScope.launch {
+            repository.getNewSongs().collect { _newSongs.value = it}
+        }
+        viewModelScope.launch {
+            repository.getRecentlyPlayed().collect { _recentlyPlayed.value = it}
         }
     }
 

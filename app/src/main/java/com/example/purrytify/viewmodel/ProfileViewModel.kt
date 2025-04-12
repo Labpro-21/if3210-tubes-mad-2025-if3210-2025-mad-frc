@@ -1,68 +1,48 @@
 package com.example.purrytify.viewmodel
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.State
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.purrytify.R
 import com.example.purrytify.model.ProfileUiState
 import com.example.purrytify.repository.ProfileRepository
+import com.example.purrytify.utils.TokenManager
 import kotlinx.coroutines.launch
+import java.util.Locale
 
-class ProfileViewModel : ViewModel() {
+class ProfileViewModel(private val tokenManager: TokenManager) : ViewModel() {
 
     private val _uiState = mutableStateOf(ProfileUiState())
     val uiState: State<ProfileUiState> get() = _uiState
 
-    private val profileRepository = ProfileRepository()
+    private val profileRepository = ProfileRepository(tokenManager)
 
-    // Misalnya, kita dapat memanggil API saat inisialisasi view model (gunakan token yang valid)
-    init {
-        // Ganti "example-token" dengan token autentikasi sesungguhnya
-        fetchUserProfile("example-token")
-    }
-
-    // Fungsi untuk mengambil data profile dari API
-    fun fetchUserProfile(token: String) {
+    fun fetchUserProfile() {
         viewModelScope.launch {
-            profileRepository.fetchUserProfile(token).onSuccess { userProfile ->
-                // Lakukan mapping data dari API ke UI state
-                _uiState.value = _uiState.value.copy(
+            profileRepository.fetchUserProfile().onSuccess { userProfile ->
+                Log.d("ProfileViewModel", "User profile fetched: $userProfile")
+                _uiState.value = ProfileUiState(
                     username = userProfile.username,
                     email = userProfile.email,
-                    profilePhoto = userProfile.profilePhoto, // gunakan data dari API
-                    songsAdded = 0,
+                    profilePhoto = userProfile.profilePhoto,
+                    country = parseCountryCode(userProfile.location),
+                    songsAdded = 0,   // Sesuaikan jika ada data
                     likedSongs = 0,
                     listenedSongs = 0
                 )
-            }.onFailure {
-                // Tangani error misalnya log error atau update UI state dengan pesan error
+            }.onFailure { throwable ->
+                Log.e("ProfileViewModel", "Gagal fetch profile", throwable)
             }
         }
     }
 
-    // Fungsi update manual jika dibutuhkan
-    fun updateUsername(username: String) {
-        _uiState.value = _uiState.value.copy(username = username)
-    }
-
-    fun updateEmail(email: String) {
-        _uiState.value = _uiState.value.copy(email = email)
-    }
-
-    fun updateProfilePhoto(newProfilePhotoUrl: String) {
-        _uiState.value = _uiState.value.copy(profilePhoto = newProfilePhotoUrl)
-    }
-
-    fun updateSongsAdded(songsAdded: Int) {
-        _uiState.value = _uiState.value.copy(songsAdded = songsAdded)
-    }
-
-    fun updateLikedSongs(likedSongs: Int) {
-        _uiState.value = _uiState.value.copy(likedSongs = likedSongs)
-    }
-
-    fun updateListenedSongs(listenedSongs: Int) {
-        _uiState.value = _uiState.value.copy(listenedSongs = listenedSongs)
+    private fun parseCountryCode(code: String): String {
+        return try {
+            // Membuat Locale dengan kode negara (pastikan kode sudah sesuai dengan ISO 3166-1 alpha-2)
+            Locale("", code.uppercase()).displayCountry
+        } catch (e: Exception) {
+            code // Jika terjadi error, kembalikan kode aslinya
+        }
     }
 }

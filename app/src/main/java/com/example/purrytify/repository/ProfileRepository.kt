@@ -2,18 +2,17 @@ package com.example.purrytify.repository
 
 import com.example.purrytify.model.UserProfile
 import com.example.purrytify.network.RetrofitClient
+import com.example.purrytify.utils.TokenManager
 import retrofit2.HttpException
 import java.io.IOException
 
-class ProfileRepository {
+class ProfileRepository(private val tokenManager: TokenManager) {
 
-    // Fungsi fetchUser Profile mengembalikan Result yang berisi UserProfile jika berhasil,
-    // atau Exception jika terjadi error
-    suspend fun fetchUserProfile(token: String): Result<UserProfile> {
+    // Fungsi fetchUserProfile menggunakan RetrofitClient yang sudah diciptakan dengan TokenAuthenticator, sehingga header Authorization ditambahkan otomatis
+    suspend fun fetchUserProfile(): Result<UserProfile> {
         return try {
-            // Pastikan header "Authorization" diisi dengan format "Bearer {token}"
-            val authHeader = "Bearer $token"
-            val response = RetrofitClient.apiService.getUserProfile(authHeader)
+            // Catatan: interface ApiService harus diupdate agar getUserProfile() tidak lagi membutuhkan parameter header
+            val response = RetrofitClient.create(tokenManager).getUserProfile()
             if (response.isSuccessful) {
                 response.body()?.let { userProfile ->
                     Result.success(userProfile)
@@ -24,7 +23,6 @@ class ProfileRepository {
         } catch (e: HttpException) {
             Result.failure(e)
         } catch (e: IOException) {
-            // IOException terjadi jika terdapat masalah jaringan atau parsing
             Result.failure(e)
         }
     }
