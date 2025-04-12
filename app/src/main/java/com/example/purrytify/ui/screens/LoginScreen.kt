@@ -98,6 +98,7 @@ fun LoginScreen(
                         userRepository.insertUser(newUser)
                     }
                     val userId = userRepository.getUserIdByEmail(uiState.email) ?: -1
+                    sessionManager.clearSession()
                     sessionManager.saveSession(userId)
                     onLoginSuccess(loginResponse.accessToken)
                     viewModel.clearLoginResult()
