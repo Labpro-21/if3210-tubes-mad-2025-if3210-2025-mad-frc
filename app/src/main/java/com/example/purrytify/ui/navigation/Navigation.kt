@@ -36,7 +36,6 @@ fun AppNavigation() {
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
     val navController = rememberNavController()
-    val context = LocalContext.current
     val db = AppDatabase.getDatabase(context)
     val repository = remember { SongRepository(db.songDao()) }
 
