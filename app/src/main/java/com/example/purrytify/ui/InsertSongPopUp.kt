@@ -8,6 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -176,8 +177,19 @@ fun InsertSongPopUp(
             }
         }
     }else{
-        IconButton(onClick = { showSheet = true }) {
+//        IconButton(onClick = { showSheet = true }) {
+//            Icon(Icons.Default.Edit, contentDescription = "Edit")
+//        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { showSheet=true }
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Icon(Icons.Default.Edit, contentDescription = "Edit")
+            Spacer(modifier = Modifier.width(16.dp))
+            Text("Edit Song", style = MaterialTheme.typography.bodyLarge)
         }
     }
 }

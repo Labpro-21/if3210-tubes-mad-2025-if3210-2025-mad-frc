@@ -59,6 +59,7 @@ import com.example.purrytify.viewmodel.PlayerViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.purrytify.model.Song
 import com.example.purrytify.ui.InsertSongPopUp
+import com.example.purrytify.ui.SongSettingsModal
 import com.example.purrytify.viewmodel.PlayerViewModelFactory
 import com.example.purrytify.viewmodel.SongViewModel
 
@@ -104,7 +105,7 @@ fun PlayerScreen(
                 Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Minimize Player")
             }
 
-            currentSong?.let { InsertSongPopUp(songViewModel, it) }
+            SongSettingsModal(songViewModel,playerViewModel)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -240,15 +241,20 @@ fun PlayerModalBottomSheet(
     showSheet: Boolean,
     onDismiss: () -> Unit,
     song: Song,
-    isPlaying: Boolean,
-    progress: Float,
     songViewModel: SongViewModel,
     onSongChange: (Int) -> Unit,
 ) {
+    val context = LocalContext.current
+    val appContext = context.applicationContext as Application
+    val playerViewModel: PlayerViewModel = viewModel(factory = PlayerViewModelFactory(appContext))
+    val shouldClose by playerViewModel.shouldClosePlayerSheet.collectAsState()
     if (showSheet) {
-        val isExpanded = sheetState.currentValue == SheetValue.Expanded
-        LaunchedEffect(isExpanded) {
-            Log.d("PlayerModalBottomSheet", "isExpanded: $isExpanded at ${System.currentTimeMillis()}")
+        LaunchedEffect(shouldClose) {
+            if (shouldClose) {
+                sheetState.hide()
+                onDismiss()
+                playerViewModel.resetCloseSheetFlag()
+            }
         }
         ModalBottomSheet(
             onDismissRequest = onDismiss,

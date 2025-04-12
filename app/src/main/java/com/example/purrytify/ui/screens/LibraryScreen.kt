@@ -125,8 +125,6 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
             onDismiss = {
                 setShowPlayer(false) },
             song = song,
-            isPlaying = true,
-            progress = 0.0f,
             songViewModel = songViewModel,
             onSongChange = { newId ->
                 currentSongId = (newId + allSongs.size) % allSongs.size
