@@ -43,6 +43,15 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import com.example.purrytify.ui.navBar.BottomNavBar
+import android.app.Activity
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 
 @Composable
 fun HomeScreenContent(
@@ -240,23 +249,31 @@ fun HomeScreenWithBottomNav(
     onNavigateToLibrary: () -> Unit,
     onNavigateToProfile: () -> Unit,
     songViewModel: SongViewModel,
+    playerViewModel: PlayerViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        factory = PlayerViewModelFactory(
+            (LocalContext.current as Activity).application
+        )
+    ),
     isPlaying: Boolean = true,
-    onPlayPause: () -> Unit = {}
+    onPlayPause: () -> Unit = { playerViewModel.playPause() }
 ) {
     Scaffold(
         bottomBar = {
             Column {
-                BottomPlayerSection(
+                // Bottom player section yang mengambil current song dari database via SongViewModel
+                BottomPlayerSectionFromDB(
+                    songViewModel = songViewModel,
                     isPlaying = isPlaying,
                     onPlayPause = onPlayPause
                 )
+                // Bottom navigation bar (reusable)
                 BottomNavBar(
                     currentRoute = "home",
                     onItemSelected = { route ->
                         when (route) {
                             "library" -> onNavigateToLibrary()
                             "profile" -> onNavigateToProfile()
-                            // "home" tidak perlu action
+                            // "home" sudah aktif
                         }
                     }
                 )
@@ -264,6 +281,7 @@ fun HomeScreenWithBottomNav(
         }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
+            // Konten utama HomeScreen
             HomeScreenContent(
                 onNavigateToLibrary = onNavigateToLibrary,
                 onNavigateToProfile = onNavigateToProfile,

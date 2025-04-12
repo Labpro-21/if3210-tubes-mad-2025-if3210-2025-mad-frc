@@ -33,8 +33,8 @@ interface SongDao {
     suspend fun toggleLike(songId: Int)
 
     @Query("SELECT * FROM Song ORDER BY lastPlayed DESC LIMIT 5")
-    fun getRecentlyPlayed(): Flow<List<Song>>
+    fun getNewSongs(): Flow<List<Song>>
 
     @Query("SELECT * FROM Song WHERE lastPlayed IS NOT NULL ORDER BY lastPlayed DESC LIMIT 5")
-    fun getNewSongs(): Flow<List<Song>>
+    fun getRecentlyPlayed(): Flow<List<Song>>
 }

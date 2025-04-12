@@ -42,7 +42,6 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
 import androidx.core.net.toUri
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.material3.Tab
@@ -60,14 +59,11 @@ import com.example.purrytify.ui.navBar.BottomNavBar
 @Composable
 fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewModel: SongViewModel) {
     val context = LocalContext.current
-    val db = remember { AppDatabase.getDatabase(context) }
-    val repository = remember { SongRepository(db.songDao()) }
 
-    val viewModel: SongViewModel = viewModel(factory = SongViewModelFactory(repository))
 
-    val allSongs by viewModel.songs.collectAsState()
-    val likedSongs by viewModel.likedSongs.collectAsState()
-    val currentSong by viewModel.current_song.collectAsState()
+    val currentSong by songViewModel.current_song.collectAsState()
+    val allSongs by songViewModel.songs.collectAsState()
+    val likedSongs by songViewModel.likedSongs.collectAsState()
     var currentSongId by remember { mutableStateOf(0) }
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = false, // allow partially expanded state
@@ -80,7 +76,7 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
     val (showPlayer, setShowPlayer) = remember { mutableStateOf(false) }
     val (selectedSong, setSelectedSong) = remember { mutableStateOf<Song?>(null) }
 
-    InsertSongPopUp(viewModel)
+    InsertSongPopUp(songViewModel)
 
 
     Column(modifier = modifier.padding(16.dp)) {
@@ -112,9 +108,9 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
                         currentSongId = index
                         setSelectedSong(song)
                         setShowPlayer(true)
-                    },
+                        },
                         onToggleLike = {song ->
-                            viewModel.toggleLikeSong(song)
+                            songViewModel.toggleLikeSong(song)
                         }
                     )
                 }
@@ -131,7 +127,7 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
             song = song,
             isPlaying = true,
             progress = 0.0f,
-            songViewModel = viewModel,
+            songViewModel = songViewModel,
             onSongChange = { newId ->
                 currentSongId = (newId + allSongs.size) % allSongs.size
                 setSelectedSong(allSongs[currentSongId])
@@ -208,7 +204,6 @@ fun formatDuration(miliseconds: Long): String {
     val remainingSeconds = seconds % 60
     return String.format("%02d:%02d", minutes, remainingSeconds)
 }
-
 
 @Composable
 fun LibraryScreenWithBottomNav(
