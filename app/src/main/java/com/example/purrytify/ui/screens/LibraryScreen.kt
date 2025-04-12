@@ -209,6 +209,7 @@ fun formatDuration(miliseconds: Long): String {
     return String.format("%02d:%02d", minutes, remainingSeconds)
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreenWithBottomNav(
     onNavigateToHome: () -> Unit,
@@ -219,13 +220,34 @@ fun LibraryScreenWithBottomNav(
     modifier: Modifier = Modifier
 ) {
     val isPlaying by playerViewModel.isPlaying.collectAsState()
+    var showPlayerSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = false, // allow partially expanded state
+        confirmValueChange = { true } // allow transition freely
+    )
+
+    if (showPlayerSheet) {
+        PlayerModalBottomSheet(
+            showSheet = showPlayerSheet,
+            onDismiss = { showPlayerSheet = false },
+            song = songViewModel.current_song.collectAsState(initial = null).value ?: return,
+            isPlaying = isPlaying,
+            progress = playerViewModel.progress.collectAsState().value,
+            songViewModel = songViewModel,
+            onSongChange = { /* logika perubahan lagu */ },
+            playerViewModel = playerViewModel,
+            sheetState = sheetState
+        )
+    }
+
     Scaffold(
         bottomBar = {
             Column {
                 BottomPlayerSectionFromDB(
                     songViewModel = songViewModel,
                     isPlaying = isPlaying,
-                    onPlayPause = { playerViewModel.playPause() }
+                    onPlayPause = { playerViewModel.playPause() },
+                    onSectionClick = { showPlayerSheet = true }  // Buka modal bottom sheet saat area diklik
                 )
                 BottomNavBar(
                     currentRoute = "library",

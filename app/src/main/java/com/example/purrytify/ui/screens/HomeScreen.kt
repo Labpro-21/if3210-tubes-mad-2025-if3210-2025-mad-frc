@@ -176,22 +176,45 @@ fun HomeScreenContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreenWithBottomNav(
     onNavigateToLibrary: () -> Unit,
     onNavigateToProfile: () -> Unit,
     songViewModel: SongViewModel,
-    playerViewModel: PlayerViewModel, // menggunakan instance yang sama
+    playerViewModel: PlayerViewModel,
     modifier: Modifier = Modifier
 ) {
     val isPlaying by playerViewModel.isPlaying.collectAsState()
+    // State untuk membuka modal bottom sheet
+    var showPlayerSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = false, // allow partially expanded state
+        confirmValueChange = { true } // allow transition freely
+    )
+
+    if (showPlayerSheet) {
+        PlayerModalBottomSheet(
+            showSheet = showPlayerSheet,
+            onDismiss = { showPlayerSheet = false },
+            song = songViewModel.current_song.collectAsState(initial = null).value ?: return,
+            isPlaying = isPlaying,
+            progress = playerViewModel.progress.collectAsState().value,
+            songViewModel = songViewModel,
+            onSongChange = { /* logika perubahan lagu */ },
+            playerViewModel = playerViewModel,
+            sheetState = sheetState
+        )
+    }
+
     Scaffold(
         bottomBar = {
             Column {
                 BottomPlayerSectionFromDB(
                     songViewModel = songViewModel,
                     isPlaying = isPlaying,
-                    onPlayPause = { playerViewModel.playPause() }
+                    onPlayPause = { playerViewModel.playPause() },
+                    onSectionClick = { showPlayerSheet = true }  // Buka modal bottom sheet saat area diklik
                 )
                 BottomNavBar(
                     currentRoute = "home",

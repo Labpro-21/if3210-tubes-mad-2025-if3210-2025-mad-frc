@@ -3,6 +3,7 @@ package com.example.purrytify.ui.screens
 import android.app.Activity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,7 +38,8 @@ import androidx.compose.runtime.collectAsState
 fun BottomPlayerSectionFromDB(
     songViewModel: SongViewModel,
     isPlaying: Boolean,
-    onPlayPause: () -> Unit
+    onPlayPause: () -> Unit,
+    onSectionClick: () -> Unit  // Callback untuk membuka PlayerModalBottomSheet
 ) {
     val context = LocalContext.current
     val appContext = if (!LocalInspectionMode.current) (context as? Activity)?.application else null
@@ -70,54 +72,62 @@ fun BottomPlayerSectionFromDB(
         return
     }
 
-    Row(
+    // Bungkus seluruh konten kecuali play/pause button dengan clickable
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color.DarkGray)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .clickable { onSectionClick() }
+            .padding(16.dp)
     ) {
-        if (!currentSong!!.artworkPath.isNullOrEmpty())
-            Image(
-                painter = rememberAsyncImagePainter(currentSong!!.artworkPath!!.toUri()),
-                contentDescription = currentSong!!.title,
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(RoundedCornerShape(8.dp))
-            )
-        else
-            Icon(
-                imageVector = Icons.Default.MusicNote,
-                contentDescription = "No artwork",
-                tint = Color.White.copy(alpha = 0.7f),
-                modifier = Modifier.size(64.dp)
-            )
-
-        Spacer(modifier = Modifier.width(8.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = currentSong!!.title,
-                color = Color.White,
-                fontSize = 14.sp
-            )
-            Text(
-                text = currentSong!!.artist,
-                color = Color.Gray,
-                fontSize = 12.sp
-            )
-        }
-        IconButton(
-            onClick = { onPlayPause() }, // Pastikan callback ini memanggil playPause() pada PlayerViewModel
-            modifier = Modifier
-                .size(72.dp)
-                .background(MaterialTheme.colorScheme.primary, shape = CircleShape)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Icon(
-                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                contentDescription = "Play/Pause",
-                tint = Color.White,
-                modifier = Modifier.size(36.dp)
-            )
+            if (!currentSong!!.artworkPath.isNullOrEmpty())
+                Image(
+                    painter = rememberAsyncImagePainter(currentSong!!.artworkPath!!.toUri()),
+                    contentDescription = currentSong!!.title,
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                )
+            else
+                Icon(
+                    imageVector = Icons.Default.MusicNote,
+                    contentDescription = "No artwork",
+                    tint = Color.White.copy(alpha = 0.7f),
+                    modifier = Modifier.size(64.dp)
+                )
+
+            Spacer(modifier = Modifier.width(8.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = currentSong!!.title,
+                    color = Color.White,
+                    fontSize = 14.sp
+                )
+                Text(
+                    text = currentSong!!.artist,
+                    color = Color.Gray,
+                    fontSize = 12.sp
+                )
+            }
+            // IconButton play/pause diletakkan di luar area clickable parent dengan Modifier.clickable tidak diterapkan,
+            // sehingga ketika ditekan, hanya onPlayPause yang terpanggil.
+            IconButton(
+                onClick = { onPlayPause() },
+                modifier = Modifier
+                    .size(72.dp)
+                    .background(MaterialTheme.colorScheme.primary, shape = CircleShape)
+            ) {
+                Icon(
+                    imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                    contentDescription = "Play/Pause",
+                    tint = Color.White,
+                    modifier = Modifier.size(36.dp)
+                )
+            }
         }
     }
 }

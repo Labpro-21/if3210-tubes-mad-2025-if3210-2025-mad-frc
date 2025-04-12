@@ -80,7 +80,6 @@ class PlayerViewModel @Inject constructor(
     fun playPause() {
         Log.d("PlayerViewModel", "playPause() invoked. isPlaying before: ${_exoPlayer.isPlaying}")
 
-        // Jika belum ada media item, coba atur ulang dari currentUri (jika ada)
         if (_exoPlayer.currentMediaItem == null) {
             if (currentUri != null) {
                 _exoPlayer.setMediaItem(MediaItem.fromUri(currentUri!!))
@@ -97,7 +96,6 @@ class PlayerViewModel @Inject constructor(
             _exoPlayer.play()
         }
         
-        // Jangan lupa update state setelah perubahan
         _isPlaying.value = _exoPlayer.isPlaying
         Log.d("PlayerViewModel", "playPause() finished. isPlaying now: ${_exoPlayer.isPlaying}")
     }
