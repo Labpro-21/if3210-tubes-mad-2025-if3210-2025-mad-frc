@@ -14,8 +14,8 @@ class SongRepository(private val songDao: SongDao, private val userDao: UserDao)
     }
     suspend fun getAllSongs(userId: Int): Flow<List<Song>> = songDao.getAllSongs(userId)
     suspend fun deleteSong(id: Int){
-        songDao.deleteSong(id)
         userDao.decrementSongs(getSong(id).userId)
+        songDao.deleteSong(id)
     }
 
     suspend fun getAllLikedSongs(userId: Int): Flow<List<Song>> = songDao.getAllLikedSongs(userId)
