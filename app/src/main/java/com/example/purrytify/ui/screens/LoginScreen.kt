@@ -26,7 +26,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.purrytify.R
 import com.example.purrytify.data.AppDatabase
 import com.example.purrytify.repository.LoginRepository
-import com.example.purrytify.data.UserRepository
+import com.example.purrytify.repository.UserRepository
 import com.example.purrytify.utils.TokenManager
 import com.example.purrytify.viewmodel.LoginViewModel
 import com.example.purrytify.viewmodel.LoginViewModelFactory

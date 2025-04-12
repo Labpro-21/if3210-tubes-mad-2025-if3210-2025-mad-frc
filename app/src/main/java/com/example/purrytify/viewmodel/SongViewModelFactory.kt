@@ -2,7 +2,7 @@ package com.example.purrytify.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.example.purrytify.data.SongRepository
+import com.example.purrytify.repository.SongRepository
 
 class SongViewModelFactory(private val repository: SongRepository) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
