@@ -25,12 +25,13 @@ interface SongDao {
     fun getAllSongsOrdered(): Flow<List<Song>>
 
     @Query("UPDATE Song SET artist = :newArtist, title = :newTitle, artworkPath = :newArtwork WHERE id = :songId")
-    suspend fun updateSong(songId: Int, newArtist: String, newTitle: String, newArtwork: String)
+    suspend fun updateSong(songId: Int, newArtist: String, newTitle: String, newArtwork: String?)
 
     @Query("SELECT * FROM Song WHERE id = :songId")
     suspend fun getSongById(songId: Int): Song
 
     @Query("UPDATE Song SET liked = NOT liked WHERE id = :songId")
     suspend fun toggleLike(songId: Int)
+
 
 }

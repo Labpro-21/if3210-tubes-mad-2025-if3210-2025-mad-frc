@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -29,7 +30,11 @@ import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun InsertSongPopUp(songViewModel: SongViewModel,modifier: Modifier = Modifier) {
+fun InsertSongPopUp(
+    songViewModel: SongViewModel,
+    song: Song? = null,
+    modifier: Modifier = Modifier
+) {
     val sheetState = rememberModalBottomSheetState()
     var showSheet by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -45,15 +50,15 @@ fun InsertSongPopUp(songViewModel: SongViewModel,modifier: Modifier = Modifier) 
                     .padding(horizontal = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Upload Song", style = MaterialTheme.typography.titleMedium)
+                Text(if (song == null) "Upload Song" else "Edit Song", style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(16.dp))
 
                 var selectedPhotoUri by remember { mutableStateOf<Uri?>(null) }
                 var selectedAudioUri by remember { mutableStateOf<Uri?>(null) }
 
-                var title by rememberSaveable { mutableStateOf("") }
-                var artist by rememberSaveable { mutableStateOf("") }
-                var duration by rememberSaveable { mutableStateOf(0L) }
+                var title by rememberSaveable { mutableStateOf(song?.title ?: "") }
+                var artist by rememberSaveable { mutableStateOf(song?.artist ?: "") }
+                var duration by rememberSaveable { mutableStateOf(song?.duration ?: 0L) }
 
                 LaunchedEffect(selectedAudioUri) {
                     selectedAudioUri?.let { uri ->
@@ -69,6 +74,14 @@ fun InsertSongPopUp(songViewModel: SongViewModel,modifier: Modifier = Modifier) 
                         duration = metaduration
 
                         retriever.release()
+                    }
+                }
+
+                // Autofill the selected URIs if song is provided
+                LaunchedEffect(song) {
+                    song?.let {
+                        selectedAudioUri = Uri.parse(it.audioPath)
+                        selectedPhotoUri = Uri.parse(it.artworkPath)
                     }
                 }
 
@@ -104,7 +117,6 @@ fun InsertSongPopUp(songViewModel: SongViewModel,modifier: Modifier = Modifier) 
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-//                    label = { Text("Title") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)
@@ -116,7 +128,6 @@ fun InsertSongPopUp(songViewModel: SongViewModel,modifier: Modifier = Modifier) 
                 OutlinedTextField(
                     value = artist,
                     onValueChange = { artist = it },
-//                    label = { Text("Artist") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)
@@ -142,6 +153,7 @@ fun InsertSongPopUp(songViewModel: SongViewModel,modifier: Modifier = Modifier) 
                             artist = artist,
                             duration = duration,
                             songViewModel = songViewModel,
+                            song = song, // Passing the song object to handle edit or add
                             onComplete = { showSheet = false }
                         )
                     }, modifier = Modifier.width(150.dp)) {
@@ -152,17 +164,56 @@ fun InsertSongPopUp(songViewModel: SongViewModel,modifier: Modifier = Modifier) 
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        FloatingActionButton(
-            onClick = { showSheet = true },
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(16.dp)
-        ) {
-            Icon(Icons.Default.Add, contentDescription = "Show Popup")
+    if (song == null){
+        Box(modifier = Modifier.fillMaxSize()) {
+            FloatingActionButton(
+                onClick = { showSheet = true },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Show Popup")
+            }
+        }
+    }else{
+        IconButton(onClick = { showSheet = true }) {
+            Icon(Icons.Default.Edit, contentDescription = "Edit")
         }
     }
 }
+
+fun handleSaveSong(
+    context: Context,
+    selectedAudioUri: Uri?,
+    selectedPhotoUri: Uri?,
+    title: String,
+    artist: String,
+    duration: Long,
+    songViewModel: SongViewModel,
+    song: Song? = null, // Parameter song untuk edit
+    onComplete: () -> Unit
+) {
+    if (selectedAudioUri != null) {
+        val songToSave = Song(
+            id = song?.id ?: 0, // Gunakan ID dari song yang ada atau 0 untuk lagu baru
+            title = title,
+            artist = artist,
+            duration = duration,
+            artworkPath = selectedPhotoUri.toString(),
+            audioPath = selectedAudioUri.toString(),
+            lastPlayed = Date()
+        )
+
+        if (song != null) {
+            songViewModel.updateSong(songToSave) // Jika song ada, update
+        } else {
+            songViewModel.addSong(songToSave) // Jika song null, tambahkan baru
+        }
+    }
+
+    onComplete() // misalnya untuk menutup sheet atau update UI
+}
+
 
 @Composable
 fun UploadBoxDisplay(fileUri: Uri?, text: String, mimeType: String) {
