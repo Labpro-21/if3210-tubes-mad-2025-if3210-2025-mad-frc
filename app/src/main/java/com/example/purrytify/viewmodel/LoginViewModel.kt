@@ -9,7 +9,7 @@ import com.example.purrytify.model.LoginUiState
 import com.example.purrytify.model.LoginResponse
 import com.example.purrytify.model.User
 import com.example.purrytify.repository.LoginRepository
-import com.example.purrytify.data.UserRepository
+import com.example.purrytify.repository.UserRepository
 import com.example.purrytify.utils.SessionManager
 import kotlinx.coroutines.launch
 

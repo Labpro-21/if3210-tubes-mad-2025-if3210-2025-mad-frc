@@ -1,5 +1,6 @@
-package com.example.purrytify.data
+package com.example.purrytify.repository
 
+import com.example.purrytify.data.UserDao
 import com.example.purrytify.model.User
 import kotlinx.coroutines.flow.Flow
 

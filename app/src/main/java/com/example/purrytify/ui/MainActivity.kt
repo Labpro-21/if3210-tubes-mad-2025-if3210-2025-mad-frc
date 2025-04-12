@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.ViewModelProvider
-import com.example.purrytify.data.SongRepository
+import com.example.purrytify.repository.SongRepository
 import com.example.purrytify.data.AppDatabase
 import com.example.purrytify.ui.InsertSongPopUp
 import com.example.purrytify.ui.theme.PurrytifyTheme

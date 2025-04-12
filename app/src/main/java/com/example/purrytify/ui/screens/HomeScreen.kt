@@ -32,7 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.purrytify.R
 import com.example.purrytify.data.AppDatabase
-import com.example.purrytify.data.SongRepository
+import com.example.purrytify.repository.SongRepository
 import com.example.purrytify.viewmodel.PlayerViewModel
 import com.example.purrytify.viewmodel.PlayerViewModelFactory
 import com.example.purrytify.viewmodel.SongViewModel

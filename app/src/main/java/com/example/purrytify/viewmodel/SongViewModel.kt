@@ -4,7 +4,7 @@ import android.R
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.purrytify.data.SongRepository
+import com.example.purrytify.repository.SongRepository
 import com.example.purrytify.model.Song
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

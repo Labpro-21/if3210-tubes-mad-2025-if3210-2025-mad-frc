@@ -104,4 +104,5 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer)        // Core ExoPlayer
     implementation(libs.androidx.media3.ui)               // PlayerView
     implementation("androidx.compose.material:material-icons-extended:<version>")
+    implementation ("androidx.datastore:datastore-preferences:1.0.0")
 }
