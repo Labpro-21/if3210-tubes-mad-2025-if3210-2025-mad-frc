@@ -1,6 +1,7 @@
 package com.example.purrytify.viewmodel
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.State
 import androidx.lifecycle.AndroidViewModel

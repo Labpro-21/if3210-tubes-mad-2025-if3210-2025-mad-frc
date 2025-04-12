@@ -22,6 +22,7 @@ import com.example.purrytify.viewmodel.SongViewModelFactory
 import com.example.purrytify.viewmodel.NetworkViewModel
 import com.example.purrytify.utils.TokenManager
 import androidx.compose.runtime.livedata.observeAsState
+import com.example.purrytify.repository.UserRepository
 import com.example.purrytify.ui.screens.HomeScreenResponsive
 import com.example.purrytify.utils.SessionManager
 import com.example.purrytify.viewmodel.PlayerViewModel
@@ -42,9 +43,9 @@ fun AppNavigation() {
     val sessionManager = remember { SessionManager(context) }
     val navController = rememberNavController()
     val db = AppDatabase.getDatabase(context)
-    val repository = remember { SongRepository(db.songDao()) }
+    val repository = remember { SongRepository(db.songDao(), db.userDao()) }
 
-    val songViewModel: SongViewModel = viewModel(factory = SongViewModelFactory(repository))
+    val songViewModel: SongViewModel = viewModel(factory = SongViewModelFactory(repository,sessionManager.getUserId()))
     val networkViewModel: NetworkViewModel = viewModel()
     val isConnected by networkViewModel.isConnected.observeAsState(initial = true)
     println("Is Connected: $isConnected")
@@ -70,6 +71,8 @@ fun AppNavigation() {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
+                    songViewModel.loadSongs(sessionManager.getUserId())
+
                 }
             )
         }
@@ -96,11 +99,14 @@ fun AppNavigation() {
                 onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
                 isConnected = isConnected,
                 onLogout = {
+                    playerViewModel.stopPlayer()
                     tokenManager.clearTokens()
                     sessionManager.clearSession()
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Profile.route) { inclusive = true }
                     }
+
+
                 }
             )
         }

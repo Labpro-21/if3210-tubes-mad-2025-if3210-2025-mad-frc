@@ -44,15 +44,23 @@ interface UserDao {
     @Query("SELECT listenedSongs FROM user WHERE id = :userId")
     suspend fun getListenedSongs(userId: Int): Int?
 
-//    update liked songs
-    @Query("UPDATE user SET likedSongs = :likedSongs WHERE id = :userId")
-    suspend fun updateLikedSongs(userId: Int, likedSongs: Int)
+    @Query("UPDATE user SET songs = songs + 1 WHERE id = :userId")
+    suspend fun incrementSongs(userId: Int)
 
-    @Query("UPDATE user SET songs = :songs WHERE id = :userId")
-    suspend fun updateSongs(userId: Int, songs: Int)
+    @Query("UPDATE user SET listenedSongs = listenedSongs + 1 WHERE id = :userId")
+    suspend fun incrementListenedSongs(userId: Int)
 
-    @Query("UPDATE user SET listenedSongs = :listenedSongs WHERE id = :userId")
-    suspend fun updateListenedSongs(userId: Int, listenedSongs: Int)
+    @Query("UPDATE user SET likedSongs = likedSongs + 1 WHERE id = :userId")
+    suspend fun incrementLikedSongs(userId: Int)
+
+    @Query("UPDATE user SET likedSongs = likedSongs - 1 WHERE id = :userId")
+    suspend fun decrementLikedSongs(userId: Int)
+
+    @Query("UPDATE user SET songs = songs - 1 WHERE id = :userId")
+    suspend fun decrementSongs(userId: Int)
+
+    @Query("UPDATE user SET listenedSongs = listenedSongs - 1 WHERE id = :userId")
+    suspend fun decrementListenedSongs(userId: Int)
 
 
 }
