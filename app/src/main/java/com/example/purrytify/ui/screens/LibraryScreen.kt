@@ -138,7 +138,7 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
 
             },
         )
-        viewModel.setCurrentSong(song)
+        songViewModel.setCurrentSong(song)
 
     }
 }
