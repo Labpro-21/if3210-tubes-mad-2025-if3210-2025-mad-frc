@@ -80,7 +80,6 @@ fun PlayerScreen(
     val progress by playerViewModel.progress.collectAsState()
 
     val songUri = currentSong?.audioPath?.toUri()
-    val artworkUri = currentSong?.artworkPath?.toUri()
 
     LaunchedEffect(songUri) {
         songUri?.let {
