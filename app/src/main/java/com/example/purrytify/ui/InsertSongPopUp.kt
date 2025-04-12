@@ -27,6 +27,8 @@ import com.example.purrytify.model.Song
 import com.example.purrytify.viewmodel.SongViewModel
 import java.util.Date
 
+import com.example.purrytify.utils.SessionManager
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InsertSongPopUp(songViewModel: SongViewModel,modifier: Modifier = Modifier) {
@@ -246,14 +248,16 @@ fun handleSaveSong(
     onComplete: () -> Unit
 ) {
     if (selectedAudioUri != null) {
-
+        val sessionManager = SessionManager(context)
+        val currentUserId = sessionManager.getUserId()
         val song = Song(
             title = title,
             artist = artist,
             duration = duration,
             artworkPath = selectedPhotoUri.toString(),
             audioPath = selectedAudioUri.toString(),
-            lastPlayed = Date()
+            lastPlayed = Date(),
+            userId = currentUserId,
         )
 
         songViewModel.addSong(song)

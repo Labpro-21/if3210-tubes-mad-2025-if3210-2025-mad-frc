@@ -17,11 +17,11 @@ import com.example.purrytify.ui.screens.ProfileScreenWithBottomNav
 import com.example.purrytify.viewmodel.SongViewModel
 import com.example.purrytify.viewmodel.SongViewModelFactory
 
- // Definisi rute menggunakan sealed class
-import com.example.purrytify.ui.screens.*
+// Definisi rute menggunakan sealed class
 import com.example.purrytify.viewmodel.NetworkViewModel
 import com.example.purrytify.utils.TokenManager
 import androidx.compose.runtime.livedata.observeAsState
+import com.example.purrytify.utils.SessionManager
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -35,6 +35,7 @@ sealed class Screen(val route: String) {
 fun AppNavigation() {
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
+    val sessionManager = remember { SessionManager(context) }
     val navController = rememberNavController()
     val db = AppDatabase.getDatabase(context)
     val repository = remember { SongRepository(db.songDao()) }
@@ -85,6 +86,7 @@ fun AppNavigation() {
                 isConnected = isConnected,
                 onLogout = {
                     tokenManager.clearTokens()
+                    sessionManager.clearSession()
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Profile.route) { inclusive = true }
                     }
