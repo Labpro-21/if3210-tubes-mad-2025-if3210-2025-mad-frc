@@ -31,7 +31,10 @@ import com.example.purrytify.utils.TokenManager
 import com.example.purrytify.viewmodel.LoginViewModel
 import com.example.purrytify.ui.LockScreenOrientation
 import android.content.pm.ActivityInfo
+import com.example.purrytify.model.User
 import com.example.purrytify.viewmodel.LoginViewModelFactory
+import com.example.purrytify.utils.SessionManager
+
 
 @Composable
 fun LoginScreen(
@@ -39,8 +42,6 @@ fun LoginScreen(
         factory = LoginViewModelFactory(
             LocalContext.current.applicationContext as Application,
             LoginRepository(),
-            // Dapatkan instance UserDao dari database
-            UserRepository(userDao = AppDatabase.getDatabase(LocalContext.current).userDao())
         )
     ),
     onLoginSuccess: (accessToken: String) -> Unit = {},
@@ -57,6 +58,9 @@ fun LoginScreen(
     val uiState = viewModel.uiState.value
     val isLoading = viewModel.isLoading.value
     val loginResult = viewModel.loginResult.value
+    val userRepository = UserRepository(userDao = AppDatabase.getDatabase(LocalContext.current).userDao())
+    val sessionManager = remember { SessionManager(context) }
+
 
     // State untuk error message di tiap field
     var emailError by remember { mutableStateOf<String?>(null) }
@@ -74,6 +78,18 @@ fun LoginScreen(
                         loginResponse.accessToken,
                         loginResponse.refreshToken
                     )
+                    if (!userRepository.isEmailRegistered(uiState.email)) {
+                        // Jika belum, buat user baru; sesuaikan field sesuai model User
+                        val newUser = User(
+                            email = uiState.email,
+                            songs = 0,
+                            likedSongs = 0,
+                            listenedSongs = 0
+                        )
+                        userRepository.insertUser(newUser)
+                    }
+                    val userId = userRepository.getUserIdByEmail(uiState.email) ?: -1
+                    sessionManager.saveSession(userId)
                     onLoginSuccess(loginResponse.accessToken)
                     viewModel.clearLoginResult()
                     // Bersihkan error jika ada
