@@ -19,6 +19,10 @@ import coil.compose.AsyncImage
 import com.example.purrytify.R
 import com.example.purrytify.viewmodel.ProfileViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import com.example.purrytify.ui.navBar.BottomNavBar
 
 @Composable
 fun ProfileScreen(onBack: () -> Unit) {
@@ -123,6 +127,32 @@ fun ProfileScreen(
             modifier = Modifier.align(Alignment.CenterHorizontally)
         ) {
             Text(text = "Back")
+        }
+    }
+}
+
+@Composable
+fun ProfileScreenWithBottomNav(
+    onNavigateToHome: () -> Unit,
+    onNavigateToLibrary: () -> Unit,
+    onBack: () -> Unit
+) {
+    Scaffold(
+        bottomBar = {
+            BottomNavBar(
+                currentRoute = "profile",
+                onItemSelected = { route ->
+                    when (route) {
+                        "home" -> onNavigateToHome()
+                        "library" -> onNavigateToLibrary()
+                        // Jika route "profile" dipilih, berarti saat ini sedang aktif.
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
+        Box(modifier = Modifier.padding(innerPadding)) {
+            ProfileScreen(onBack = onBack)
         }
     }
 }
