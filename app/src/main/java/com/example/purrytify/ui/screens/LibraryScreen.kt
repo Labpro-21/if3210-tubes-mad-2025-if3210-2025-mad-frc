@@ -106,13 +106,13 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
         } else {
             LazyColumn {
                 items(displayedSongs) { song ->
-                    SongItem(song = song, onClick =  {
-                        val index = allSongs.indexOf(song)
-                        currentSongId = index
-                        setSelectedSong(song)
-                        setShowPlayer(true)
+                    SongItem(
+                        song = song,
+                        onClick = {
+                            songViewModel.setCurrentSong(song)
+                            playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
                         },
-                        onToggleLike = {song ->
+                        onToggleLike = { song ->
                             songViewModel.toggleLikeSong(song)
                         }
                     )
