@@ -26,8 +26,11 @@ class UserRepository(private val userDao: UserDao) {
     suspend fun getSongs(userId: Int) = userDao.getSongs(userId)
     suspend fun getListenedSongs(userId: Int) = userDao.getListenedSongs(userId)
 
-    suspend fun updateLikedSongs(userId: Int, likedSongs: Int) = userDao.updateLikedSongs(userId, likedSongs)
-    suspend fun updateSongs(userId: Int, songs: Int) = userDao.updateSongs(userId, songs)
-    suspend fun updateListenedSongs(userId: Int, listenedSongs: Int) = userDao.updateListenedSongs(userId, listenedSongs)
+    suspend fun incrementSongs(userId: Int) = userDao.incrementSongs(userId)
+    suspend fun incrementListenedSongs(userId: Int) = userDao.incrementListenedSongs(userId)
+    suspend fun incrementLikedSongs(userId: Int) = userDao.incrementLikedSongs(userId)
 
+    suspend fun decrementLikedSongs(userId: Int) = userDao.decrementLikedSongs(userId)
+    suspend fun decrementSongs(userId: Int) = userDao.decrementSongs(userId)
+    suspend fun decrementListenedSongs(userId: Int) = userDao.decrementListenedSongs(userId)
 }

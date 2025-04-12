@@ -22,6 +22,7 @@ import com.example.purrytify.viewmodel.SongViewModelFactory
 import com.example.purrytify.viewmodel.NetworkViewModel
 import com.example.purrytify.utils.TokenManager
 import androidx.compose.runtime.livedata.observeAsState
+import com.example.purrytify.repository.UserRepository
 import com.example.purrytify.ui.screens.HomeScreenResponsive
 import com.example.purrytify.utils.SessionManager
 import com.example.purrytify.viewmodel.PlayerViewModel
@@ -42,7 +43,7 @@ fun AppNavigation() {
     val sessionManager = remember { SessionManager(context) }
     val navController = rememberNavController()
     val db = AppDatabase.getDatabase(context)
-    val repository = remember { SongRepository(db.songDao()) }
+    val repository = remember { SongRepository(db.songDao(), db.userDao()) }
 
     val songViewModel: SongViewModel = viewModel(factory = SongViewModelFactory(repository))
     val networkViewModel: NetworkViewModel = viewModel()

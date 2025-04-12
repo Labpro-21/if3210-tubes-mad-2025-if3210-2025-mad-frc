@@ -27,6 +27,8 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.purrytify.model.Song
 import com.example.purrytify.viewmodel.SongViewModel
+import com.example.purrytify.data.UserDao
+import com.example.purrytify.repository.UserRepository
 import java.util.Date
 
 import com.example.purrytify.utils.SessionManager
@@ -208,6 +210,8 @@ fun handleSaveSong(
     onComplete: () -> Unit
 ) {
     if (selectedAudioUri != null) {
+        val sessionManager = SessionManager(context)
+        val currentUserId = sessionManager.getUserId()
         val songToSave = Song(
             id = song?.id ?: 0, // Gunakan ID dari song yang ada atau 0 untuk lagu baru
             title = title,
@@ -216,7 +220,8 @@ fun handleSaveSong(
             artworkPath = selectedPhotoUri.toString(),
             audioPath = selectedAudioUri.toString(),
             lastPlayed = Date(),
-        )
+            userId = currentUserId,
+            )
 
         if (song != null) {
             songViewModel.updateSong(songToSave) // Jika song ada, update

@@ -24,7 +24,7 @@ data class Song(
     @ColumnInfo(name="duration") val duration: Long,
     @ColumnInfo(name="artworkPath") val artworkPath: String?,
     @ColumnInfo(name="audioPath") val audioPath: String,
-    @ColumnInfo(name="lastPlayed") val lastPlayed: Date,
+    @ColumnInfo(name="lastPlayed") val lastPlayed: Date?,
     @ColumnInfo(name="liked") val liked: Boolean=false,
     @ColumnInfo(name="user_id") val userId: Int=0,
 )
