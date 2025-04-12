@@ -50,8 +50,8 @@ fun AppNavigation() {
 
     // Tentukan startDestination berdasarkan status login dan koneksi internet
     val startDestination = when {
-        tokenManager.isLoggedIn() -> Screen.Login.route
-        else -> Screen.Home.route
+        tokenManager.isLoggedIn() -> Screen.Home.route
+        else -> Screen.Login.route
     }
 
     val playerViewModel: PlayerViewModel = viewModel<PlayerViewModel>(
