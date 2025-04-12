@@ -12,7 +12,7 @@ import com.example.purrytify.utils.Converters // or the correct path to your Con
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun songDao(): SongDao
-
+    abstract fun userDao(): UserDao
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
 
