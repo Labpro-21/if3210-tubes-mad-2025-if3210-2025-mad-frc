@@ -75,9 +75,7 @@ fun PlayerScreen(
     playerViewModel: PlayerViewModel
 ) {
     val context = LocalContext.current
-    val appContext = context.applicationContext as Application
 
-//    val playerViewModel: PlayerViewModel = viewModel(factory = PlayerViewModelFactory(appContext))
     val currentSong by songViewModel.current_song.collectAsState()
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     val isLooping by playerViewModel.isLooping.collectAsState()
@@ -250,9 +248,6 @@ fun PlayerModalBottomSheet(
     playerViewModel: PlayerViewModel
 ) {
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
-    val context = LocalContext.current
-    val appContext = context.applicationContext as Application
-    val playerViewModel: PlayerViewModel = viewModel(factory = PlayerViewModelFactory(appContext))
     val shouldClose by playerViewModel.shouldClosePlayerSheet.collectAsState()
     if (showSheet) {
         LaunchedEffect(shouldClose) {

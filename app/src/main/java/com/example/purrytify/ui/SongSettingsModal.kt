@@ -65,7 +65,7 @@ private fun ConfirmDelete(
             confirmButton = {
                 TextButton(onClick = {
                     currentSong?.let {
-                        songViewModel.deleteSong(it.id)
+                        songViewModel.deleteSong(it)
                         playerViewModel.stopPlayer()
                         playerViewModel.closePlayerSheet() // Ini yang trigger penutupan sheet
 

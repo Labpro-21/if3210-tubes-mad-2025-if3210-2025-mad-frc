@@ -4,6 +4,7 @@ import com.example.purrytify.data.SongDao
 import com.example.purrytify.data.UserDao
 import com.example.purrytify.model.Song
 import kotlinx.coroutines.flow.Flow
+import java.util.Date
 
 class SongRepository(private val songDao: SongDao, private val userDao: UserDao) {
     suspend fun getSong(songId: Int) = songDao.getSongById(songId)
@@ -33,4 +34,5 @@ class SongRepository(private val songDao: SongDao, private val userDao: UserDao)
     suspend fun getNewSongs(): Flow<List<Song>> = songDao.getNewSongs()
     suspend fun getRecentlyPlayed(): Flow<List<Song>> = songDao.getRecentlyPlayed()
     suspend fun incrementListenedSongs(userId: Int) = userDao.incrementListenedSongs(userId)
+    suspend fun updateLastPlayed(userId:Int, lastPlayed:Date) = songDao.updateLastPlayed(userId,lastPlayed)
 }

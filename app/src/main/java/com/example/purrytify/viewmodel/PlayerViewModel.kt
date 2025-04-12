@@ -2,6 +2,7 @@ package com.example.purrytify.viewmodel
 
 import android.app.Application
 import android.net.Uri
+import androidx.annotation.OptIn
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.AudioAttributes
@@ -9,6 +10,7 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.Log
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
@@ -78,7 +80,7 @@ class PlayerViewModel @Inject constructor(
     }
 
 
-
+    @OptIn(UnstableApi::class)
     fun playPause() {
         Log.d("PlayerViewModel", "playPause() invoked. isPlaying before: ${_exoPlayer.isPlaying}")
 
@@ -113,6 +115,7 @@ class PlayerViewModel @Inject constructor(
         _isPlaying.value = false
         _progress.value = 0f
         currentUri = null
+//        onCleared()
     }
 
     fun closePlayerSheet() {
