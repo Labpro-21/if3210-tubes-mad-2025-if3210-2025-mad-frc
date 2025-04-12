@@ -28,11 +28,31 @@ interface UserDao {
     @Query("SELECT * FROM user WHERE email = :email LIMIT 1")
     suspend fun getUserByEmail(email: String): User?
 
-//    get user id by email
     @Query("SELECT id FROM user WHERE email = :email LIMIT 1")
     suspend fun getUserIdByEmail(email: String): Int?
 
     @Query("SELECT EXISTS(SELECT 1 FROM user WHERE email = :email)")
     suspend fun isEmailRegistered(email: String): Boolean
+
+//    get liked songs
+    @Query("SELECT likedSongs FROM user WHERE id = :userId")
+    suspend fun getLikedSongs(userId: Int): Int?
+
+    @Query("SELECT songs FROM user WHERE id = :userId")
+    suspend fun getSongs(userId: Int): Int?
+
+    @Query("SELECT listenedSongs FROM user WHERE id = :userId")
+    suspend fun getListenedSongs(userId: Int): Int?
+
+//    update liked songs
+    @Query("UPDATE user SET likedSongs = :likedSongs WHERE id = :userId")
+    suspend fun updateLikedSongs(userId: Int, likedSongs: Int)
+
+    @Query("UPDATE user SET songs = :songs WHERE id = :userId")
+    suspend fun updateSongs(userId: Int, songs: Int)
+
+    @Query("UPDATE user SET listenedSongs = :listenedSongs WHERE id = :userId")
+    suspend fun updateListenedSongs(userId: Int, listenedSongs: Int)
+
 
 }

@@ -215,7 +215,7 @@ fun handleSaveSong(
             duration = duration,
             artworkPath = selectedPhotoUri.toString(),
             audioPath = selectedAudioUri.toString(),
-            lastPlayed = Date()
+            lastPlayed = Date(),
         )
 
         if (song != null) {

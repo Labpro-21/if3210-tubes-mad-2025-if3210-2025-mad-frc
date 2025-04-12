@@ -1,5 +1,6 @@
 package com.example.purrytify.ui.screens
 
+import android.app.Activity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -55,10 +56,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import com.example.purrytify.ui.SongRecyclerView
 import com.example.purrytify.ui.navBar.BottomNavBar
+import com.example.purrytify.viewmodel.PlayerViewModel
+import com.example.purrytify.viewmodel.PlayerViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewModel: SongViewModel) {
+fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewModel: SongViewModel, playerViewModel: PlayerViewModel) {
     val context = LocalContext.current
 
 
@@ -144,6 +147,7 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
                 setSelectedSong(allSongs[currentSongId])
 
             },
+            playerViewModel = playerViewModel
         )
         songViewModel.setCurrentSong(song)
 
@@ -216,33 +220,61 @@ fun formatDuration(miliseconds: Long): String {
     return String.format("%02d:%02d", minutes, remainingSeconds)
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreenWithBottomNav(
     onNavigateToHome: () -> Unit,
     onNavigateToProfile: () -> Unit,
-    songViewModel: SongViewModel,
     onBack: () -> Unit,
+    songViewModel: SongViewModel,
+    playerViewModel: PlayerViewModel,
     modifier: Modifier = Modifier
 ) {
+    val isPlaying by playerViewModel.isPlaying.collectAsState()
+    var showPlayerSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = false, // allow partially expanded state
+        confirmValueChange = { true } // allow transition freely
+    )
+
+    if (showPlayerSheet) {
+        PlayerModalBottomSheet(
+            showSheet = showPlayerSheet,
+            onDismiss = { showPlayerSheet = false },
+            song = songViewModel.current_song.collectAsState(initial = null).value ?: return,
+            songViewModel = songViewModel,
+            onSongChange = { /* logika perubahan lagu */ },
+            playerViewModel = playerViewModel,
+            sheetState = sheetState
+        )
+    }
+
     Scaffold(
         bottomBar = {
-            BottomNavBar(
-                currentRoute = "library",
-                onItemSelected = { route ->
-                    when (route) {
-                        "home" -> onNavigateToHome()
-                        "profile" -> onNavigateToProfile()
-                        // Jika route-nya "library", sedang aktif, tidak perlu action.
+            Column {
+                BottomPlayerSectionFromDB(
+                    songViewModel = songViewModel,
+                    isPlaying = isPlaying,
+                    onPlayPause = { playerViewModel.playPause() },
+                    onSectionClick = { showPlayerSheet = true }  // Buka modal bottom sheet saat area diklik
+                )
+                BottomNavBar(
+                    currentRoute = "library",
+                    onItemSelected = { route ->
+                        when (route) {
+                            "home" -> onNavigateToHome()
+                            "profile" -> onNavigateToProfile()
+                        }
                     }
-                }
-            )
+                )
+            }
         }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
-            // Panggil konten LibraryScreen yang sudah ada di LibraryScreen.kt
             LibraryScreen(
                 onBack = onBack,
                 songViewModel = songViewModel,
+                playerViewModel = playerViewModel
             )
         }
     }

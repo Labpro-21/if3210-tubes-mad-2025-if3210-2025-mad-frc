@@ -1,5 +1,6 @@
  package com.example.purrytify.ui.navigation
 
+import android.app.Activity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -22,8 +23,10 @@ import com.example.purrytify.viewmodel.NetworkViewModel
 import com.example.purrytify.utils.TokenManager
 import androidx.compose.runtime.livedata.observeAsState
 import com.example.purrytify.utils.SessionManager
+import com.example.purrytify.viewmodel.PlayerViewModel
+import com.example.purrytify.viewmodel.PlayerViewModelFactory
 
-sealed class Screen(val route: String) {
+ sealed class Screen(val route: String) {
     object Login : Screen("login")
     object Home : Screen("home")
     object Library : Screen("library")
@@ -47,9 +50,14 @@ fun AppNavigation() {
 
     // Tentukan startDestination berdasarkan status login dan koneksi internet
     val startDestination = when {
-        tokenManager.isLoggedIn() -> Screen.Home.route
-        else -> Screen.Login.route
+        tokenManager.isLoggedIn() -> Screen.Login.route
+        else -> Screen.Home.route
     }
+
+    val playerViewModel: PlayerViewModel = viewModel<PlayerViewModel>(
+        factory = PlayerViewModelFactory((context as androidx.activity.ComponentActivity).application)
+    )
+
 
     NavHost(navController = navController, startDestination = startDestination) {
         println("is Connected: $isConnected")
@@ -68,7 +76,8 @@ fun AppNavigation() {
             HomeScreenWithBottomNav(
                 onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                songViewModel = songViewModel
+                songViewModel = songViewModel,
+                playerViewModel = playerViewModel
             )
         }
         composable(route = Screen.Library.route) {
@@ -76,7 +85,8 @@ fun AppNavigation() {
                 onBack = { navController.popBackStack() },
                 songViewModel = songViewModel,
                 onNavigateToHome = { navController.navigate(Screen.Home.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
+                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                playerViewModel = playerViewModel
             )
         }
         composable(route = Screen.Profile.route) {

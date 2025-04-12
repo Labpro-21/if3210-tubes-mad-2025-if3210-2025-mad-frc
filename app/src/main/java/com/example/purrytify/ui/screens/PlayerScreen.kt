@@ -70,17 +70,19 @@ fun PlayerScreen(
     onNext: () -> Unit,
     onPrevious: () -> Unit,
     songViewModel: SongViewModel,
+    playerViewModel: PlayerViewModel
 ) {
     val context = LocalContext.current
     val appContext = context.applicationContext as Application
 
-    val playerViewModel: PlayerViewModel = viewModel(factory = PlayerViewModelFactory(appContext))
+//    val playerViewModel: PlayerViewModel = viewModel(factory = PlayerViewModelFactory(appContext))
     val currentSong by songViewModel.current_song.collectAsState()
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     val isLooping by playerViewModel.isLooping.collectAsState()
     val progress by playerViewModel.progress.collectAsState()
 
     val songUri = currentSong?.audioPath?.toUri()
+    val artworkUri = currentSong?.artworkPath?.toUri()
 
     LaunchedEffect(songUri) {
         songUri?.let {
@@ -243,6 +245,7 @@ fun PlayerModalBottomSheet(
     song: Song,
     songViewModel: SongViewModel,
     onSongChange: (Int) -> Unit,
+    playerViewModel: PlayerViewModel
 ) {
     val context = LocalContext.current
     val appContext = context.applicationContext as Application
@@ -266,11 +269,11 @@ fun PlayerModalBottomSheet(
                 onNext = { onSongChange(song.id) },
                 onPrevious = { onSongChange(song.id - 2) },
                 songViewModel = songViewModel,
+                playerViewModel = playerViewModel
             )
         }
     }
 }
-
 
 
 

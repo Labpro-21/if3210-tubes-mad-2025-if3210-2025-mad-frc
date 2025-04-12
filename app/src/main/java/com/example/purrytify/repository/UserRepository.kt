@@ -22,4 +22,12 @@ class UserRepository(private val userDao: UserDao) {
 
     suspend fun getUserIdByEmail(email: String) = userDao.getUserIdByEmail(email)
 
+    suspend fun getLikedSongs(userId: Int) = userDao.getLikedSongs(userId)
+    suspend fun getSongs(userId: Int) = userDao.getSongs(userId)
+    suspend fun getListenedSongs(userId: Int) = userDao.getListenedSongs(userId)
+
+    suspend fun updateLikedSongs(userId: Int, likedSongs: Int) = userDao.updateLikedSongs(userId, likedSongs)
+    suspend fun updateSongs(userId: Int, songs: Int) = userDao.updateSongs(userId, songs)
+    suspend fun updateListenedSongs(userId: Int, listenedSongs: Int) = userDao.updateListenedSongs(userId, listenedSongs)
+
 }

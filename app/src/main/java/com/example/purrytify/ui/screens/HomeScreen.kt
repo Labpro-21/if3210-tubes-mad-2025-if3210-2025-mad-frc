@@ -43,6 +43,15 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import com.example.purrytify.ui.navBar.BottomNavBar
+import android.app.Activity
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 
 @Composable
 fun HomeScreenContent(
@@ -167,88 +176,43 @@ fun HomeScreenContent(
     }
 }
 
-@Composable
-fun BottomPlayerSection(
-    isPlaying: Boolean = true,
-    onPlayPause: () -> Unit = {}
-) {
-    val context = LocalContext.current
-    val appContext = if (!LocalInspectionMode.current)
-        context.applicationContext as? Application
-    else null
-
-    if (appContext == null) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.DarkGray)
-                .padding(16.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(text = "Preview Mode - Player tidak aktif", color = Color.White)
-        }
-        return
-    }
-    val viewModel: PlayerViewModel = viewModel(factory = PlayerViewModelFactory(appContext))
-    // Jika Anda sudah memiliki onPlayPause, Anda bisa gunakan callback onPlayPause di sini.
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.DarkGray)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.album_cover1),
-            contentDescription = "Currently Playing",
-            modifier = Modifier.size(50.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = "Starboy",
-                color = Color.White,
-                fontSize = 14.sp
-            )
-            Text(
-                text = "The Weeknd",
-                color = Color.Gray,
-                fontSize = 12.sp
-            )
-        }
-        IconButton(
-            onClick = { onPlayPause() },
-            modifier = Modifier
-                .size(72.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.primary,
-                    shape = CircleShape
-                )
-        ) {
-            Icon(
-                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                contentDescription = "Play/Pause",
-                tint = Color.White,
-                modifier = Modifier.size(36.dp)
-            )
-        }
-    }
-}
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreenWithBottomNav(
     onNavigateToLibrary: () -> Unit,
     onNavigateToProfile: () -> Unit,
     songViewModel: SongViewModel,
-    isPlaying: Boolean = true,
-    onPlayPause: () -> Unit = {}
+    playerViewModel: PlayerViewModel,
+    modifier: Modifier = Modifier
 ) {
+    val isPlaying by playerViewModel.isPlaying.collectAsState()
+    // State untuk membuka modal bottom sheet
+    var showPlayerSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = false, // allow partially expanded state
+        confirmValueChange = { true } // allow transition freely
+    )
+
+    if (showPlayerSheet) {
+        PlayerModalBottomSheet(
+            showSheet = showPlayerSheet,
+            onDismiss = { showPlayerSheet = false },
+            song = songViewModel.current_song.collectAsState(initial = null).value ?: return,
+            songViewModel = songViewModel,
+            onSongChange = { /* logika perubahan lagu */ },
+            playerViewModel = playerViewModel,
+            sheetState = sheetState
+        )
+    }
+
     Scaffold(
         bottomBar = {
             Column {
-                BottomPlayerSection(
+                BottomPlayerSectionFromDB(
+                    songViewModel = songViewModel,
                     isPlaying = isPlaying,
-                    onPlayPause = onPlayPause
+                    onPlayPause = { playerViewModel.playPause() },
+                    onSectionClick = { showPlayerSheet = true }  // Buka modal bottom sheet saat area diklik
                 )
                 BottomNavBar(
                     currentRoute = "home",
@@ -256,7 +220,6 @@ fun HomeScreenWithBottomNav(
                         when (route) {
                             "library" -> onNavigateToLibrary()
                             "profile" -> onNavigateToProfile()
-                            // "home" tidak perlu action
                         }
                     }
                 )
