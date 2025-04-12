@@ -34,11 +34,13 @@ import androidx.compose.material3.Scaffold
 import com.example.purrytify.ui.navBar.BottomNavBar
 import com.example.purrytify.ui.LockScreenOrientation
 import android.content.pm.ActivityInfo
+import com.example.purrytify.viewmodel.SongViewModel
 
 @Composable
 fun ProfileScreen(
     isConnected: Boolean,
     onLogout: () -> Unit,
+    songViewModel: SongViewModel
 ) {
     val context = LocalContext.current
 
@@ -74,7 +76,8 @@ fun ProfileScreen(
         songsAdded = uiState.songsAdded,
         likedSongs = uiState.likedSongs,
         listenedSongs = uiState.listenedSongs,
-        onLogout = onLogout
+        onLogout = onLogout,
+        songViewModel = songViewModel
     )
 }
 
@@ -86,7 +89,8 @@ fun ProfileContent(
     songsAdded: Int,
     likedSongs: Int,
     listenedSongs: Int,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    songViewModel: SongViewModel
 ) {
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
     // Background gradasi dari #006175 ke #121212
@@ -150,7 +154,10 @@ fun ProfileContent(
             Spacer(modifier = Modifier.height(32.dp))
             // Tombol Log Out dengan teks putih dan background #3E3F3F
             Button(
-                onClick = onLogout,
+                onClick = {
+                    onLogout()
+                    songViewModel.reset()
+                },
                 modifier = Modifier.fillMaxWidth(0.5f),
                 shape = RoundedCornerShape(24.dp),
                 colors = androidx.compose.material.ButtonDefaults.buttonColors(
@@ -199,7 +206,8 @@ fun ProfileScreenWithBottomNav(
     onNavigateToHome: () -> Unit,
     onNavigateToLibrary: () -> Unit,
     isConnected: Boolean,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    songViewModel: SongViewModel
 ) {
     Scaffold(
         bottomBar = {
@@ -216,7 +224,7 @@ fun ProfileScreenWithBottomNav(
         }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
-            ProfileScreen(isConnected = isConnected, onLogout = onLogout)
+            ProfileScreen(isConnected = isConnected, onLogout = onLogout, songViewModel = songViewModel)
         }
     }
 }

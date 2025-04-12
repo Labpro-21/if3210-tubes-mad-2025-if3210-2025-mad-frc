@@ -40,6 +40,14 @@ class SongViewModel(private val repository: SongRepository,userId: Int) : ViewMo
         }
     }
 
+    fun reset() {
+        _songs.value = emptyList()
+        _liked_songs.value = emptyList()
+        _current_song.value = null
+        _new_songs.value = emptyList()
+        _recently_played.value = emptyList()
+    }
+
     fun deleteSong(song:Song) {
         viewModelScope.launch {
             repository.deleteSong(song.id)
