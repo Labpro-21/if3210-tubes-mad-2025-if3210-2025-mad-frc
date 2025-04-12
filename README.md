@@ -13,15 +13,15 @@ Well... it's not a short list tho, so you can see it here if you want [Libraries
 <h2 align="center">Screenshots</h2>
 
 Smile for the camera! here's some shots we've prepared so you can see what we've build with our blood and sweat (it's an overreaction i know)
-* [HomeScreen]()
-* [HomeScreen (playing song)]()
-* [LibraryScreen (all songs)]()
-* [LibarryScreen (liked songs)]()
-* [LibraryScreen (playing songs)]()
-* [Profile]()
-* [Login]()
-* [Player]()
-* [ResponsiveHome]()
+* [HomeScreen](markdown/screenshots/HomeScreen.jpg)
+* [HomeScreen (playing song)](markdown/screenshots/HomeScreen(playing).jpg)
+* [LibraryScreen (all songs)](markdown/screenshots/LibraryScreen(All).jpg)
+* [LibarryScreen (liked songs)](markdown/screenshots/LibraryScreen(Liked).jpg)
+* [LibraryScreen (playing songs)](markdown/screenshots/LibraryScreen(playing).jpg)
+* [Profile](markdown/screenshots/Profile.jpg)
+* [Login](markdown/screenshots/Login.jpg)
+* [Player](markdown/screenshots/Player.jpg)
+* [ResponsiveHome](markdown/screenshots/HomeScreen(Responsive).jpg)
 
 <h2 align="center">Workloads</h2>
 "A lone knight may hold the line, but it is the strength of the brotherhood that wins the war." Yup, we three can't did all of this without a teamwork so here's what we've taken part of:
