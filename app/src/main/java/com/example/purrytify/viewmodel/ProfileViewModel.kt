@@ -6,43 +6,48 @@ import androidx.compose.runtime.State
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.purrytify.model.ProfileUiState
-import com.example.purrytify.repository.ProfileRepository
+import com.example.purrytify.data.UserRepository
+import com.example.purrytify.utils.SessionManager
 import com.example.purrytify.utils.TokenManager
 import kotlinx.coroutines.launch
 import java.util.Locale
 
-class ProfileViewModel(private val tokenManager: TokenManager) : ViewModel() {
+class ProfileViewModel(
+    private val tokenManager: TokenManager,
+    private val userRepository: UserRepository,
+    private val sessionManager: SessionManager
+) : ViewModel() {
 
     private val _uiState = mutableStateOf(ProfileUiState())
     val uiState: State<ProfileUiState> get() = _uiState
 
-    private val profileRepository = ProfileRepository(tokenManager)
-
     fun fetchUserProfile() {
         viewModelScope.launch {
-            profileRepository.fetchUserProfile().onSuccess { userProfile ->
-                Log.d("ProfileViewModel", "User profile fetched: $userProfile")
+            // Ambil userId dari sesi
+            val currentUserId = sessionManager.getUserId()
+            val user = userRepository.getUserById(currentUserId)
+            if (user != null) {
+                Log.d("ProfileViewModel", "User profile fetched from DB: $user")
                 _uiState.value = ProfileUiState(
-                    username = userProfile.username,
-                    email = userProfile.email,
-                    profilePhoto = userProfile.profilePhoto,
-                    country = parseCountryCode(userProfile.location),
-                    songsAdded = 0,   // Sesuaikan jika ada data
-                    likedSongs = 0,
-                    listenedSongs = 0
+                    username = user.email.substringBefore("@"), // atau gunakan field username jika tersedia
+                    email = user.email,
+                    profilePhoto = "", // update sesuai dengan field di database jika ada
+                    country = parseCountryCode(user.email.takeLast(2)), // Contoh: ambil 2 karakter terakhir untuk kode negara
+                    songsAdded = user.songs,
+                    likedSongs = user.likedSongs,
+                    listenedSongs = user.listenedSongs
                 )
-            }.onFailure { throwable ->
-                Log.e("ProfileViewModel", "Gagal fetch profile", throwable)
+            } else {
+                Log.e("ProfileViewModel", "User not found in DB for id: $currentUserId")
             }
         }
     }
 
     private fun parseCountryCode(code: String): String {
         return try {
-            // Membuat Locale dengan kode negara (pastikan kode sudah sesuai dengan ISO 3166-1 alpha-2)
             Locale("", code.uppercase()).displayCountry
         } catch (e: Exception) {
-            code // Jika terjadi error, kembalikan kode aslinya
+            code
         }
     }
 }
