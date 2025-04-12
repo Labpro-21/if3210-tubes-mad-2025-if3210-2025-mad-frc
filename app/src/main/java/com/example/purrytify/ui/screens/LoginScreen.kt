@@ -31,6 +31,13 @@ import com.example.purrytify.utils.TokenManager
 import com.example.purrytify.viewmodel.LoginViewModel
 import com.example.purrytify.ui.LockScreenOrientation
 import android.content.pm.ActivityInfo
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import com.example.purrytify.model.User
 import com.example.purrytify.viewmodel.LoginViewModelFactory
 import com.example.purrytify.utils.SessionManager
@@ -60,6 +67,8 @@ fun LoginScreen(
     val loginResult = viewModel.loginResult.value
     val userRepository = UserRepository(userDao = AppDatabase.getDatabase(LocalContext.current).userDao())
     val sessionManager = remember { SessionManager(context) }
+
+    val focusManager = LocalFocusManager.current
 
 
     // State untuk error message di tiap field
@@ -118,15 +127,10 @@ fun LoginScreen(
                 .fillMaxSize()
                 .background(Color(0xFF121212))
                 .padding(paddingValues)
+                // Agar konten menyesuaikan dengan keyboard:
+                .imePadding()
+                .verticalScroll(rememberScrollState())
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.bg_login),
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.TopCenter),
-                contentScale = ContentScale.Crop
-            )
 
             Column(
                 modifier = Modifier
@@ -136,6 +140,15 @@ fun LoginScreen(
                     .offset(y = -120.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Image(
+                    painter = painterResource(id = R.drawable.bg_login),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxWidth(),
+                    contentScale = ContentScale.Crop
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
                 // Slogan/Jargon
                 Text(
                     text = "Millions of Songs. Only on Purritify.",
@@ -169,7 +182,11 @@ fun LoginScreen(
                         focusedLabelColor = Color.White,
                         unfocusedLabelColor = Color.White
                     ),
-                    shape = RoundedCornerShape(4.dp)
+                    shape = RoundedCornerShape(4.dp),
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = {
+                        focusManager.moveFocus(FocusDirection.Down)
+                    })
                 )
                 // Tampilkan error untuk email jika ada
                 emailError?.let { errorMsg ->
@@ -214,7 +231,11 @@ fun LoginScreen(
                                 tint = Color.White
                             )
                         }
-                    }
+                    },
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = {
+                        viewModel.login()
+                    })
                 )
                 // Tampilkan error untuk password jika ada
                 passwordError?.let { errorMsg ->
