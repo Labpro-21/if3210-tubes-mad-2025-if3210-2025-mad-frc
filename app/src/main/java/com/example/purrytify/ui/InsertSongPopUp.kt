@@ -196,38 +196,6 @@ fun InsertSongPopUp(
     }
 }
 
-fun handleSaveSong(
-    context: Context,
-    selectedAudioUri: Uri?,
-    selectedPhotoUri: Uri?,
-    title: String,
-    artist: String,
-    duration: Long,
-    songViewModel: SongViewModel,
-    song: Song? = null, // Parameter song untuk edit
-    onComplete: () -> Unit
-) {
-    if (selectedAudioUri != null) {
-        val songToSave = Song(
-            id = song?.id ?: 0, // Gunakan ID dari song yang ada atau 0 untuk lagu baru
-            title = title,
-            artist = artist,
-            duration = duration,
-            artworkPath = selectedPhotoUri.toString(),
-            audioPath = selectedAudioUri.toString(),
-            lastPlayed = Date(),
-        )
-
-        if (song != null) {
-            songViewModel.updateSong(songToSave) // Jika song ada, update
-        } else {
-            songViewModel.addSong(songToSave) // Jika song null, tambahkan baru
-        }
-    }
-
-    onComplete() // misalnya untuk menutup sheet atau update UI
-}
-
 
 @Composable
 fun UploadBoxDisplay(fileUri: Uri?, text: String, mimeType: String) {
@@ -308,12 +276,15 @@ fun handleSaveSong(
     artist: String,
     duration: Long,
     songViewModel: SongViewModel,
-    onComplete: () -> Unit
+    onComplete: () -> Unit,
+    song: Song? = null, // Parameter song untuk edit
+
 ) {
     if (selectedAudioUri != null) {
         val sessionManager = SessionManager(context)
         val currentUserId = sessionManager.getUserId()
-        val song = Song(
+        val songToSave = Song(
+            id = song?.id ?: 0, // Gunakan ID dari song yang ada atau 0 untuk lagu baru
             title = title,
             artist = artist,
             duration = duration,
@@ -323,7 +294,11 @@ fun handleSaveSong(
             userId = currentUserId,
         )
 
-        songViewModel.addSong(song)
+        if (song != null) {
+            songViewModel.updateSong(songToSave) // Jika song ada, update
+        } else {
+            songViewModel.addSong(songToSave) // Jika song null, tambahkan baru
+        }
     }
 
     onComplete() // misalnya untuk menutup sheet atau update UI

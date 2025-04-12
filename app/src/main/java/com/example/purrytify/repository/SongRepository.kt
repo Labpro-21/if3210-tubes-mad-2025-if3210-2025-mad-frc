@@ -7,12 +7,12 @@ import kotlinx.coroutines.flow.Flow
 class SongRepository(private val songDao: SongDao) {
     suspend fun getSong(songId: Int) = songDao.getSongById(songId)
     suspend fun insertSong(song: Song) = songDao.insertSong(song)
-    suspend fun getAllSongs(): List<Song> = songDao.getAllSongs()
+    suspend fun getAllSongs(userId:Int): List<Song> = songDao.getAllSongs(userId)
     suspend fun deleteSong(id: Int) = songDao.deleteSong(id)
-    suspend fun getAllLikedSongs(): Flow<List<Song>> = songDao.getAllLikedSongs()
-    suspend fun getAllSongsOrdered(): Flow<List<Song>> = songDao.getAllSongsOrdered()
+    suspend fun getAllLikedSongs(userId:Int): Flow<List<Song>> = songDao.getAllLikedSongs(userId)
+    suspend fun getAllSongsOrdered(userId:Int): Flow<List<Song>> = songDao.getAllSongsOrdered(userId)
     suspend fun updateSong(id:Int, newArtist: String, newTitle: String, newArtwork: String?) = songDao.updateSong(id,newArtist,newTitle,newArtwork)
     suspend fun toggleLike(id:Int) = songDao.toggleLike(id)
-    suspend fun getNewSongs(): Flow<List<Song>> = songDao.getNewSongs()
-    suspend fun getRecentlyPlayed(): Flow<List<Song>> = songDao.getRecentlyPlayed()
+    suspend fun getNewSongs(userId:Int): Flow<List<Song>> = songDao.getNewSongs(userId)
+    suspend fun getRecentlyPlayed(userId:Int): Flow<List<Song>> = songDao.getRecentlyPlayed(userId)
 }

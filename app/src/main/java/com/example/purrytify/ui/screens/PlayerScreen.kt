@@ -73,9 +73,7 @@ fun PlayerScreen(
     playerViewModel: PlayerViewModel
 ) {
     val context = LocalContext.current
-    val appContext = context.applicationContext as Application
 
-//    val playerViewModel: PlayerViewModel = viewModel(factory = PlayerViewModelFactory(appContext))
     val currentSong by songViewModel.current_song.collectAsState()
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     val isLooping by playerViewModel.isLooping.collectAsState()
@@ -247,9 +245,6 @@ fun PlayerModalBottomSheet(
     onSongChange: (Int) -> Unit,
     playerViewModel: PlayerViewModel
 ) {
-    val context = LocalContext.current
-    val appContext = context.applicationContext as Application
-    val playerViewModel: PlayerViewModel = viewModel(factory = PlayerViewModelFactory(appContext))
     val shouldClose by playerViewModel.shouldClosePlayerSheet.collectAsState()
     if (showSheet) {
         LaunchedEffect(shouldClose) {

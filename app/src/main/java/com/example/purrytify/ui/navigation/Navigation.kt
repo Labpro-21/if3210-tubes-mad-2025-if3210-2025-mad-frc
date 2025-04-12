@@ -43,7 +43,7 @@ fun AppNavigation() {
     val db = AppDatabase.getDatabase(context)
     val repository = remember { SongRepository(db.songDao()) }
 
-    val songViewModel: SongViewModel = viewModel(factory = SongViewModelFactory(repository))
+    val songViewModel: SongViewModel = viewModel(factory = SongViewModelFactory(repository,sessionManager.getUserId()))
     val networkViewModel: NetworkViewModel = viewModel()
     val isConnected by networkViewModel.isConnected.observeAsState(initial = true)
     println("Is Connected: $isConnected")
@@ -69,6 +69,8 @@ fun AppNavigation() {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
+                    songViewModel.loadSongs(sessionManager.getUserId())
+
                 }
             )
         }
@@ -95,11 +97,14 @@ fun AppNavigation() {
                 onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
                 isConnected = isConnected,
                 onLogout = {
+                    playerViewModel.stopPlayer()
                     tokenManager.clearTokens()
                     sessionManager.clearSession()
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Profile.route) { inclusive = true }
                     }
+
+
                 }
             )
         }

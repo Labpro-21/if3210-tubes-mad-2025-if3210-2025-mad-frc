@@ -30,6 +30,7 @@ import com.example.purrytify.repository.UserRepository
 import com.example.purrytify.utils.TokenManager
 import com.example.purrytify.viewmodel.LoginViewModel
 import com.example.purrytify.viewmodel.LoginViewModelFactory
+import kotlinx.coroutines.delay
 
 @Composable
 fun LoginScreen(

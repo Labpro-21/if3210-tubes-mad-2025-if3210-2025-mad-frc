@@ -1,6 +1,7 @@
 package com.example.purrytify.viewmodel
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.State
 import androidx.lifecycle.AndroidViewModel
@@ -57,6 +58,8 @@ class LoginViewModel(
                 }
                 val userId = userRepository.getUserIdByEmail(_uiState.value.email) ?: -1
                 sessionManager.saveSession(userId)
+                Log.d("SongViewModel", "Session User Id: ${sessionManager.getUserId()}")
+
             }
             isLoading.value = false
         }

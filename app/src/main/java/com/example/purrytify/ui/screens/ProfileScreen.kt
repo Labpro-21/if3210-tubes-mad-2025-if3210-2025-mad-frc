@@ -26,7 +26,7 @@ import com.example.purrytify.viewmodel.ProfileViewModel
 import com.example.purrytify.viewmodel.ProfileViewModelFactory
 import com.example.purrytify.utils.TokenManager
 import com.example.purrytify.data.AppDatabase
-import com.example.purrytify.data.UserRepository
+import com.example.purrytify.repository.UserRepository
 import com.example.purrytify.utils.SessionManager
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
