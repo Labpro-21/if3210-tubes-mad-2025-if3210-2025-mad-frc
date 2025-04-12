@@ -28,7 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.purrytify.data.SongRepository
+import com.example.purrytify.repository.SongRepository
 import com.example.purrytify.data.AppDatabase
 import com.example.purrytify.model.Song
 import com.example.purrytify.viewmodel.SongViewModel
@@ -55,6 +55,7 @@ import com.example.purrytify.ui.InsertSongPopUp
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import com.example.purrytify.ui.SongRecyclerView
 import com.example.purrytify.ui.navBar.BottomNavBar
 import com.example.purrytify.ui.LockScreenOrientation
 import com.example.purrytify.viewmodel.PlayerViewModel
@@ -131,8 +132,6 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
             onDismiss = {
                 setShowPlayer(false) },
             song = song,
-            isPlaying = true,
-            progress = 0.0f,
             songViewModel = songViewModel,
             onSongChange = { newId ->
                 currentSongId = (newId + allSongs.size) % allSongs.size
@@ -235,8 +234,6 @@ fun LibraryScreenWithBottomNav(
             showSheet = showPlayerSheet,
             onDismiss = { showPlayerSheet = false },
             song = songViewModel.current_song.collectAsState(initial = null).value ?: return,
-            isPlaying = isPlaying,
-            progress = playerViewModel.progress.collectAsState().value,
             songViewModel = songViewModel,
             onSongChange = { /* logika perubahan lagu */ },
             playerViewModel = playerViewModel,

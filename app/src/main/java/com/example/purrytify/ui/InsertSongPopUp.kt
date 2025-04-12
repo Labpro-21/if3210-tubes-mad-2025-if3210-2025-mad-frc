@@ -8,6 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -27,6 +28,8 @@ import coil.request.ImageRequest
 import com.example.purrytify.model.Song
 import com.example.purrytify.viewmodel.SongViewModel
 import java.util.Date
+
+import com.example.purrytify.utils.SessionManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -176,8 +179,19 @@ fun InsertSongPopUp(
             }
         }
     }else{
-        IconButton(onClick = { showSheet = true }) {
+//        IconButton(onClick = { showSheet = true }) {
+//            Icon(Icons.Default.Edit, contentDescription = "Edit")
+//        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { showSheet=true }
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Icon(Icons.Default.Edit, contentDescription = "Edit")
+            Spacer(modifier = Modifier.width(16.dp))
+            Text("Edit Song", style = MaterialTheme.typography.bodyLarge)
         }
     }
 }
@@ -201,7 +215,7 @@ fun handleSaveSong(
             duration = duration,
             artworkPath = selectedPhotoUri.toString(),
             audioPath = selectedAudioUri.toString(),
-            lastPlayed = Date()
+            lastPlayed = Date(),
         )
 
         if (song != null) {
@@ -297,14 +311,16 @@ fun handleSaveSong(
     onComplete: () -> Unit
 ) {
     if (selectedAudioUri != null) {
-
+        val sessionManager = SessionManager(context)
+        val currentUserId = sessionManager.getUserId()
         val song = Song(
             title = title,
             artist = artist,
             duration = duration,
             artworkPath = selectedPhotoUri.toString(),
             audioPath = selectedAudioUri.toString(),
-            lastPlayed = Date()
+            lastPlayed = Date(),
+            userId = currentUserId,
         )
 
         songViewModel.addSong(song)

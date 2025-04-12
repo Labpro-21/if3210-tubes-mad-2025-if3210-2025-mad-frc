@@ -1,11 +1,14 @@
 package com.example.purrytify.ui.screens
 
-import android.content.Context
+import android.app.Application
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,24 +18,39 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.purrytify.R
+import com.example.purrytify.data.AppDatabase
+import com.example.purrytify.repository.LoginRepository
+import com.example.purrytify.repository.UserRepository
 import com.example.purrytify.utils.TokenManager
 import com.example.purrytify.viewmodel.LoginViewModel
 import com.example.purrytify.ui.LockScreenOrientation
 import android.content.pm.ActivityInfo
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
+import com.example.purrytify.model.User
+import com.example.purrytify.viewmodel.LoginViewModelFactory
+import com.example.purrytify.utils.SessionManager
+
 
 @Composable
 fun LoginScreen(
-    viewModel: LoginViewModel = viewModel(),
+    viewModel: LoginViewModel = viewModel(
+        factory = LoginViewModelFactory(
+            LocalContext.current.applicationContext as Application,
+            LoginRepository(),
+        )
+    ),
     onLoginSuccess: (accessToken: String) -> Unit = {},
     isConnected: Boolean
 ) {
@@ -47,6 +65,11 @@ fun LoginScreen(
     val uiState = viewModel.uiState.value
     val isLoading = viewModel.isLoading.value
     val loginResult = viewModel.loginResult.value
+    val userRepository = UserRepository(userDao = AppDatabase.getDatabase(LocalContext.current).userDao())
+    val sessionManager = remember { SessionManager(context) }
+
+    val focusManager = LocalFocusManager.current
+
 
     // State untuk error message di tiap field
     var emailError by remember { mutableStateOf<String?>(null) }
@@ -64,6 +87,18 @@ fun LoginScreen(
                         loginResponse.accessToken,
                         loginResponse.refreshToken
                     )
+                    if (!userRepository.isEmailRegistered(uiState.email)) {
+                        // Jika belum, buat user baru; sesuaikan field sesuai model User
+                        val newUser = User(
+                            email = uiState.email,
+                            songs = 0,
+                            likedSongs = 0,
+                            listenedSongs = 0
+                        )
+                        userRepository.insertUser(newUser)
+                    }
+                    val userId = userRepository.getUserIdByEmail(uiState.email) ?: -1
+                    sessionManager.saveSession(userId)
                     onLoginSuccess(loginResponse.accessToken)
                     viewModel.clearLoginResult()
                     // Bersihkan error jika ada
@@ -92,15 +127,10 @@ fun LoginScreen(
                 .fillMaxSize()
                 .background(Color(0xFF121212))
                 .padding(paddingValues)
+                // Agar konten menyesuaikan dengan keyboard:
+                .imePadding()
+                .verticalScroll(rememberScrollState())
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.bg_login),
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.TopCenter),
-                contentScale = ContentScale.Crop
-            )
 
             Column(
                 modifier = Modifier
@@ -110,6 +140,15 @@ fun LoginScreen(
                     .offset(y = -120.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Image(
+                    painter = painterResource(id = R.drawable.bg_login),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxWidth(),
+                    contentScale = ContentScale.Crop
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
                 // Slogan/Jargon
                 Text(
                     text = "Millions of Songs. Only on Purritify.",
@@ -143,7 +182,11 @@ fun LoginScreen(
                         focusedLabelColor = Color.White,
                         unfocusedLabelColor = Color.White
                     ),
-                    shape = RoundedCornerShape(4.dp)
+                    shape = RoundedCornerShape(4.dp),
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = {
+                        focusManager.moveFocus(FocusDirection.Down)
+                    })
                 )
                 // Tampilkan error untuk email jika ada
                 emailError?.let { errorMsg ->
@@ -188,7 +231,11 @@ fun LoginScreen(
                                 tint = Color.White
                             )
                         }
-                    }
+                    },
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = {
+                        viewModel.login()
+                    })
                 )
                 // Tampilkan error untuk password jika ada
                 passwordError?.let { errorMsg ->

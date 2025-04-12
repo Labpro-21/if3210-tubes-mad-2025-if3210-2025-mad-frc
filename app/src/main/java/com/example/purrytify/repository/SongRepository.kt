@@ -1,5 +1,6 @@
-package com.example.purrytify.data
+package com.example.purrytify.repository
 
+import com.example.purrytify.data.SongDao
 import com.example.purrytify.model.Song
 import kotlinx.coroutines.flow.Flow
 
@@ -8,7 +9,7 @@ class SongRepository(private val songDao: SongDao) {
     suspend fun insertSong(song: Song) = songDao.insertSong(song)
     suspend fun getAllSongs(): List<Song> = songDao.getAllSongs()
     suspend fun deleteSong(id: Int) = songDao.deleteSong(id)
-    suspend fun getAllLikedSongs():Flow<List<Song>> = songDao.getAllLikedSongs()
+    suspend fun getAllLikedSongs(): Flow<List<Song>> = songDao.getAllLikedSongs()
     suspend fun getAllSongsOrdered(): Flow<List<Song>> = songDao.getAllSongsOrdered()
     suspend fun updateSong(id:Int, newArtist: String, newTitle: String, newArtwork: String?) = songDao.updateSong(id,newArtist,newTitle,newArtwork)
     suspend fun toggleLike(id:Int) = songDao.toggleLike(id)

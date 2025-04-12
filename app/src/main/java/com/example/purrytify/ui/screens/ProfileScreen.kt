@@ -25,6 +25,9 @@ import com.example.purrytify.R
 import com.example.purrytify.viewmodel.ProfileViewModel
 import com.example.purrytify.viewmodel.ProfileViewModelFactory
 import com.example.purrytify.utils.TokenManager
+import com.example.purrytify.data.AppDatabase
+import com.example.purrytify.repository.UserRepository
+import com.example.purrytify.utils.SessionManager
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -41,9 +44,11 @@ fun ProfileScreen(
 
     // Membuat TokenManager dari context
     val tokenManager = remember { TokenManager(context) }
+    val sessionManager = remember { SessionManager(context) }
+    val userRepository = remember { UserRepository(AppDatabase.getDatabase(context).userDao()) }
     // Mendapatkan ProfileViewModel melalui factory agar dapat menyuntikkan TokenManager
     val profileViewModel: ProfileViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
-        factory = ProfileViewModelFactory(tokenManager)
+        factory = ProfileViewModelFactory(tokenManager, userRepository, sessionManager)
     )
 
     var showNoInternetDialog by remember { mutableStateOf(!isConnected) }

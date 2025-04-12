@@ -10,7 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.purrytify.data.AppDatabase
-import com.example.purrytify.data.SongRepository
+import com.example.purrytify.repository.SongRepository
 import com.example.purrytify.ui.screens.HomeScreenWithBottomNav
 import com.example.purrytify.ui.screens.LibraryScreenWithBottomNav
 import com.example.purrytify.ui.screens.LoginScreen
@@ -18,11 +18,12 @@ import com.example.purrytify.ui.screens.ProfileScreenWithBottomNav
 import com.example.purrytify.viewmodel.SongViewModel
 import com.example.purrytify.viewmodel.SongViewModelFactory
 
- // Definisi rute menggunakan sealed class
-import com.example.purrytify.ui.screens.*
+// Definisi rute menggunakan sealed class
 import com.example.purrytify.viewmodel.NetworkViewModel
 import com.example.purrytify.utils.TokenManager
 import androidx.compose.runtime.livedata.observeAsState
+import com.example.purrytify.ui.screens.HomeScreenResponsive
+import com.example.purrytify.utils.SessionManager
 import com.example.purrytify.viewmodel.PlayerViewModel
 import com.example.purrytify.viewmodel.PlayerViewModelFactory
 
@@ -38,6 +39,7 @@ import com.example.purrytify.viewmodel.PlayerViewModelFactory
 fun AppNavigation() {
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
+    val sessionManager = remember { SessionManager(context) }
     val navController = rememberNavController()
     val db = AppDatabase.getDatabase(context)
     val repository = remember { SongRepository(db.songDao()) }
@@ -50,7 +52,7 @@ fun AppNavigation() {
     // Tentukan startDestination berdasarkan status login dan koneksi internet
     val startDestination = when {
         tokenManager.isLoggedIn() -> Screen.Home.route
-        else -> Screen.Home.route
+        else -> Screen.Login.route
     }
 
     val playerViewModel: PlayerViewModel = viewModel<PlayerViewModel>(
@@ -95,6 +97,7 @@ fun AppNavigation() {
                 isConnected = isConnected,
                 onLogout = {
                     tokenManager.clearTokens()
+                    sessionManager.clearSession()
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Profile.route) { inclusive = true }
                     }
