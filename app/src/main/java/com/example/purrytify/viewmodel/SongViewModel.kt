@@ -107,6 +107,9 @@ class SongViewModel(private val repository: SongRepository,userId: Int) : ViewMo
     }
 
     fun setCurrentSong(song:Song){
+        if (song == current_song.value) {
+            return
+        }
         viewModelScope.launch {
             // Ambil data terbaru dari DB
             val dbSong = repository.getSong(song.id)
