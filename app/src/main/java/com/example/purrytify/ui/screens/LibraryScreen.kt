@@ -102,7 +102,7 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
                         setShowPlayer(true)
                         },
                         onToggleLike = {song ->
-                            viewModel.toggleLikeSong(song)
+                            songViewModel.toggleLikeSong(song)
                         }
                     )
                 }
@@ -117,14 +117,14 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
             song = song,
             isPlaying = true,
             progress = 0.0f,
-            songViewModel = viewModel,
+            songViewModel = songViewModel,
             onSongChange = { newId ->
                 currentSongId = (newId + allSongs.size) % allSongs.size
                 setSelectedSong(allSongs[currentSongId])
 
             },
             onToggleLike = {
-                viewModel.toggleLikeSong(song)
+                songViewModel.toggleLikeSong(song)
             }
         )
 
