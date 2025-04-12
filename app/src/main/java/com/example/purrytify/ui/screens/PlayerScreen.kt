@@ -15,7 +15,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.HeartBroken
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -50,6 +55,7 @@ import com.example.purrytify.viewmodel.PlayerViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.purrytify.model.Song
 import com.example.purrytify.viewmodel.PlayerViewModelFactory
+import com.example.purrytify.viewmodel.SongViewModel
 
 
 @Composable
@@ -60,22 +66,24 @@ fun PlayerScreen(
     progress: Float = 0.3f, // 30% played
     onNext:()-> Unit,
     onPrevious:()-> Unit,
+    onToggleLike: () -> Unit,
+    songViewModel: SongViewModel
 ) {
     val context = LocalContext.current
     val appContext = LocalContext.current.applicationContext as Application
 
-    val viewModel: PlayerViewModel = viewModel(
+    val playerViewModel: PlayerViewModel = viewModel(
         factory = PlayerViewModelFactory(appContext)
     )
 
-    val isPlaying by viewModel.isPlaying.collectAsState()
-    val isLooping by viewModel.isLooping.collectAsState()
-    val progress by viewModel.progress.collectAsState()
+    val isPlaying by playerViewModel.isPlaying.collectAsState()
+    val isLooping by playerViewModel.isLooping.collectAsState()
+    val progress by playerViewModel.progress.collectAsState()
     val songUri = song.audioPath.toUri()
     val artworkUri = song.artworkPath?.toUri()
 
     LaunchedEffect(songUri) {
-        viewModel.prepareAndPlay(songUri, onSongComplete = onNext)
+        playerViewModel.prepareAndPlay(songUri, onSongComplete = onNext)
     }
 
     Column(
@@ -84,7 +92,23 @@ fun PlayerScreen(
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ){
+
+            IconButton(onClick = {}) {
+                Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Minimize Player")
+            }
+
+            IconButton(onClick = {}) {
+                Icon(Icons.Default.Edit, contentDescription = "Edit")
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Artwork
         Box(
@@ -129,8 +153,11 @@ fun PlayerScreen(
                 Text(song.artist, style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
 
             }
-            IconButton(onClick = {}) {
-                Icon(Icons.Default.HeartBroken, contentDescription = "Like")
+            IconButton(onClick = { songViewModel.toggleLikeSong(song) }) {
+                Icon(
+                    imageVector = if (song.liked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = "Toggle Like"
+                )
             }
         }
 
@@ -138,7 +165,7 @@ fun PlayerScreen(
 
         Slider(
             value = progress,
-            onValueChange = { viewModel.seekTo(it) },
+            onValueChange = { playerViewModel.seekTo(it) },
             valueRange = 0f..song.duration.toFloat()/1000,
             modifier = Modifier.fillMaxWidth(),
             colors = SliderDefaults.colors(
@@ -174,7 +201,7 @@ fun PlayerScreen(
 
             // Play/Pause Button
             IconButton(
-                onClick = { viewModel.playPause() },
+                onClick = { playerViewModel.playPause() },
                 modifier = Modifier
                     .size(72.dp)
                     .background(
@@ -194,7 +221,7 @@ fun PlayerScreen(
             IconButton(onClick = { onNext() }) {
                 Icon(Icons.Default.SkipNext, contentDescription = "Next")
             }
-            IconButton(onClick = { viewModel.toggleLoop() }) {
+            IconButton(onClick = { playerViewModel.toggleLoop() }) {
                 Icon(
                     imageVector = if (isLooping) Icons.Default.RepeatOne else Icons.Default.Repeat,
                     contentDescription = "Repeat")
@@ -211,7 +238,9 @@ fun PlayerModalBottomSheet(
     song:Song,
     isPlaying: Boolean,
     progress: Float,
-    onSongChange: (Int) -> Unit
+    songViewModel: SongViewModel,
+    onSongChange: (Int) -> Unit,
+    onToggleLike: () -> Unit
 ) {
     if (showSheet) {
         ModalBottomSheet(
@@ -224,7 +253,10 @@ fun PlayerModalBottomSheet(
                 isPlaying = isPlaying,
                 progress = progress,
                 onNext = { onSongChange(song.id) },
-                onPrevious = { onSongChange(song.id - 2) }
+                onPrevious = { onSongChange(song.id - 2) },
+                songViewModel= songViewModel,
+                onToggleLike= onToggleLike,
+
             )
         }
     }

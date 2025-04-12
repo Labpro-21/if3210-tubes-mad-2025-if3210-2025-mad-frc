@@ -11,5 +11,5 @@ class SongRepository(private val songDao: SongDao) {
     suspend fun getAllLikedSongs():Flow<List<Song>> = songDao.getAllLikedSongs()
     suspend fun getAllSongsOrdered(): Flow<List<Song>> = songDao.getAllSongsOrdered()
     suspend fun updateSong(id:Int, newArtist: String, newTitle: String, newArtwork: String) = songDao.updateSong(id,newArtist,newTitle,newArtwork)
-
+    suspend fun toggleLike(id:Int) = songDao.toggleLike(id)
 }
