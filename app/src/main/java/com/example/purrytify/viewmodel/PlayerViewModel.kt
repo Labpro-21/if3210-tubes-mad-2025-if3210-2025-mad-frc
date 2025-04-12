@@ -22,6 +22,8 @@ import javax.inject.Inject
 class PlayerViewModel @Inject constructor(
     private val context: Application
 ) : AndroidViewModel(context) {
+    private val _shouldClosePlayerSheet = MutableStateFlow(false)
+    val shouldClosePlayerSheet: StateFlow<Boolean> = _shouldClosePlayerSheet
 
     private val _exoPlayer = ExoPlayer.Builder(context).build()
 //    val exoPlayer: ExoPlayer get() = _exoPlayer
@@ -105,10 +107,21 @@ class PlayerViewModel @Inject constructor(
         _exoPlayer.seekTo((seconds*1000).toLong())
     }
 
-//
-//    fun updateProgress(value: Float) {
-//        _progress.value = value
-//    }
+    fun stopPlayer() {
+        _exoPlayer.stop()
+        _exoPlayer.clearMediaItems()
+        _isPlaying.value = false
+        _progress.value = 0f
+        currentUri = null
+    }
+
+    fun closePlayerSheet() {
+        _shouldClosePlayerSheet.value = true
+    }
+
+    fun resetCloseSheetFlag() {
+        _shouldClosePlayerSheet.value = false
+    }
 
     override fun onCleared() {
         super.onCleared()
