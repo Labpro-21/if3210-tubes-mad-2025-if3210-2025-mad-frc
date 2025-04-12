@@ -40,11 +40,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.core.net.toUri
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import com.example.purrytify.ui.InsertSongPopUp
@@ -52,16 +54,22 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import com.example.purrytify.ui.navBar.BottomNavBar
+import com.example.purrytify.viewmodel.PlayerMode
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewModel: SongViewModel) {
     val context = LocalContext.current
 
     val allSongs by songViewModel.songs.collectAsState()
     val likedSongs by songViewModel.likedSongs.collectAsState()
+    val currentSong by viewModel.current_song.collectAsState()
     var currentSongId by remember { mutableStateOf(0) }
-
+    val playerMode = remember { mutableStateOf(PlayerMode.MINI) }
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = false, // allow partially expanded state
+        confirmValueChange = { true } // allow transition freely
+    )
     // Tab state
     val tabs = listOf("All Songs", "Liked Songs")
     val (selectedTabIndex, setSelectedTabIndex) = remember { mutableIntStateOf(0) }
@@ -112,8 +120,11 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
 
     selectedSong?.let { song ->
         PlayerModalBottomSheet(
+            sheetState = sheetState,
             showSheet = showPlayer,
-            onDismiss = { setShowPlayer(false) },
+            onDismiss = {
+                playerMode.value = PlayerMode.MINI
+                setShowPlayer(false) },
             song = song,
             isPlaying = true,
             progress = 0.0f,
@@ -127,6 +138,7 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
                 songViewModel.toggleLikeSong(song)
             }
         )
+        viewModel.setCurrentSong(song)
 
     }
 }
