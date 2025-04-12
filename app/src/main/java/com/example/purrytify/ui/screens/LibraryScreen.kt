@@ -45,6 +45,10 @@ import androidx.compose.material3.TabRow
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import com.example.purrytify.ui.InsertSongPopUp
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import com.example.purrytify.ui.navBar.BottomNavBar
 
 
 @Composable
@@ -174,3 +178,34 @@ fun formatDuration(miliseconds: Long): String {
     return String.format("%02d:%02d", minutes, remainingSeconds)
 }
 
+@Composable
+fun LibraryScreenWithBottomNav(
+    onNavigateToHome: () -> Unit,
+    onNavigateToProfile: () -> Unit,
+    songViewModel: SongViewModel,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Scaffold(
+        bottomBar = {
+            BottomNavBar(
+                currentRoute = "library",
+                onItemSelected = { route ->
+                    when (route) {
+                        "home" -> onNavigateToHome()
+                        "profile" -> onNavigateToProfile()
+                        // Jika route-nya "library", sedang aktif, tidak perlu action.
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
+        Box(modifier = Modifier.padding(innerPadding)) {
+            // Panggil konten LibraryScreen yang sudah ada di LibraryScreen.kt
+            LibraryScreen(
+                onBack = onBack,
+                songViewModel = songViewModel,
+            )
+        }
+    }
+}
