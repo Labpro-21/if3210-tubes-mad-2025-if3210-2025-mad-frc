@@ -12,14 +12,14 @@ class SongRepository(private val songDao: SongDao, private val userDao: UserDao)
         songDao.insertSong(song)
         userDao.incrementSongs(song.userId)
     }
-    suspend fun getAllSongs(): List<Song> = songDao.getAllSongs()
+    suspend fun getAllSongs(userId: Int): Flow<List<Song>> = songDao.getAllSongs(userId)
     suspend fun deleteSong(id: Int){
         songDao.deleteSong(id)
         userDao.decrementSongs(getSong(id).userId)
     }
 
-    suspend fun getAllLikedSongs(): Flow<List<Song>> = songDao.getAllLikedSongs()
-    suspend fun getAllSongsOrdered(): Flow<List<Song>> = songDao.getAllSongsOrdered()
+    suspend fun getAllLikedSongs(userId: Int): Flow<List<Song>> = songDao.getAllLikedSongs(userId)
+    suspend fun getAllSongsOrdered(userId: Int): Flow<List<Song>> = songDao.getAllSongsOrdered(userId)
     suspend fun updateSong(id:Int, newArtist: String, newTitle: String, newArtwork: String?) = songDao.updateSong(id,newArtist,newTitle,newArtwork)
     suspend fun toggleLike(id:Int) {
         songDao.toggleLike(id)
@@ -31,8 +31,8 @@ class SongRepository(private val songDao: SongDao, private val userDao: UserDao)
         }
     }
 
-    suspend fun getNewSongs(): Flow<List<Song>> = songDao.getNewSongs()
-    suspend fun getRecentlyPlayed(): Flow<List<Song>> = songDao.getRecentlyPlayed()
+    suspend fun getNewSongs(userId: Int): Flow<List<Song>> = songDao.getNewSongs(userId)
+    suspend fun getRecentlyPlayed(userId: Int): Flow<List<Song>> = songDao.getRecentlyPlayed(userId)
     suspend fun incrementListenedSongs(userId: Int) = userDao.incrementListenedSongs(userId)
     suspend fun updateLastPlayed(userId:Int, lastPlayed:Date) = songDao.updateLastPlayed(userId,lastPlayed)
 }
