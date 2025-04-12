@@ -1,6 +1,7 @@
 package com.example.purrytify.ui.screens
 
 import android.app.Activity
+import android.content.pm.ActivityInfo
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -56,8 +57,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import com.example.purrytify.ui.SongRecyclerView
 import com.example.purrytify.ui.navBar.BottomNavBar
+import com.example.purrytify.ui.LockScreenOrientation
 import com.example.purrytify.viewmodel.PlayerViewModel
 import com.example.purrytify.viewmodel.PlayerViewModelFactory
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -218,6 +221,7 @@ fun LibraryScreenWithBottomNav(
     playerViewModel: PlayerViewModel,
     modifier: Modifier = Modifier
 ) {
+    LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     var showPlayerSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(
