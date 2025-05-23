@@ -12,12 +12,17 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import com.example.purrytify.data.AppDatabase
+import com.example.purrytify.model.Song
+import com.example.purrytify.model.PlayHistory
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.Date
 import javax.inject.Inject
 
 @HiltViewModel
@@ -142,7 +147,22 @@ class PlayerViewModel @Inject constructor(
 
     }
 
+    fun recordPlay(song: Song, listenedMs: Long) {
+        val app: Application = getApplication()
 
+        viewModelScope.launch(Dispatchers.IO) {
+            val dao = AppDatabase.getDatabase(app).songDao()
+            val now = System.currentTimeMillis()
+            dao.insertPlayHistory(
+                PlayHistory(
+                    song_id = song.id,
+                    user_id = song.userId,
+                    played_at = Date(now),
+                    duration_ms = listenedMs
+                )
+            )
+        }
+    }
 }
 
 
