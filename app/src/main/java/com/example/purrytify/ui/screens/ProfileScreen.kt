@@ -34,13 +34,16 @@ import androidx.compose.material3.Scaffold
 import com.example.purrytify.ui.navBar.BottomNavBar
 import com.example.purrytify.ui.LockScreenOrientation
 import android.content.pm.ActivityInfo
+import androidx.compose.material.Card
 import com.example.purrytify.viewmodel.SongViewModel
+import androidx.compose.material3.MaterialTheme
+import com.example.purrytify.model.SoundCapsule
 
 @Composable
 fun ProfileScreen(
     isConnected: Boolean,
     onLogout: () -> Unit,
-    songViewModel: SongViewModel
+    songViewModel: SongViewModel,
 ) {
     val context = LocalContext.current
 
@@ -50,8 +53,11 @@ fun ProfileScreen(
     val userRepository = remember { UserRepository(AppDatabase.getDatabase(context).userDao()) }
     // Mendapatkan ProfileViewModel melalui factory agar dapat menyuntikkan TokenManager
     val profileViewModel: ProfileViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
-        factory = ProfileViewModelFactory(tokenManager, userRepository, sessionManager)
+        factory = ProfileViewModelFactory(context, tokenManager, userRepository, sessionManager)
     )
+
+    val analytics by profileViewModel.analytics.collectAsState()
+    LaunchedEffect(Unit) { profileViewModel.loadAnalytics() }
 
     var showNoInternetDialog by remember { mutableStateOf(!isConnected) }
 
@@ -77,7 +83,9 @@ fun ProfileScreen(
         likedSongs = uiState.likedSongs,
         listenedSongs = uiState.listenedSongs,
         onLogout = onLogout,
-        songViewModel = songViewModel
+        songViewModel = songViewModel,
+        analytics = analytics,
+        profileViewModel = profileViewModel
     )
 }
 
@@ -90,7 +98,9 @@ fun ProfileContent(
     likedSongs: Int,
     listenedSongs: Int,
     onLogout: () -> Unit,
-    songViewModel: SongViewModel
+    songViewModel: SongViewModel,
+    analytics: SoundCapsule,
+    profileViewModel: ProfileViewModel
 ) {
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
     // Background gradasi dari #006175 ke #121212
@@ -175,6 +185,27 @@ fun ProfileContent(
                 StatItem(count = songsAdded, label = "SONGS")
                 StatItem(count = likedSongs, label = "LIKED")
                 StatItem(count = listenedSongs, label = "LISTENED")
+            }
+        }
+    }
+
+    Text("Sound Capsule", style = MaterialTheme.typography.titleMedium)
+    Spacer(Modifier.height(8.dp))
+
+    if (analytics.month == null) {
+        Text("No data available", color = Color.Gray)
+    } else {
+        Column(Modifier.padding(16.dp)) {
+            Text("Time listened: ${analytics.formattedTimeListened()}")
+            Text("Top artist: ${analytics.topArtist ?: "No data"}")
+            Text("Top song: ${analytics.topSong ?: "No data"}")
+            Text("Day-streak: ${analytics.dayStreak ?: 0} days")
+            Spacer(Modifier.height(12.dp))
+            Button(onClick = {
+                val file = profileViewModel.exportCsv()
+                /* share via Intent jika perlu */
+            }) {
+                Text("Export CSV")
             }
         }
     }
