@@ -7,10 +7,11 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.purrytify.model.Song
 import com.example.purrytify.model.User
+import com.example.purrytify.model.PlayHistory
 
 import com.example.purrytify.utils.Converters // or the correct path to your Converters.kt
 
-@Database(entities = [Song::class,User::class], version = 2)
+@Database(entities = [Song::class,User::class,PlayHistory::class], version = 3)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun songDao(): SongDao
