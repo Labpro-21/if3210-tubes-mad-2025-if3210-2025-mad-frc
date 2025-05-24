@@ -1,9 +1,16 @@
 package com.example.purrytify
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.ViewModelProvider
 import com.example.purrytify.repository.SongRepository
 import com.example.purrytify.data.AppDatabase
@@ -18,29 +25,40 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-
+import androidx.core.content.ContextCompat
+import android.Manifest
 
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-//        val songDao = AppDatabase.getDatabase(applicationContext).songDao()
-//        val repository = SongRepository(songDao)
-//        val viewModelFactory = SongViewModelFactory(repository)
-//        val songViewModel = ViewModelProvider(this, viewModelFactory).get(SongViewModel::class.java)
-
         enableEdgeToEdge()
-
-//        setContent {
-//            PurrytifyTheme {
-//                InsertSongPopUp(songViewModel = songViewModel)
-//                LibraryScreen()
-//            }
         setContent {
             PurrytifyTheme {
                 AppNavigation()
+                requestNotificationPermission()
             }
         }
     }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (!isGranted) {
+            Toast.makeText(this, "Notifikasi dinonaktifkan", Toast.LENGTH_SHORT).show()
+        }
+    }
+
 }

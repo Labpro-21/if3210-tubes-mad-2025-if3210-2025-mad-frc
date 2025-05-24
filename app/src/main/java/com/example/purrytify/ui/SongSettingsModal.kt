@@ -10,8 +10,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.purrytify.ui.audio_routing.AudioRoutingModal
 import com.example.purrytify.viewmodel.PlayerViewModel
 import com.example.purrytify.viewmodel.SongViewModel
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,7 +36,7 @@ fun SongSettingsModal(
             val currentSong by songViewModel.current_song.collectAsState()
             InsertSongPopUp(songViewModel,currentSong)
             ConfirmDelete(songViewModel,playerViewModel)
-
+            AudioRoutingModal()
         }
     }
 }

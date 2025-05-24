@@ -1,6 +1,7 @@
 package com.example.purrytify.viewmodel
 
 import android.R
+import android.content.Context
 import android.util.Log
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
@@ -14,7 +15,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.Date
 
-class SongViewModel(private val repository: SongRepository,userId: Int) : ViewModel() {
+class SongViewModel(
+    private val repository: SongRepository,
+    userId: Int,
+    context: Context
+) : ViewModel() {
 
     private val _songs = MutableStateFlow<List<Song>>(emptyList())
     private val _liked_songs = MutableStateFlow<List<Song>>(emptyList())

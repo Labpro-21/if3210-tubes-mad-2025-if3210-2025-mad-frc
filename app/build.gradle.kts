@@ -90,6 +90,9 @@ dependencies {
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation ("androidx.security:security-crypto:1.1.0-alpha07")
+    implementation("androidx.media3:media3-ui:1.3.1")
+    implementation("androidx.media3:media3-exoplayer:1.3.1")
+    implementation ("androidx.media:media:1.6.0")
 
     // Room Database
     implementation(libs.androidx.room.runtime)
