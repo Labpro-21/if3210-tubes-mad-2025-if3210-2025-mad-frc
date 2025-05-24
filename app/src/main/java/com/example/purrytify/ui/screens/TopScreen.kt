@@ -1,5 +1,6 @@
 package com.example.purrytify.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -161,8 +162,10 @@ fun TopScreen(
                         // Play first song in list
                         if (onlineSongs.isNotEmpty()) {
                             val firstSong = onlineSongs.first()
+                            onlineViewModel.sendSongsToMusicService()
                             songViewModel.setCurrentSong(firstSong)
-                            playerViewModel.prepareAndPlay(firstSong.audioPath.toUri()) { }
+                            //playerViewModel.prepareAndPlay(firstSong.audioPath.toUri()) { }
+                            playerViewModel.prepareAndPlay(0)
                         }
                     },
                     modifier = Modifier.size(72.dp),
@@ -193,8 +196,12 @@ fun TopScreen(
                     song = song,
                     rank = index + 1,
                     onClick = {
+                        onlineViewModel.sendSongsToMusicService()
                         songViewModel.setCurrentSong(song)
-                        playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
+//                        playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
+                        Log.d("TopScreen", "Prepare and Play song ID-${song.id-1}")
+                        playerViewModel.prepareAndPlay(song.id-1)
+
                     }
                 )
             }

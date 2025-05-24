@@ -32,8 +32,6 @@ import com.example.purrytify.repository.SongRepository
 import com.example.purrytify.data.AppDatabase
 import com.example.purrytify.model.Song
 import com.example.purrytify.viewmodel.SongViewModel
-import com.example.purrytify.viewmodel.SongViewModelFactory
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MusicNote
@@ -134,7 +132,9 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
                     currentSongId = index
 //                    setSelectedSong(song)
                     songViewModel.setCurrentSong(song)
-                    playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
+//                    playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
+                    playerViewModel.prepareAndPlay(index)
+
                     setShowPlayer(true)
                 },
                 onToggleLike = { song ->

@@ -4,12 +4,17 @@ import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
+import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
+import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.support.v4.media.session.MediaSessionCompat
 import android.util.Log
+import android.widget.RemoteViews
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.NotificationCompat
 import androidx.media3.common.MediaItem
 import com.example.purrytify.MyApp
@@ -17,6 +22,9 @@ import com.example.purrytify.R
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.core.net.toUri
 import androidx.media3.common.Player
+import coil.imageLoader
+import coil.request.ImageRequest
+import com.example.purrytify.model.Song
 
 class MusicService : Service() {
 
@@ -26,6 +34,8 @@ class MusicService : Service() {
     var progress : Float = 0f;
     private var progressHandler: Handler? = null
     private var progressRunnable: Runnable? = null
+    private var playlist: List<Song> = emptyList()
+    private var currentSongId:Int? = 0;
 
     override fun onCreate() {
         super.onCreate()
@@ -34,13 +44,36 @@ class MusicService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val songUriString = intent?.getStringExtra("SONG_URI")
-        if (songUriString != null) {
-            val uri = songUriString.toUri()
-            playFromUri(uri)
+//        val songUriString = intent?.getStringExtra("SONG_URI")
+//        if (songUriString != null) {
+//            val uri = songUriString.toUri()
+//            playFromUri(uri)
+//        }
+        val hasSongId = intent?.hasExtra("SONG_ID") ?: false
+        Log.d("MusicService", "hasSongId: $hasSongId")
+
+        if (hasSongId) {
+            val songId = intent.getIntExtra("SONG_ID", 0)
+            Log.d("MusicService", "SongId: $songId")
+
+            currentSongId = songId
+            playSong()
         }
 
         when(intent?.action) {
+            "ACTION_SET_PLAYLIST" ->{
+                @Suppress("DEPRECATION")
+                val songs: ArrayList<Song>? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    intent.getParcelableArrayListExtra("playlist", Song::class.java)
+                } else {
+                    intent.getParcelableArrayListExtra("playlist") // deprecated, tapi masih bisa dipakai untuk API < 33
+                }
+                Log.d("MusicService", "Playlist updated: ${playlist.size} songs")
+
+                if (songs != null) {
+                    playlist = songs
+                }
+            }
             MyApp.ACTION_PLAY -> {
                 if (exoPlayer.isPlaying) {
                     pause()
@@ -81,7 +114,7 @@ class MusicService : Service() {
                 if (exoPlayer.isPlaying) {
                     val intent = Intent("ACTION_UPDATE_PROGRESS")
                     intent.putExtra("PROGRESS", exoPlayer.currentPosition)
-                    Log.d("MusicService", "current position:${exoPlayer.currentPosition}")
+//                    Log.d("MusicService", "current position:${exoPlayer.currentPosition}")
                     sendBroadcast(intent)
                 }
                 progressHandler?.postDelayed(this, 500)
@@ -119,9 +152,47 @@ class MusicService : Service() {
         isPlaying = true
     }
 
+    private fun playSong(){
+        if (playlist.isEmpty()) {
+            Log.e("MusicService", "Playlist is empty, cannot play song.")
+            return
+        }
+
+        if (currentSongId == null || currentSongId !in playlist.indices) {
+            Log.e("MusicService", "Invalid currentSongId: $currentSongId")
+            return
+        }
+        Log.d("MusicService", "playing song currentSongId: $currentSongId")
+        val songUri = playlist[currentSongId!!].audioPath.toUri()
+        val mediaItem = MediaItem.fromUri(songUri)
+        progress = 0f
+        exoPlayer.setMediaItem(mediaItem)
+        exoPlayer.prepare()
+        startForeground(1, createNotification())
+
+        exoPlayer.play()
+        exoPlayer.addListener(object : Player.Listener {
+            override fun onPlaybackStateChanged(state: Int) {
+                if (state == Player.STATE_ENDED) {
+                    skipNext()
+                    sendBroadcast(Intent("ACTION_SONG_COMPLETE"))
+                }
+            }
+        })
+        isPlaying = true
+    }
 
     private fun createNotification(): Notification {
         Log.d("MusicService","CreatingNotification")
+        val song = playlist[currentSongId!!]
+//        val customView = RemoteViews(packageName, R.layout.notification_player)
+//        // Set teks dan gambar
+//        customView.setTextViewText(R.id.notification_title, song.title)
+//        customView.setTextViewText(R.id.notification_artist, song.artist)
+//        customView.setImageViewResource(R.id.notification_play_pause, if (exoPlayer.isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
+
+
+
         val playPauseIcon = if (exoPlayer.isPlaying) R.drawable.ic_pause else R.drawable.ic_play
 
         val playPauseIntent = Intent(this, MusicService::class.java).apply {
@@ -152,9 +223,10 @@ class MusicService : Service() {
 
 
         return NotificationCompat.Builder(this, MyApp.CHANNEL_ID)
-            .setContentTitle("Purrytify")
-            .setContentText("Playing music")
+            .setContentTitle(song.title)
+            .setContentText(song.artist)
             .setSmallIcon(R.mipmap.ic_launcher)
+//            .setCustomContentView(customView)
             .addAction(R.drawable.ic_previous, "Previous", prevPendingIntent)
             .addAction(playPauseIcon, "Play/Pause", playPausePendingIntent)
             .addAction(R.drawable.ic_next, "Next", nextPendingIntent)
@@ -171,10 +243,35 @@ class MusicService : Service() {
 
     private fun skipNext() {
         // contoh: skip ke lagu berikutnya
+        Log.d("ONNEXT", "currentSongId: $currentSongId")
+
+        currentSongId?.let {
+            if (it < playlist.size - 1) {
+                currentSongId = it + 1
+            }else{
+                currentSongId = 0
+            }
+        }
+        Log.d("ONNEXT", "new currentSongId: $currentSongId")
+
+        playSong()
     }
 
     private fun skipPrevious() {
         // contoh: kembali ke lagu sebelumnya
+        Log.d("ONPREVIOUS", "currentSongId: $currentSongId")
+
+        currentSongId?.let {
+            if (it > 0) {
+                currentSongId = it - 1
+            }else{
+                currentSongId = playlist.size - 1
+            }
+        }
+        Log.d("ONPREVIOUS", " new currentSongId: $currentSongId")
+
+
+        playSong()
     }
 
     private fun notifyPlayingStateChanged(isPlaying: Boolean) {

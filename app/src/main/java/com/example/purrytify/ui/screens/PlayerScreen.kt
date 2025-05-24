@@ -86,7 +86,9 @@ fun PlayerScreen(
 
     LaunchedEffect(songUri) {
         songUri?.let {
-            playerViewModel.prepareAndPlay(it, onSongComplete = onNext)
+//            playerViewModel.prepareAndPlay(it, onSongComplete = onNext)
+            playerViewModel.prepareAndPlay(currentSong!!.id)
+
         }
     }
 

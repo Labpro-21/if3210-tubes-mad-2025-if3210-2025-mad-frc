@@ -6,6 +6,7 @@ plugins {
 //    id("dagger.hilt.android.plugin")
     alias(libs.plugins.hilt)
     kotlin("kapt") // Tambahkan ini untuk annotation processing
+    id("kotlin-parcelize")
 }
 
 android {

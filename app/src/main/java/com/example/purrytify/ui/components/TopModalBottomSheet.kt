@@ -1,5 +1,6 @@
 package com.example.purrytify.ui.components
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -186,8 +187,10 @@ fun TopModalBottomSheet(
                                 onClick = {
                                     if (onlineSongs.isNotEmpty()) {
                                         val firstSong = onlineSongs.first()
+                                        onlineViewModel.sendSongsToMusicService()
                                         songViewModel.setCurrentSong(firstSong)
-                                        playerViewModel.prepareAndPlay(firstSong.audioPath.toUri()) { }
+                                        //playerViewModel.prepareAndPlay(firstSong.audioPath.toUri()) { }
+                                        playerViewModel.prepareAndPlay(0)
                                     }
                                 },
                                 modifier = Modifier.size(60.dp), // Size sesuai permintaan
@@ -226,8 +229,11 @@ fun TopModalBottomSheet(
                             song = song,
                             rank = index + 1,
                             onClick = {
+                                onlineViewModel.sendSongsToMusicService()
                                 songViewModel.setCurrentSong(song)
-                                playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
+//                        playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
+                                Log.d("TopScreen", "Prepare and Play song ID-${index}")
+                                playerViewModel.prepareAndPlay(index)
                             }
                         )
                     }

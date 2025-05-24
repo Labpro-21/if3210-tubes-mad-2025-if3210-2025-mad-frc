@@ -56,7 +56,7 @@ fun AppNavigation() {
     val userId = sessionManager.getUserId() ?: 0
     val songViewModel: SongViewModel = viewModel(
         key = "songViewModel_${userId}",
-        factory = SongViewModelFactory(repository, userId)
+        factory = SongViewModelFactory(repository, userId, (context as ComponentActivity).application)
     )
     val networkViewModel: NetworkViewModel = viewModel()
     val isConnected by networkViewModel.isConnected.observeAsState(initial = true)
@@ -69,13 +69,13 @@ fun AppNavigation() {
     }
 
     val playerViewModel: PlayerViewModel = viewModel<PlayerViewModel>(
-        factory = PlayerViewModelFactory((context as ComponentActivity).application)
+        factory = PlayerViewModelFactory(context.application)
     )
 
     // Tambahkan OnlineSongViewModel
     val api = remember { RetrofitClient.create(tokenManager) }
     val onlineViewModel: OnlineSongViewModel = viewModel(
-        factory = OnlineSongViewModelFactory(api, sessionManager)
+        factory = OnlineSongViewModelFactory(api, sessionManager,context.application)
     )
 
     NavHost(navController = navController, startDestination = startDestination) {

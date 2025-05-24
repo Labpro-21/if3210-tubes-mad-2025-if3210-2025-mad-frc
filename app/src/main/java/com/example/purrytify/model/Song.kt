@@ -5,6 +5,8 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.ForeignKey
 import java.util.Date
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
 
 @Entity(
     tableName = "song",
@@ -17,6 +19,8 @@ import java.util.Date
         )
     ]
 )
+
+@Parcelize
 data class Song(
     @PrimaryKey(autoGenerate = true) val id: Int=0,
     @ColumnInfo(name="title") val title: String="Unnamed Song",
@@ -28,4 +32,4 @@ data class Song(
     @ColumnInfo(name="addedDate") val addedDate: Date,
     @ColumnInfo(name="liked") val liked: Boolean=false,
     @ColumnInfo(name="user_id") val userId: Int=0,
-)
+): Parcelable

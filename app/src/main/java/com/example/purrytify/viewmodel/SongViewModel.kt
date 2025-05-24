@@ -1,13 +1,15 @@
 package com.example.purrytify.viewmodel
 
 import android.R
-import android.content.Context
+import android.app.Application
+import android.content.Intent
 import android.util.Log
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.purrytify.repository.SongRepository
 import com.example.purrytify.model.Song
+import com.example.purrytify.service.MusicService
 import com.example.purrytify.utils.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +20,7 @@ import java.util.Date
 class SongViewModel(
     private val repository: SongRepository,
     userId: Int,
-    context: Context
+    private val context: Application,
 ) : ViewModel() {
 
     private val _songs = MutableStateFlow<List<Song>>(emptyList())
@@ -60,17 +62,32 @@ class SongViewModel(
         }
     }
 
+    private fun sendSongsToMusicService() {
+        val songList = _songs.value
+        Log.d("SongViewModel", "Sending Playlist of ${songList.size} length")
+        val intent = Intent(context, MusicService::class.java).apply {
+            action = "ACTION_SET_PLAYLIST"
+            putParcelableArrayListExtra("playlist", ArrayList(songList))
+            Log.d("SongViewModel", "Sending Playlist of ${ArrayList(songList).size} length")
+        }
+        context.startService(intent)
+    }
+
+
     fun loadSongs(userId:Int) {
         Log.d("SongViewModel", "Loading songs for userId: $userId")
         viewModelScope.launch {
             repository.getAllSongs(userId).collect { songList ->
                 _songs.value = songList
 
-                // Update _current_song jika ID-nya masih ada di list
+                // Update current song jika masih valid
                 _current_song.value?.let { current ->
                     val updated = songList.find { it.id == current.id }
                     _current_song.value = updated
                 }
+
+                // Kirim ke MusicService setelah _songs diperbarui
+                sendSongsToMusicService()
             }
         }
 
@@ -148,6 +165,9 @@ class SongViewModel(
         }
     }
 
+    fun getSongIndex(song:Song):Int {
+        return _songs.value.indexOf(song)
+    }
 
 
 }

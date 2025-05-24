@@ -285,6 +285,19 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     }
 
+    fun prepareAndPlay(id: Int) {
+
+        // Kirim intent ke MusicService untuk memainkan lagu
+        val intent = Intent(appContext, MusicService::class.java).apply {
+            action = MyApp.ACTION_PLAY
+            putExtra("SONG_ID", id)
+        }
+        appContext.startService(intent)
+
+    }
+
+
+
     override fun onCleared() {
         super.onCleared()
         appContext.unregisterReceiver(songCompleteReceiver)

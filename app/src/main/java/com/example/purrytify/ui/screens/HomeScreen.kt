@@ -44,6 +44,7 @@ import com.example.purrytify.viewmodel.PlayerViewModel
 import com.example.purrytify.viewmodel.SongViewModel
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
+import android.util.Log
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -194,7 +195,11 @@ fun HomeScreenContent(
                             song = song,
                             onClick = {
                                 songViewModel.setCurrentSong(song)
-                                playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
+//                                playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
+                                val index = songViewModel.getSongIndex(song)
+                                Log.d("HomeScreen", "Picked SongId: ${index}")
+                                playerViewModel.prepareAndPlay(index)
+
                             },
                             onMoreClick = {
                                 selectedSong = song
@@ -232,7 +237,11 @@ fun HomeScreenContent(
                     song = song,
                     onClick = {
                         songViewModel.setCurrentSong(song)
-                        playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
+//                        playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
+                        val index = songViewModel.getSongIndex(song)
+                        Log.d("HomeScreen", "Picked SongId: ${index}")
+                        playerViewModel.prepareAndPlay(index)
+
                     },
                     onMoreClick = {
                         selectedSong = song
@@ -527,7 +536,7 @@ fun HomeScreenResponsive(
     }
     val session = remember<SessionManager> { SessionManager(context) }
 
-    val factory = remember<OnlineSongViewModelFactory> { OnlineSongViewModelFactory(api, session) }
+    val factory = remember<OnlineSongViewModelFactory> { OnlineSongViewModelFactory(api, session,appContext!!) }
     val onlineViewModel: OnlineSongViewModel =
         viewModel(factory = factory)
 
