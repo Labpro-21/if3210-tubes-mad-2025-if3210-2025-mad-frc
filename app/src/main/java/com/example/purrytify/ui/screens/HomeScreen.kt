@@ -73,7 +73,6 @@ import androidx.compose.material3.ModalBottomSheet
 import java.util.Date
 
 import com.example.purrytify.ui.components.SongSettingsModal
-import com.example.purrytify.ui.components.TopModalBottomSheet
 
 @Composable
 fun HomeScreenContent(
@@ -85,6 +84,7 @@ fun HomeScreenContent(
     recentlyPlayedFromDb: List<Song>,
     onlineViewModel: OnlineSongViewModel,
     songVm: SongViewModel,
+    onNavigateToTopSong: (String) -> Unit,
 ) {
     val context = LocalContext.current
     val appContext = if (!LocalInspectionMode.current)
@@ -95,10 +95,6 @@ fun HomeScreenContent(
     var showSongSettings by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var selectedSong by remember { mutableStateOf<Song?>(null) }
-
-    // State untuk Top50 Modal Bottom Sheet
-    var showTopSheet by remember { mutableStateOf(false) }
-    var selectedChartType by remember { mutableStateOf("global") }
 
     if (appContext == null) {
         Box(
@@ -146,9 +142,9 @@ fun HomeScreenContent(
                     title = "Top 50",
                     subtitle = "GLOBAL",
                     colors = listOf(Color(0xFF0B4870), Color(0xFF16BFFD)),
-                    onClick = {
-                        selectedChartType = "global"
-                        showTopSheet = true}
+                    onClick = { 
+                        onNavigateToTopSong("global")
+                    }
                 )
                 
                 // Top 50 Indonesia
@@ -156,9 +152,8 @@ fun HomeScreenContent(
                     title = "Top 10",
                     subtitle = "INDONESIA",
                     colors = listOf(Color(0xFFE34981), Color(0xFFFFB25E)),
-                    onClick = {
-                        selectedChartType = "ID"
-                        showTopSheet = true
+                    onClick = { 
+                        onNavigateToTopSong("id")
                     }
                 )
             }
@@ -243,7 +238,7 @@ fun HomeScreenContent(
         }
     }
 
-    // Modal Settings & Delete Dialog (sama seperti sebelumnya)
+    // Modal Settings
     SongSettingsModal(
         visible = showSongSettings,
         onDismiss = { showSongSettings = false },
@@ -260,20 +255,13 @@ fun HomeScreenContent(
                 shareOnlineSong(context, song)
             }
         },
+        onDownload = {
+            selectedSong?.let { song ->
+                downloadSong(context, song, songVm)
+            }
+        },
         isOnlineSong = selectedSong?.audioPath?.startsWith("http") == true
     )
-
-    // Top50 Modal Bottom Sheet - TAMBAHAN BARU
-    if (showTopSheet) {
-        TopModalBottomSheet(
-            visible = showTopSheet,
-            chartType = selectedChartType,
-            onlineViewModel = onlineViewModel,
-            songViewModel = songViewModel,
-            playerViewModel = playerViewModel,
-            onDismiss = { showTopSheet = false }
-        )
-    }
 }
 
 @Composable
@@ -285,7 +273,7 @@ fun ChartCard(
 ) {
     Card(
         modifier = Modifier
-            .size(120.dp) // Sama dengan ukuran cover lagu
+            .size(120.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -449,7 +437,7 @@ fun HomeScreenWithBottomNav(
     recentlyPlayedFromDb: List<Song>,
     onlineViewModel: OnlineSongViewModel,
     songVm: SongViewModel,
-    onNavigateToTop50: (String) -> Unit
+    onNavigateToTopSong: (String) -> Unit
 ) {
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     var showPlayerSheet by remember { mutableStateOf(false) }
@@ -501,6 +489,7 @@ fun HomeScreenWithBottomNav(
                 recentlyPlayedFromDb = recentlyPlayedFromDb,
                 onlineViewModel = onlineViewModel,
                 songVm = songViewModel,
+                onNavigateToTopSong = onNavigateToTopSong
             )
         }
     }
@@ -512,7 +501,7 @@ fun HomeScreenResponsive(
     onNavigateToProfile: () -> Unit,
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
-    onNavigateToTop50: (String) -> Unit = {}
+    onNavigateToTopSong: (String) -> Unit = {}
 ) {
     val configuration = LocalConfiguration.current
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR)
@@ -566,7 +555,7 @@ fun HomeScreenResponsive(
                 recentlyPlayedFromDb = recentlyPlayedFromDb,
                 onlineViewModel = onlineViewModel,
                 songVm = songViewModel,
-                onNavigateToTop50 = onNavigateToTop50
+                onNavigateToTopSong = onNavigateToTopSong
             )
         }
     } else {
@@ -579,7 +568,7 @@ fun HomeScreenResponsive(
             recentlyPlayedFromDb = recentlyPlayedFromDb,
             onlineViewModel = onlineViewModel,
             songVm = songViewModel,
-            onNavigateToTop50 = onNavigateToTop50
+            onNavigateToTopSong = onNavigateToTopSong
         )
     }
 }

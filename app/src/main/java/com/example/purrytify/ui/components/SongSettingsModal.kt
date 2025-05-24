@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
@@ -23,6 +24,7 @@ fun SongSettingsModal(
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onShare: () -> Unit,
+    onDownload: () -> Unit,
     isOnlineSong: Boolean = false
 ) {
     if (!visible) return
@@ -52,6 +54,17 @@ fun SongSettingsModal(
 
             // Share option (only for online songs)
             if (isOnlineSong) {
+                ListItem(
+                    headlineContent = { Text("Download Song") },
+                    leadingContent = {
+                        Icon(Icons.Default.Download, contentDescription = null)
+                    },
+                    modifier = Modifier.clickable {
+                        onDownload()
+                        onDismiss()
+                    }
+                )
+
                 ListItem(
                     headlineContent = { Text("Share") },
                     leadingContent = { 

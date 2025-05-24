@@ -40,7 +40,6 @@ class PlayerViewModel @Inject constructor(
 
     private var currentUri: Uri? = null
 
-
     init {
         val audioAttributes = AudioAttributes.Builder()
             .setUsage(C.USAGE_MEDIA)

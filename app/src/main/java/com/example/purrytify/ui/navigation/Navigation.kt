@@ -98,6 +98,9 @@ fun AppNavigation() {
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                 songViewModel = songViewModel,
                 playerViewModel = playerViewModel,
+                onNavigateToTopSong = { chartType ->
+                    navController.navigate("top/$chartType")
+                }
             )
         }
         composable(route = Screen.Library.route) {
@@ -124,6 +127,26 @@ fun AppNavigation() {
                     songViewModel.reset()
                 },
                 songViewModel = songViewModel
+            )
+        }
+        composable(
+            route = "top/{chartType}",
+            arguments = listOf(navArgument("chartType") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val chartType = backStackEntry.arguments?.getString("chartType") ?: "global"
+            TopScreen(
+                chartType = chartType,
+                onlineViewModel = onlineViewModel,
+                songViewModel = songViewModel,
+                playerViewModel = playerViewModel,
+                onBack = { navController.popBackStack() },
+                onNavigateToHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
+                },
+                onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
+                onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
             )
         }
     }
