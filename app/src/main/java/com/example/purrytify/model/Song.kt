@@ -28,4 +28,5 @@ data class Song(
     @ColumnInfo(name="addedDate") val addedDate: Date,
     @ColumnInfo(name="liked") val liked: Boolean=false,
     @ColumnInfo(name="user_id") val userId: Int=0,
+    @ColumnInfo(name="isExplicitlyAdded") val isExplicitlyAdded: Boolean = false
 )

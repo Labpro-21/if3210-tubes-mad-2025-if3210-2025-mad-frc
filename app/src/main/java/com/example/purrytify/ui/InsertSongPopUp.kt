@@ -22,16 +22,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.purrytify.model.Song
 import com.example.purrytify.viewmodel.SongViewModel
-import com.example.purrytify.data.UserDao
-import com.example.purrytify.repository.UserRepository
 import java.util.Date
-
 import com.example.purrytify.utils.SessionManager
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -325,32 +321,32 @@ fun handleSaveSong(
     duration: Long,
     songViewModel: SongViewModel,
     onComplete: () -> Unit,
-    song: Song? = null, // Parameter song untuk edit
-
+    song: Song? = null,
 ) {
     if (selectedAudioUri != null) {
         val sessionManager = SessionManager(context)
         val currentUserId = sessionManager.getUserId()
         val songToSave = Song(
-            id = song?.id ?: 0, // Gunakan ID dari song yang ada atau 0 untuk lagu baru
+            id = song?.id ?: 0,
             title = if (title.isBlank()) "Unnamed Song" else title,
             artist = if (artist.isBlank()) "Unnamed Artist" else artist,
             duration = duration,
-            artworkPath = selectedPhotoUri.toString(),
-            audioPath = selectedAudioUri.toString(),
-            addedDate = Date(),
-            lastPlayed = null,
+            artworkPath = selectedPhotoUri?.toString() ?: song?.artworkPath, // Gunakan URI baru jika ada, atau yang lama jika edit
+            audioPath = selectedAudioUri.toString(), // Untuk audioPath, selalu gunakan yang baru jika ada (atau yang lama jika tidak dipilih ulang saat edit)
+            addedDate = song?.addedDate ?: Date(), // Jika baru, set tanggal sekarang. Jika edit, pertahankan tanggal lama.
+            lastPlayed = song?.lastPlayed, // Pertahankan lastPlayed jika edit
+            liked = song?.liked ?: false, // Pertahankan status liked jika edit
             userId = currentUserId,
+            isExplicitlyAdded = true // Selalu true karena dari UI penambahan/edit manual
         )
 
-        if (song != null) {
-            songViewModel.updateSong(songToSave) // Jika song ada, update
-        } else {
-            songViewModel.addSong(songToSave) // Jika song null, tambahkan baru
+        if (song != null) { // Mode Edit
+            songViewModel.updateSong(songToSave)
+        } else { // Mode Tambah Baru
+            songViewModel.addSong(songToSave)
         }
     }
-
-    onComplete() // misalnya untuk menutup sheet atau update UI
+    onComplete()
 }
 
 fun getFileNameFromUri(context: Context, uri: Uri): String {

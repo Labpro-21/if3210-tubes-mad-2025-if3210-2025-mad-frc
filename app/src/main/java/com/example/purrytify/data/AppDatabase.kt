@@ -11,7 +11,7 @@ import com.example.purrytify.model.PlayHistory
 
 import com.example.purrytify.utils.Converters // or the correct path to your Converters.kt
 
-@Database(entities = [Song::class,User::class,PlayHistory::class], version = 3)
+@Database(entities = [Song::class,User::class,PlayHistory::class], version = 4)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun songDao(): SongDao

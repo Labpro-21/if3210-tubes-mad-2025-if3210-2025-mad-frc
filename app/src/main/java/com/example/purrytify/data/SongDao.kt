@@ -14,20 +14,23 @@ interface SongDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertSong(song: Song): Long
 
-    @Query("SELECT * FROM Song WHERE user_id = :userId")
-    fun getAllSongs(userId:Int): Flow<List<Song>>
+    @Query("SELECT * FROM Song WHERE user_id = :userId AND isExplicitlyAdded = 1 ORDER BY title ASC") // Filter ditambahkan
+    fun getAllExplicitlyAddedSongs(userId:Int): Flow<List<Song>>
+
+    @Query("SELECT * FROM Song WHERE user_id = :userId ORDER BY title ASC")
+    fun getAllSongsInternal(userId:Int): Flow<List<Song>>
 
     @Query("DELETE FROM Song WHERE id = :songId")
     suspend fun deleteSong(songId: Int)
 
-    @Query("SELECT * FROM Song WHERE liked = 1 AND user_id = :userId ORDER BY lastPlayed")
+    @Query("SELECT * FROM Song WHERE liked = 1 AND user_id = :userId ORDER BY lastPlayed DESC")
     fun getAllLikedSongs(userId:Int): Flow<List<Song>>
 
-    @Query("SELECT * FROM Song WHERE user_id = :userId ORDER BY lastPlayed")
+    @Query("SELECT * FROM Song WHERE user_id = :userId ORDER BY lastPlayed DESC")
     fun getAllSongsOrdered(userId:Int): Flow<List<Song>>
 
-    @Query("UPDATE Song SET artist = :newArtist, title = :newTitle, artworkPath = :newArtwork WHERE id = :songId")
-    suspend fun updateSong(songId: Int, newArtist: String, newTitle: String, newArtwork: String?)
+    @Query("UPDATE Song SET artist = :newArtist, title = :newTitle, artworkPath = :newArtwork, isExplicitlyAdded = :isExplicitlyAdded WHERE id = :songId")
+    suspend fun updateSong(songId: Int, newArtist: String, newTitle: String, newArtwork: String?, isExplicitlyAdded: Boolean)
 
     @Query("SELECT * FROM Song WHERE id = :songId")
     suspend fun getSongById(songId: Int): Song?
