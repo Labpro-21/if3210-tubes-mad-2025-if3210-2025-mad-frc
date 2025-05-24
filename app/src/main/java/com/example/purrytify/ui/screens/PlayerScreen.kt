@@ -84,12 +84,9 @@ fun PlayerScreen(
     val songUri = currentSong?.audioPath?.toUri()
     val artworkUri = currentSong?.artworkPath?.toUri()
 
-    LaunchedEffect(songUri) {
-        songUri?.let {
-//            playerViewModel.prepareAndPlay(it, onSongComplete = onNext)
-//            playerViewModel.prepareAndPlay(currentSong!!.id)
+    LaunchedEffect(currentSong) {
+        currentSong?.let { Log.d("PlayerScreen", "Current song changed to: ${it.title}") }
 
-        }
     }
 
     Column(

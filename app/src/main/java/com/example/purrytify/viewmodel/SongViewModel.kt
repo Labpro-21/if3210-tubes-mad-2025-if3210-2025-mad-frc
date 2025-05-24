@@ -1,19 +1,13 @@
 package com.example.purrytify.viewmodel
 
-import android.R
 import android.app.Application
 import android.content.Intent
 import android.util.Log
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.purrytify.repository.SongRepository
+import androidx.lifecycle.*
 import com.example.purrytify.model.Song
-import com.example.purrytify.service.MusicService
-import com.example.purrytify.utils.SessionManager
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import com.example.purrytify.repository.SongRepository
+import com.example.purrytify.utils.MusicServiceManager
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Date
 
@@ -25,19 +19,38 @@ class SongViewModel(
 
     private val _songs = MutableStateFlow<List<Song>>(emptyList())
     private val _liked_songs = MutableStateFlow<List<Song>>(emptyList())
-    private val _current_song = MutableStateFlow<Song?>(null)
     private val _new_songs = MutableStateFlow<List<Song>>(emptyList())
     private val _recently_played = MutableStateFlow<List<Song>>(emptyList())
 
+    // Expose songs as StateFlow
     val songs: StateFlow<List<Song>> = _songs.asStateFlow()
-    val likedSongs : StateFlow<List<Song>> = _liked_songs.asStateFlow()
-    val current_song : StateFlow<Song?> = _current_song.asStateFlow()
-    val newSongs : StateFlow<List<Song>> = _new_songs.asStateFlow()
-    val recentlyPlayed : StateFlow<List<Song>> = _recently_played.asStateFlow()
+    val likedSongs: StateFlow<List<Song>> = _liked_songs.asStateFlow()
+    val newSongs: StateFlow<List<Song>> = _new_songs.asStateFlow()
+    val recentlyPlayed: StateFlow<List<Song>> = _recently_played.asStateFlow()
+
+    val current_song: StateFlow<Song?> = MusicServiceManager.currentSong
+
+    private val _currentSongLiveData = MutableLiveData<Song?>()
+    val currentSongLiveData: LiveData<Song?> = _currentSongLiveData
 
     init {
+        viewModelScope.launch {
+            MusicServiceManager.currentSong.collect { song ->
+                _currentSongLiveData.postValue(song)
+            }
+        }
 
         loadSongs(userId)
+
+        viewModelScope.launch {
+            repository.getAllLikedSongs(userId).collect { _liked_songs.value = it }
+        }
+        viewModelScope.launch {
+            repository.getNewSongs(userId).collect { _new_songs.value = it }
+        }
+        viewModelScope.launch {
+            repository.getRecentlyPlayed(userId).collect { _recently_played.value = it }
+        }
     }
 
     fun addSong(song: Song) {
@@ -50,12 +63,12 @@ class SongViewModel(
     fun reset() {
         _songs.value = emptyList()
         _liked_songs.value = emptyList()
-        _current_song.value = null
         _new_songs.value = emptyList()
         _recently_played.value = emptyList()
+        MusicServiceManager.updateCurrentSong(null)
     }
 
-    fun deleteSong(song:Song) {
+    fun deleteSong(song: Song) {
         viewModelScope.launch {
             repository.deleteSong(song.id)
             loadSongs(song.userId)
@@ -65,7 +78,7 @@ class SongViewModel(
     private fun sendSongsToMusicService() {
         val songList = _songs.value
         Log.d("SongViewModel", "Sending Playlist of ${songList.size} length")
-        val intent = Intent(context, MusicService::class.java).apply {
+        val intent = Intent(context, com.example.purrytify.service.MusicService::class.java).apply {
             action = "ACTION_SET_PLAYLIST"
             putParcelableArrayListExtra("playlist", ArrayList(songList))
             Log.d("SongViewModel", "Sending Playlist of ${ArrayList(songList).size} length")
@@ -73,101 +86,75 @@ class SongViewModel(
         context.startService(intent)
     }
 
-
-    fun loadSongs(userId:Int) {
+    fun loadSongs(userId: Int) {
         Log.d("SongViewModel", "Loading songs for userId: $userId")
         viewModelScope.launch {
             repository.getAllSongs(userId).collect { songList ->
                 _songs.value = songList
 
                 // Update current song jika masih valid
-                _current_song.value?.let { current ->
+                MusicServiceManager.currentSong.value?.let { current ->
                     val updated = songList.find { it.id == current.id }
-                    _current_song.value = updated
+                    if (updated != null) {
+                        MusicServiceManager.updateCurrentSong(updated)
+                    }
                 }
 
-                // Kirim ke MusicService setelah _songs diperbarui
                 sendSongsToMusicService()
             }
         }
-
-        viewModelScope.launch {
-            repository.getAllLikedSongs(userId).collect { _liked_songs.value = it }
-        }
-
-        viewModelScope.launch {
-            repository.getNewSongs(userId).collect { _new_songs.value = it }
-        }
-
-        viewModelScope.launch {
-            repository.getRecentlyPlayed(userId).collect { _recently_played.value = it }
-        }
     }
 
-
-    fun toggleLikeSong(song : Song){
+    fun toggleLikeSong(song: Song) {
         viewModelScope.launch {
             repository.toggleLike(song.id)
-            // Fix: Tambahkan null-safety check
             val updatedSong = repository.getSong(song.id)
             if (updatedSong != null) {
                 Log.d("SongViewModel", "Updated liked status: ${updatedSong.liked}")
             } else {
-                Log.d("SongViewModel", "Song not found in database after toggle")
+                Log.d("SongViewModel", "Song not found after toggle")
             }
-            Log.d("SongViewModel", "Updated liked songs: ${likedSongs.value}")
             loadSongs(song.userId)
         }
     }
 
-    fun updateSong(song: Song){
+    fun updateSong(song: Song) {
         val id = song.id
         val newArtist = song.artist
         val newTitle = song.title
         val newArtwork = song.artworkPath
         viewModelScope.launch {
-            repository.updateSong(id,newArtist,newTitle,newArtwork)
+            repository.updateSong(id, newArtist, newTitle, newArtwork)
             loadSongs(song.userId)
         }
     }
 
     fun setCurrentSong(song: Song) {
-        if (song == current_song.value) {
+        if (song == MusicServiceManager.currentSong.value) {
             return
         }
         viewModelScope.launch {
             try {
                 val dbSong = repository.getSong(song.id)
-                
                 if (dbSong != null) {
                     if (dbSong.lastPlayed == null) {
                         repository.incrementListenedSongs(song.userId)
                     }
                     repository.updateLastPlayed(song.id, Date())
                     loadSongs(song.userId)
-                    // Fix: Tambahkan null-safety check juga di sini
-                    _current_song.value = repository.getSong(song.id) ?: song
+                    MusicServiceManager.updateCurrentSong(dbSong)
                 } else {
-                    _current_song.value = song
+                    MusicServiceManager.updateCurrentSong(song)
                     Log.d("SongViewModel", "Setting online song as current: ${song.title}")
                 }
             } catch (e: Exception) {
                 Log.e("SongViewModel", "Error setting current song", e)
-                _current_song.value = song
+                MusicServiceManager.updateCurrentSong(song)
             }
         }
     }
 
-    fun updateLastPlayed(song:Song){
-        viewModelScope.launch {
-            repository.updateLastPlayed(song.id,Date())
-            loadSongs(song.userId)
-        }
-    }
-
-    fun getSongIndex(song:Song):Int {
+    fun getSongIndex(song: Song): Int {
         return _songs.value.indexOf(song)
     }
-
-
 }
