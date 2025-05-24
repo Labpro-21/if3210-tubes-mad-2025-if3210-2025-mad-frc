@@ -80,7 +80,7 @@ class MainActivity : ComponentActivity() {
             PurrytifyTheme {
                 AppNavigation(
                     songViewModelFromActivity = songViewModel,
-                    onScanQrClicked = { launchQrScanner() } // Ini sudah benar
+                    onScanQrClicked = { launchQrScanner() }
                 )
             }
         }
@@ -114,7 +114,7 @@ class MainActivity : ComponentActivity() {
             if (scannedUri.scheme == "purrytify" && scannedUri.host == "song") {
                 // Ini adalah deep link Purrytify, proses seperti deep link biasa
                 val intent = Intent(Intent.ACTION_VIEW, scannedUri)
-                handleIntent(intent) // Gunakan fungsi handleIntent yang sudah ada
+                handleIntent(intent)
             } else {
                 Log.w("DeepLinkHandler", "Scanned QR is not a valid Purrytify song link: $scannedData")
             }

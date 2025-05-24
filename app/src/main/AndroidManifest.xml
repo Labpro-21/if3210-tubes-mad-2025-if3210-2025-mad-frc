@@ -44,18 +44,6 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="purrytify"
                     android:host="song" />
-                <!-- {/* Tidak perlu android:pathPattern jika Anda menangkap ID sebagai segment terakhir dari host.
-                    Jika URI Anda adalah "purrytify://song/191", maka "song" adalah host, dan "191" adalah path atau pathSegment.
-                    Jika Anda ingin lebih spesifik dengan path, Anda bisa menggunakan:
-                    <data android:scheme="purrytify"
-                        android:host="song"
-                        android:pathPrefix="/" />
-                    atau
-                    <data android:scheme="purrytify"
-                        android:host="song"
-                        android:pathPattern="/.*" />
-                    Namun, untuk "purrytify://song/ID_LAGU", host "song" biasanya sudah cukup karena sisanya akan dianggap path.
-                */} -->
             </intent-filter>
         </activity>
     </application>

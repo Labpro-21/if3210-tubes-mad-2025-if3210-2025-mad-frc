@@ -272,7 +272,6 @@ fun ProfileScreenWithBottomNav(
                     when (route) {
                         "home" -> onNavigateToHome()
                         "library" -> onNavigateToLibrary()
-                        // Jika route "profile" dipilih, berarti saat ini sedang aktif.
                     }
                 }
             )

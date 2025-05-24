@@ -293,7 +293,7 @@ fun TopScreen(
                     // Download button
                     OutlinedButton(
                         onClick = { if (!isDownloadingAll) downloadAll() },
-                        modifier = Modifier.size(48.dp),
+                        modifier = Modifier.size(50.dp),
                         shape = CircleShape,
                         colors = ButtonDefaults.outlinedButtonColors(
                             contentColor = Color.White
@@ -307,7 +307,7 @@ fun TopScreen(
                             imageVector = Icons.Default.Download,
                             contentDescription = "Download All",
                             tint = Color.White,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                     }
 
@@ -323,7 +323,7 @@ fun TopScreen(
                                 }
                             }
                         },
-                        modifier = Modifier.size(60.dp),
+                        modifier = Modifier.size(50.dp),
                         shape = CircleShape,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF1ED760)
@@ -334,7 +334,7 @@ fun TopScreen(
                             imageVector = Icons.Default.PlayArrow,
                             contentDescription = "Play All",
                             tint = Color.Black,
-                            modifier = Modifier.size(32.dp)
+                            modifier = Modifier.size(28.dp)
                         )
                     }
                 }

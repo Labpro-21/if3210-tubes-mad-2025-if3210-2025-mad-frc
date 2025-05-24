@@ -56,7 +56,6 @@ class SongViewModel(private val repository: SongRepository, private val userId: 
             repository.deleteSong(songIdToDelete)
             if (_current_song.value?.id == songIdToDelete) {
                 _current_song.value = null
-                // Anda mungkin juga ingin menghentikan PlayerViewModel di sini jika lagu yang dihapus sedang diputar
             }
             loadSongs(song.userId)
         }
@@ -79,26 +78,17 @@ class SongViewModel(private val repository: SongRepository, private val userId: 
         viewModelScope.launch {
         repository.getAllSongsInternal(userIdToLoad).collect { allSongsList ->
              val currentSongSnapshot = _current_song.value
-             if (currentSongSnapshot != null && currentSongSnapshot.id != 0) { // Hanya jika ada current song yang valid
+             if (currentSongSnapshot != null && currentSongSnapshot.id != 0) { 
                 val songFromDbList = allSongsList.find { it.id == currentSongSnapshot.id && it.userId == currentSongSnapshot.userId }
                 if (songFromDbList != null) {
-                    // Hanya update _current_song jika ada perubahan relevan (misal status liked, atau jika objeknya berbeda instance)
-                    // dan BUKAN jika setCurrentSong baru saja mengaturnya.
-                    // Untuk menghindari race condition, mungkin lebih baik jika setCurrentSong adalah satu-satunya yang mengatur _current_song secara langsung
-                    // dan loadSongs hanya memicu refresh data lagu lain.
-                    // Atau, pastikan objeknya benar-benar berbeda sebelum update.
                     if (currentSongSnapshot.liked != songFromDbList.liked ||
-                        currentSongSnapshot.title != songFromDbList.title || // Contoh field lain jika bisa berubah
+                        currentSongSnapshot.title != songFromDbList.title ||
                         currentSongSnapshot.artist != songFromDbList.artist ||
                         currentSongSnapshot.artworkPath != songFromDbList.artworkPath) {
                        Log.d("SongViewModel_loadSongs", "Updating _current_song (ID: ${currentSongSnapshot.id}) due to changes in DB (e.g., liked status).")
                        _current_song.value = songFromDbList
                     }
                 } else {
-                    // Jika lagu yang sebelumnya current sudah tidak ada di DB (dan bukan online song yang baru diproses setCurrentSong)
-                    // Kita bisa null-kan _current_song jika memang sudah dihapus.
-                    // Namun, setCurrentSong yang baru saja dijalankan dari deep link akan menangani ini.
-                    // Jadi, mungkin tidak perlu null-kan di sini jika setCurrentSong sudah benar.
                     Log.d("SongViewModel_loadSongs", "Current song (ID: ${currentSongSnapshot.id}) not found in allSongsList. setCurrentSong should handle if it was deleted.")
                 }
              }
@@ -154,7 +144,6 @@ class SongViewModel(private val repository: SongRepository, private val userId: 
             val effectiveUserId = this@SongViewModel.userId
             Log.i("SongViewModel_setCurrentSong", "START: Setting current song: ${songData.title} (Original ID: ${songData.id}, Path: ${songData.audioPath}) for user $effectiveUserId")
 
-            // Nullify _current_song di awal jika lagu yang dipilih berbeda, untuk menghentikan PlayHistory sementara
             if (_current_song.value?.audioPath != songData.audioPath || _current_song.value == null) {
                 Log.i("SongViewModel_setCurrentSong", "Different song selected or current is null. Nullifying _current_song temporarily.")
                 _current_song.value = null
@@ -177,7 +166,7 @@ class SongViewModel(private val repository: SongRepository, private val userId: 
                     )
                     val newLocalId = repository.insertSong(entryForDb)
                     if (newLocalId > 0) {
-                        localCopy = repository.getSong(newLocalId.toInt()) // Ambil instance dari DB dengan ID lokal
+                        localCopy = repository.getSong(newLocalId.toInt())
                         if (localCopy != null) {
                             Log.i("SongViewModel_setCurrentSong", "Online song inserted. Local ID: ${localCopy.id}, Title: ${localCopy.title}")
                             fullyProcessedSong = localCopy
@@ -191,7 +180,7 @@ class SongViewModel(private val repository: SongRepository, private val userId: 
                     Log.i("SongViewModel_setCurrentSong", "Online song '${songData.title}' found in local DB. Local ID: ${localCopy.id}")
                     fullyProcessedSong = localCopy
                 }
-            } else { // Local song
+            } else { 
                 val localSongFromDb = repository.getSong(songData.id)
                 if (localSongFromDb != null && localSongFromDb.userId == effectiveUserId) {
                     Log.i("SongViewModel_setCurrentSong", "Local song '${localSongFromDb.title}' (ID: ${localSongFromDb.id}) found.")
@@ -201,7 +190,6 @@ class SongViewModel(private val repository: SongRepository, private val userId: 
                 }
             }
 
-            // Update database (lastPlayed, listenedCount) dan _current_song.value HANYA jika fullyProcessedSong valid
             if (fullyProcessedSong != null && fullyProcessedSong.id != 0) {
                 val isFirstTimePlayedLocally = fullyProcessedSong.lastPlayed == null
                 
@@ -210,10 +198,9 @@ class SongViewModel(private val repository: SongRepository, private val userId: 
 
                 if (isFirstTimePlayedLocally) {
                     Log.i("SongViewModel_setCurrentSong", "Incrementing listened songs for user $effectiveUserId (song ID: ${fullyProcessedSong.id})")
-                    repository.incrementListenedSongs(fullyProcessedSong.userId) // Seharusnya effectiveUserId
+                    repository.incrementListenedSongs(fullyProcessedSong.userId)
                 }
 
-                // Ambil versi paling akhir dari DB untuk _current_song.value
                 val finalSongToShow = repository.getSong(fullyProcessedSong.id)
                 _current_song.value = finalSongToShow
                 if (finalSongToShow != null) {
@@ -227,7 +214,6 @@ class SongViewModel(private val repository: SongRepository, private val userId: 
                  _current_song.value = null
             }
 
-            // loadSongs akan dipanggil setelahnya untuk merefresh semua list UI
             loadSongs(effectiveUserId)
             Log.i("SongViewModel_setCurrentSong", "END: setCurrentSong for ${songData.title}")
         }
@@ -249,14 +235,13 @@ class SongViewModel(private val repository: SongRepository, private val userId: 
     fun recordPlayTick() {
         viewModelScope.launch {
             _current_song.value?.let { currentSong ->
-                // Kondisi paling penting: ID harus valid (bukan 0) dan milik user saat ini.
                 if (currentSong.id != 0 && currentSong.userId == this@SongViewModel.userId) {
                     Log.d("SongViewModel_recordPlayTick", "Attempting tick. Current Song ID: ${currentSong.id}, Title: ${currentSong.title}, UserID: ${currentSong.userId}, Path: ${currentSong.audioPath}")
                     val history = PlayHistory(
                         user_id = this@SongViewModel.userId,
                         played_at = Date(),
                         duration_ms = 1_000L,
-                        song_id = currentSong.id // Ini harus ID lokal yang valid
+                        song_id = currentSong.id
                     )
                     try {
                         repository.addPlayHistory(history)

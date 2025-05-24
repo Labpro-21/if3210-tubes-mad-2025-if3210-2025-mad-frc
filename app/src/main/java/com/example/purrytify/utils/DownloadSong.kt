@@ -160,7 +160,6 @@ fun downloadSong(
                                 addedDate = Date(),
                                 liked = false, // Default untuk lagu baru
                                 userId = sessionManager.getUserId()
-                                // Tambahkan field lain seperti serverId atau isExplicitlyAdded jika ada di model Song Anda
                             )
                             Log.d(tag, "Preparing to add new song to database: $newDownloadedSong")
                             songViewModel.addSong(newDownloadedSong)

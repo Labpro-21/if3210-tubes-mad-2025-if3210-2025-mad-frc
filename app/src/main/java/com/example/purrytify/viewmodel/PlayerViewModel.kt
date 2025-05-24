@@ -160,14 +160,13 @@ class PlayerViewModel @Inject constructor(
         }
 
         if (_exoPlayer.isPlaying) {
-            _exoPlayer.pause() // Ini akan memicu onIsPlayingChanged(false)
+            _exoPlayer.pause()
             Log.d("PlayerViewModel", "Player paused.")
         } else {
-            // Jika tidak sedang playing, kita ingin play.
             if (_exoPlayer.playbackState == Player.STATE_IDLE && _exoPlayer.currentMediaItem != null) {
                 _exoPlayer.prepare()
             }
-            _exoPlayer.play() // Ini akan memicu onIsPlayingChanged(true) jika berhasil
+            _exoPlayer.play()
             Log.d("PlayerViewModel", "Player play initiated.")
         }
     }
