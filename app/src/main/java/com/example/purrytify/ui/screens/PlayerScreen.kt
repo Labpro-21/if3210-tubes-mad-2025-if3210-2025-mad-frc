@@ -87,7 +87,7 @@ fun PlayerScreen(
     LaunchedEffect(songUri) {
         songUri?.let {
 //            playerViewModel.prepareAndPlay(it, onSongComplete = onNext)
-            playerViewModel.prepareAndPlay(currentSong!!.id)
+//            playerViewModel.prepareAndPlay(currentSong!!.id)
 
         }
     }
@@ -266,8 +266,8 @@ fun PlayerModalBottomSheet(
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
         ) {
             PlayerScreen(
-                onNext = { onSongChange(song.id+1) },
-                onPrevious = { onSongChange(song.id - 1) },
+                onNext = { playerViewModel.skipNext() },
+                onPrevious = { playerViewModel.skipPrevious() },
                 songViewModel = songViewModel,
                 playerViewModel = playerViewModel
             )
