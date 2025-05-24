@@ -19,6 +19,7 @@ import java.util.Date
 )
 data class Song(
     @PrimaryKey(autoGenerate = true) val id: Int=0,
+    @ColumnInfo(name="server_id", index = true) val serverId: Int? = null,
     @ColumnInfo(name="title") val title: String="Unnamed Song",
     @ColumnInfo(name="artist") val artist: String="Unnamed Artist",
     @ColumnInfo(name="duration") val duration: Long,
@@ -28,4 +29,5 @@ data class Song(
     @ColumnInfo(name="addedDate") val addedDate: Date,
     @ColumnInfo(name="liked") val liked: Boolean=false,
     @ColumnInfo(name="user_id") val userId: Int=0,
+    @ColumnInfo(name="isExplicitlyAdded") val isExplicitlyAdded: Boolean = false
 )

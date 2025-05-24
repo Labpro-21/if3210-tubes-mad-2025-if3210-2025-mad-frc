@@ -15,19 +15,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.purrytify.R
+import androidx.compose.material.icons.filled.QrCode2
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import com.example.purrytify.model.Song
+import com.example.purrytify.utils.ImageSharer
+import com.example.purrytify.utils.QrCodeGenerator
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SongSettingsModal(
+    song: Song?, // Tambahkan parameter song
     visible: Boolean,
     onDismiss: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
-    onShare: () -> Unit,
+    onShareUrl: () -> Unit, // Untuk share URL biasa
+    // onShareQr: () -> Unit, // Kita akan handle langsung di sini
     onDownload: () -> Unit,
     isOnlineSong: Boolean = false
 ) {
-    if (!visible) return
+    if (!visible || song == null) return // Pastikan song tidak null
+
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -38,22 +50,20 @@ fun SongSettingsModal(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Edit option (only for local songs)
-            if (!isOnlineSong) {
+            // Opsi Edit
+            if (!isOnlineSong && song.isExplicitlyAdded) { // Edit hanya untuk lagu lokal eksplisit
                 ListItem(
                     headlineContent = { Text("Edit Song") },
-                    leadingContent = { 
-                        Icon(Icons.Default.Edit, contentDescription = null) 
-                    },
-                    modifier = Modifier.clickable { 
+                    leadingContent = { Icon(Icons.Default.Edit, contentDescription = "Edit Song") },
+                    modifier = Modifier.clickable {
                         onEdit()
                         onDismiss()
                     }
                 )
             }
 
-            // Share option (only for online songs)
-            if (isOnlineSong) {
+            // Opsi Share URL (hanya untuk lagu server)
+            if (song.serverId != null) { // Cek serverId
                 ListItem(
                     headlineContent = { Text("Download Song") },
                     leadingContent = {
@@ -66,31 +76,46 @@ fun SongSettingsModal(
                 )
 
                 ListItem(
-                    headlineContent = { Text("Share") },
-                    leadingContent = { 
-                        Icon(Icons.Default.Share, contentDescription = null) 
-                    },
-                    modifier = Modifier.clickable { 
-                        onShare()
+                    headlineContent = { Text("Share via URL") },
+                    leadingContent = { Icon(Icons.Default.Share, contentDescription = "Share via URL") },
+                    modifier = Modifier.clickable {
+                        onShareUrl()
                         onDismiss()
+                    }
+                )
+
+                // Opsi Share QR (hanya untuk lagu server)
+                ListItem(
+                    headlineContent = { Text("Share via QR Code") },
+                    leadingContent = { Icon(Icons.Filled.QrCode2, contentDescription = "Share via QR Code") },
+                    modifier = Modifier.clickable {
+                        scope.launch { // Jalankan di coroutine karena ada operasi file
+                            val deepLink = "purrytify://song/${song.serverId}"
+                            val qrBitmap = QrCodeGenerator.generateQrBitmap(deepLink)
+                            if (qrBitmap != null) {
+                                val imageUri = ImageSharer.saveBitmapToCache(context, qrBitmap, "song_${song.serverId}_qr.png")
+                                if (imageUri != null) {
+                                    ImageSharer.shareImageUri(context, imageUri, "Share ${song.title} QR")
+                                }
+                            }
+                            onDismiss()
+                        }
                     }
                 )
             }
 
-            // Delete option (only for local songs)
-            if (!isOnlineSong) {
+
+            // Opsi Delete (hanya untuk lagu lokal eksplisit)
+            if (!isOnlineSong && song.isExplicitlyAdded) {
                 ListItem(
                     headlineContent = { Text("Delete Song") },
-                    leadingContent = { 
-                        Icon(Icons.Default.Delete, contentDescription = null) 
-                    },
-                    modifier = Modifier.clickable { 
+                    leadingContent = { Icon(Icons.Default.Delete, contentDescription = "Delete Song") },
+                    modifier = Modifier.clickable {
                         onDelete()
                         onDismiss()
                     }
                 )
             }
-
             Spacer(modifier = Modifier.height(16.dp))
         }
     }

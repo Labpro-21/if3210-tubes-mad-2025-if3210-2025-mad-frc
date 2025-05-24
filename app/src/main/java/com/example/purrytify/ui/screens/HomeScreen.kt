@@ -21,7 +21,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Download
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,36 +42,29 @@ import com.example.purrytify.viewmodel.OnlineSongViewModel
 import com.example.purrytify.viewmodel.PlayerViewModel
 import com.example.purrytify.viewmodel.SongViewModel
 import android.content.pm.ActivityInfo
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
 import android.content.res.Configuration
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.purrytify.network.ApiService
 import com.example.purrytify.network.RetrofitClient
 import com.example.purrytify.utils.TokenManager
 import com.example.purrytify.utils.SessionManager
 import com.example.purrytify.viewmodel.OnlineSongViewModelFactory
-import com.example.purrytify.viewmodel.ProfileViewModel
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.ui.graphics.Brush
-
-
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.ModalBottomSheet
 import java.util.Date
-
 import com.example.purrytify.ui.components.SongSettingsModal
+import com.example.purrytify.ui.components.TopModalBottomSheet
+import com.example.purrytify.utils.shareServerSong
 
 @Composable
 fun HomeScreenContent(
@@ -240,19 +232,20 @@ fun HomeScreenContent(
 
     // Modal Settings
     SongSettingsModal(
+        song = selectedSong,
         visible = showSongSettings,
         onDismiss = { showSongSettings = false },
-        onEdit = {
+        onEdit = { 
             selectedSong?.let { song ->
                 // Implementasi edit logic
             }
-        },
-        onDelete = {
+         },
+        onDelete = { 
             showDeleteDialog = true
-        },
-        onShare = {
-            selectedSong?.let { song ->
-                shareOnlineSong(context, song)
+         },
+        onShareUrl = {
+            selectedSong?.let { songToShare ->
+                shareServerSong(context, songToShare)
             }
         },
         onDownload = {

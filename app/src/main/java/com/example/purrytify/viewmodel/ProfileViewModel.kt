@@ -1,19 +1,29 @@
 package com.example.purrytify.viewmodel
 
+import android.annotation.SuppressLint
+import android.content.Context
 import android.util.Log
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.purrytify.data.AppDatabase        
 import com.example.purrytify.model.ProfileUiState
-import com.example.purrytify.repository.UserRepository
+import com.example.purrytify.model.SoundCapsule
+import com.example.purrytify.repository.AnalyticsRepository
 import com.example.purrytify.repository.ProfileRepository
+import com.example.purrytify.repository.UserRepository
 import com.example.purrytify.utils.SessionManager
 import com.example.purrytify.utils.TokenManager
+import kotlinx.coroutines.flow.MutableStateFlow       
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.io.File
+import java.time.YearMonth
 import java.util.Locale
 
 class ProfileViewModel(
+    @SuppressLint("StaticFieldLeak") private val context: Context,
     private val tokenManager: TokenManager,
     private val userRepository: UserRepository,
     private val sessionManager: SessionManager
@@ -22,8 +32,15 @@ class ProfileViewModel(
     private val _uiState = mutableStateOf(ProfileUiState())
     val uiState: State<ProfileUiState> get() = _uiState
 
-    // Buat instance ProfileRepository untuk memanggil API
     private val profileRepository = ProfileRepository(tokenManager)
+
+    private val analyticsRepo = AnalyticsRepository(
+        dao = AppDatabase.getDatabase(context).songDao(),
+        context = context
+    )
+
+    private val _analytics = MutableStateFlow(SoundCapsule())
+    val analytics: StateFlow<SoundCapsule> = _analytics
 
     fun fetchUserProfile() {
         viewModelScope.launch {
@@ -56,5 +73,16 @@ class ProfileViewModel(
         } catch (e: Exception) {
             code
         }
+    }
+
+    fun loadAnalytics(month: YearMonth = YearMonth.now()) {
+        viewModelScope.launch {
+            val uid = sessionManager.getUserId()
+            _analytics.value = analyticsRepo.getMonthlyAnalytics(uid, YearMonth.now().toString())
+        }
+    }
+
+    fun exportCsv(): File {
+        return analyticsRepo.exportToCsv(_analytics.value)
     }
 }
