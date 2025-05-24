@@ -504,24 +504,15 @@ fun HomeScreenResponsive(
     onNavigateToProfile: () -> Unit,
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
-    onNavigateToTop50: (String) -> Unit = {}
+    onNavigateToTop50: (String) -> Unit = {},
+    onlineViewModel: OnlineSongViewModel
 ) {
     val configuration = LocalConfiguration.current
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR)
     val context = LocalContext.current
-    val appContext = context.applicationContext as? Application
 
     val newSongsFromDb by songViewModel.newSongs.collectAsState()
     val recentlyPlayedFromDb by songViewModel.recentlyPlayed.collectAsState()
-
-    val api = remember<ApiService> {
-        RetrofitClient.create(tokenManager = TokenManager(context))
-    }
-    val session = remember<SessionManager> { SessionManager(context) }
-
-    val factory = remember<OnlineSongViewModelFactory> { OnlineSongViewModelFactory(api, session) }
-    val onlineViewModel: OnlineSongViewModel =
-        viewModel(factory = factory)
 
     if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
         Row(modifier = Modifier.fillMaxSize()) {

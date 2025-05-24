@@ -1,20 +1,32 @@
 package com.example.purrytify.data
 
+import androidx.room.ColumnInfo
 import androidx.room.Dao
+import androidx.room.Embedded
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Relation
 import com.example.purrytify.model.PlayHistory
 import com.example.purrytify.model.Song
 import kotlinx.coroutines.flow.Flow
 import java.util.Date
+
+// Data class untuk menampung hasil query streak
+data class SongPlayDate(
+    @ColumnInfo(name = "songId") val songId: Int,
+    @ColumnInfo(name = "songTitle") val songTitle: String?,
+    @ColumnInfo(name = "songArtist") val songArtist: String?,
+    @ColumnInfo(name = "songArtworkPath") val songArtworkPath: String?,
+    @ColumnInfo(name = "playDate") val playDate: String // Format "YYYY-MM-DD"
+)
 
 @Dao
 interface SongDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertSong(song: Song): Long
 
-    @Query("SELECT * FROM Song WHERE user_id = :userId AND isExplicitlyAdded = 1 ORDER BY title ASC") // Filter ditambahkan
+    @Query("SELECT * FROM Song WHERE user_id = :userId AND isExplicitlyAdded = 1 ORDER BY title ASC")
     fun getAllExplicitlyAddedSongs(userId:Int): Flow<List<Song>>
 
     @Query("SELECT * FROM Song WHERE user_id = :userId ORDER BY title ASC")
@@ -56,8 +68,23 @@ interface SongDao {
     @Query("SELECT s.title FROM play_history p JOIN song s ON p.song_id = s.id WHERE p.user_id = :userId AND strftime('%Y-%m', p.played_at/1000, 'unixepoch') = :yearMonth GROUP BY s.title ORDER BY COUNT(*) DESC LIMIT 1")
     suspend fun topSong(userId: Int, yearMonth: String): String?
 
-    @Query("SELECT MAX(streak) FROM (SELECT COUNT(DISTINCT strftime('%Y-%m-%d', played_at/1000,'unixepoch')) AS streak FROM play_history WHERE user_id = :userId AND played_at >= :startOfMonth AND played_at < :startOfNextMonth GROUP BY strftime('%Y-%m-%d', played_at/1000,'unixepoch'))")
-    suspend fun dayStreak(userId: Int, startOfMonth: Long, startOfNextMonth: Long): Int?
+    // Query baru untuk mendapatkan data mentah perhitungan streak
+    @Query("""
+        SELECT 
+            ph.song_id as songId, 
+            s.title AS songTitle, 
+            s.artist AS songArtist, 
+            s.artworkPath AS songArtworkPath, 
+            strftime('%Y-%m-%d', ph.played_at/1000, 'unixepoch') AS playDate
+        FROM play_history ph
+        JOIN song s ON ph.song_id = s.id
+        WHERE ph.user_id = :userId 
+          AND ph.played_at >= :startOfMonthMillis 
+          AND ph.played_at < :startOfNextMonthMillis
+        ORDER BY ph.song_id, playDate ASC
+    """)
+    suspend fun getPlayHistoryDatesForStreak(userId: Int, startOfMonthMillis: Long, startOfNextMonthMillis: Long): List<SongPlayDate>
+
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPlayHistory(history: PlayHistory)

@@ -51,8 +51,12 @@ import com.example.purrytify.viewmodel.PlayerViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import android.util.Log
+import androidx.compose.foundation.clickable
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.ui.text.style.TextOverflow
+import coil.compose.rememberAsyncImagePainter
+import java.util.Locale
 
 @Composable
 fun ProfileScreen(
@@ -288,40 +292,45 @@ fun ProfileScreenWithBottomNav(
 fun SoundCapsuleSection(
     analytics: SoundCapsule,
     onDownload: () -> Unit,
-    onShareMonth: () -> Unit,
-    songViewModel: SongViewModel,
-    playerViewModel: PlayerViewModel
+    onShareMonth: () -> Unit, // Anda mungkin ingin men-share ringkasan teks dari sini
+    songViewModel: SongViewModel, // Tetap diperlukan untuk recordPlayTick
+    playerViewModel: PlayerViewModel // Tetap diperlukan untuk status isPlaying
 ) {
     val isPlaying by playerViewModel.isPlaying.collectAsState()
-
     val baseMillis = analytics.timeListenedMillis ?: 0L
     var extraMillis by remember { mutableStateOf(0L) }
-//    print information to logcat tentang analytics
-    Log.d("SoundCapsuleSection", "analytics: $analytics")
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(isPlaying) { // Re-launch jika isPlaying berubah
         while (isActive) {
-            delay(1_000L)
-            Log.d("SoundCapsuleSection", "isActive=$isActive, isPlaying=$isPlaying, extra=$extraMillis")
             if (isPlaying) {
-                extraMillis += 1_000L
+                // Log di sini SEBELUM memanggil recordPlayTick
+                Log.d("ProfileScreen_Ticker", "isPlaying is true. Current song in SongVM: ${songViewModel.current_song.value?.title}")
                 songViewModel.recordPlayTick()
             }
+            delay(1_000L)
         }
     }
 
-    val total = baseMillis + extraMillis
-    val formatted = run {
-        val sec = total / 1_000
-        "%d:%02d:%02d".format(sec / 3600, (sec % 3600) / 60, sec % 60)
+    val totalTimeListenedMillis = baseMillis + extraMillis
+    val formattedTimeListened = run {
+        val tot = totalTimeListenedMillis / 1000
+        val hours = tot / 3600
+        val minutes = (tot % 3600) / 60
+        // val seconds = tot % 60 // Detik mungkin tidak ditampilkan di sini
+        if (hours > 0) {
+            String.format(Locale.getDefault(), "%d jam %02d menit", hours, minutes)
+        } else {
+            String.format(Locale.getDefault(), "%d menit", minutes) // Hanya menit jika kurang dari 1 jam
+        }
     }
 
+
     Column(modifier = Modifier.fillMaxWidth()) {
-        // Section header: "Your Sound Capsule" + download icon
+        // Header Section: "Your Sound Capsule" + download icon
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 8.dp), // Tambah padding atas
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -329,79 +338,81 @@ fun SoundCapsuleSection(
                 text = "Your Sound Capsule",
                 color = Color.White,
                 fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.Bold // Lebih tebal
             )
-            IconButton(onClick = onDownload) {
+            IconButton(onClick = onDownload, modifier = Modifier.size(28.dp)) { // Ukuran disesuaikan
                 Icon(
                     imageVector = Icons.Default.FileDownload,
-                    contentDescription = "Download",
+                    contentDescription = "Download Analytics",
                     tint = Color.White
                 )
             }
         }
 
-        // Month header: e.g. "April 2025" + share icon
+        // Month header + share icon
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 16.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = analytics.monthYear ?: "",
-                color = Color.White,
-                fontSize = 16.sp,
+                text = analytics.monthYear.ifEmpty { "Data Belum Tersedia" }, // Tampilkan bulan dan tahun
+                color = Color(0xFFB3B3B3), // Warna abu-abu
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Medium
             )
             IconButton(
-                onClick = onShareMonth,
+                onClick = onShareMonth, // Fungsi untuk share ringkasan bulan ini
                 modifier = Modifier.size(24.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Share,
-                    contentDescription = "Share Month",
-                    tint = Color.White
+                    contentDescription = "Share Monthly Recap",
+                    tint = Color(0xFFB3B3B3) // Warna abu-abu
                 )
             }
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
 
         // Time listened card
         Card(
-            backgroundColor = Color(0xFF1F1F1F),
-            shape = RoundedCornerShape(8.dp),
+            backgroundColor = Color(0xFF1A1A1A), // Warna card sedikit lebih gelap
+            shape = RoundedCornerShape(12.dp),    // Corner lebih bulat
             modifier = Modifier
               .fillMaxWidth()
               .padding(horizontal = 16.dp)
+              .clickable { /* Mungkin ada detail view untuk time listened */ }
         ) {
             Row(
-              modifier = Modifier.padding(16.dp),
-              verticalAlignment = Alignment.CenterVertically
+              modifier = Modifier.padding(horizontal = 16.dp, vertical = 20.dp), // Padding lebih besar
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                Column {
                     Text(
                         text = "Time listened",
                         color = Color(0xFFB3B3B3),
-                        fontSize = 14.sp
+                        fontSize = 13.sp // Sedikit lebih kecil
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = "$formatted minutes",
-                        color = Color(0xFF3CDC76),
-                        fontSize = 24.sp,
+                        text = formattedTimeListened,
+                        color = Color(0xFF1DB954), // Warna hijau Spotify
+                        fontSize = 22.sp, // Sedikit lebih kecil
                         fontWeight = FontWeight.Bold
                     )
                 }
                 Icon(
-                    imageVector = Icons.Default.ArrowForward,
-                    contentDescription = null,
-                    tint = Color.White
+                    imageVector = Icons.Default.ArrowForward, // Atau Icons.AutoMirrored.Filled.ArrowForward
+                    contentDescription = "View Details",
+                    tint = Color(0xFFB3B3B3)
                 )
             }
         }
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp)) // Jarak antar card
 
         // Row: Top artist & Top song
         Row(
@@ -410,25 +421,31 @@ fun SoundCapsuleSection(
                 .padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Top Artist
+            // Top Artist Card
             Card(
-                backgroundColor = Color(0xFF1F1F1F),
-                shape = RoundedCornerShape(8.dp),
+                backgroundColor = Color(0xFF1A1A1A),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.weight(1f)
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    AsyncImage(
-                        model = analytics.topArtistImageUrl,
-                        contentDescription = "Artist",
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
-                    Spacer(Modifier.width(8.dp))
+                    // Ganti AsyncImage dengan rememberAsyncImagePainter jika lebih familiar
+                    if (!analytics.topArtistImageUrl.isNullOrEmpty()) {
+                        AsyncImage(
+                            model = analytics.topArtistImageUrl,
+                            contentDescription = "Top Artist Artwork",
+                            modifier = Modifier
+                                .size(40.dp) // Artwork lebih besar
+                                .clip(CircleShape),
+                            contentScale = ContentScale.Crop,
+                            error = painterResource(id = R.drawable.profile_placeholder) // Fallback
+                        )
+                    } else {
+                         Icon(painterResource(id = R.drawable.profile_placeholder), contentDescription = "Top Artist Placeholder", modifier = Modifier.size(40.dp).clip(CircleShape), tint = Color.Gray)
+                    }
+                    Spacer(Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "Top artist",
@@ -437,38 +454,40 @@ fun SoundCapsuleSection(
                         )
                         Text(
                             text = analytics.topArtist ?: "-",
-                            color = Color(0xFF3884FF),
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
+                            color = Color.White, // Warna putih untuk nama
+                            fontSize = 15.sp, // Lebih besar
+                            fontWeight = FontWeight.SemiBold, // Lebih tebal
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
-                    Icon(
-                        imageVector = Icons.Default.ArrowForward,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(16.dp)
-                    )
+                    // Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = Color(0xFFB3B3B3), modifier = Modifier.size(18.dp))
                 }
             }
-            // Top Song
+            // Top Song Card
             Card(
-                backgroundColor = Color(0xFF1F1F1F),
-                shape = RoundedCornerShape(8.dp),
+                backgroundColor = Color(0xFF1A1A1A),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.weight(1f)
             ) {
-                Row(
+                 Row(
                     modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    AsyncImage(
-                        model = analytics.topSongImageUrl,
-                        contentDescription = "Song",
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
-                    Spacer(Modifier.width(8.dp))
+                    if (!analytics.topSongImageUrl.isNullOrEmpty()) {
+                        AsyncImage(
+                            model = analytics.topSongImageUrl,
+                            contentDescription = "Top Song Artwork",
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(4.dp)), // Bisa juga CircleShape atau RoundedCornerShape
+                            contentScale = ContentScale.Crop,
+                            error = painterResource(id = R.drawable.placeholder_music)
+                        )
+                    } else {
+                        Icon(painterResource(id = R.drawable.placeholder_music), contentDescription = "Top Song Placeholder", modifier = Modifier.size(40.dp).clip(RoundedCornerShape(4.dp)), tint = Color.Gray)
+                    }
+                    Spacer(Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "Top song",
@@ -477,81 +496,88 @@ fun SoundCapsuleSection(
                         )
                         Text(
                             text = analytics.topSong ?: "-",
-                            color = Color(0xFFFFE400),
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
+                            color = Color.White,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
-                    Icon(
-                        imageVector = Icons.Default.ArrowForward,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(16.dp)
-                    )
+                    // Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = Color(0xFFB3B3B3), modifier = Modifier.size(18.dp))
                 }
             }
         }
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp))
 
-        // Streak card with cover image
-        Card(
-            backgroundColor = Color(0xFF1F1F1F),
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-        ) {
-            Column {
-                AsyncImage(
-                    model = analytics.streakCoverUrl,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp)
-                        .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)),
-                    contentScale = ContentScale.Crop
-                )
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    text = "You had a ${analytics.dayStreak}-day streak",
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-                Text(
-                    text = analytics.streakDescription ?: "",
-                    color = Color(0xFFB3B3B3),
-                    fontSize = 12.sp,
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .padding(top = 4.dp, bottom = 8.dp)
-                )
-                Text(
-                    text = analytics.streakPeriod ?: "",
-                    color = Color(0xFFB3B3B3),
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(end = 16.dp, bottom = 12.dp)
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(end = 16.dp, bottom = 12.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    IconButton(onClick = { /* share streak */ }) {
-                        Icon(
-                            imageVector = Icons.Default.Share,
-                            contentDescription = "Share streak",
-                            tint = Color.White
+        // Streak Card
+        if (analytics.longestDayStreak != null && analytics.longestDayStreak > 0) {
+            Card(
+                backgroundColor = Color(0xFF1A1A1A), // Atau warna lain yang menarik
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            ) {
+                Column {
+                    if (!analytics.streakSongArtworkPath.isNullOrEmpty()) {
+                        AsyncImage(
+                            model = analytics.streakSongArtworkPath, // Gunakan artwork lagu streak
+                            contentDescription = "Streak Song Artwork",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(160.dp) // Tinggi disesuaikan
+                                .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)),
+                            contentScale = ContentScale.Crop,
+                            error = painterResource(id = R.drawable.placeholder_music) // Fallback jika error
+                        )
+                    } else {
+                        // Placeholder jika tidak ada artwork
+                        Box(modifier = Modifier.fillMaxWidth().height(160.dp).background(Color.DarkGray).clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)))
+                    }
+
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "You had a ${analytics.longestDayStreak}-day streak",
+                            color = Color.White,
+                            fontSize = 18.sp, // Lebih besar
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            text = analytics.streakDescriptionText, // Deskripsi dinamis dari SoundCapsule
+                            color = Color(0xFFB3B3B3),
+                            fontSize = 13.sp,
+                            lineHeight = 18.sp // Atur line height jika perlu
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = analytics.streakPeriodText, // Periode dinamis dari SoundCapsule
+                            color = Color(0xFF808080), // Warna lebih redup
+                            fontSize = 12.sp
                         )
                     }
                 }
             }
+        } else {
+            // Tampilan jika tidak ada streak
+             Card(
+                backgroundColor = Color(0xFF1A1A1A),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            ) {
+                Text(
+                    text = "Mulai dengarkan setiap hari untuk membangun streakmu!",
+                    color = Color(0xFFB3B3B3),
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(16.dp),
+                    textAlign = TextAlign.Center
+                )
+            }
         }
-
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(24.dp)) // Padding bawah
     }
 }
 

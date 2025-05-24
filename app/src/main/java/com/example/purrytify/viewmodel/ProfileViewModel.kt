@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.io.File
 import java.time.YearMonth
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 class ProfileViewModel(
@@ -78,7 +79,15 @@ class ProfileViewModel(
     fun loadAnalytics(month: YearMonth = YearMonth.now()) {
         viewModelScope.launch {
             val uid = sessionManager.getUserId()
-            _analytics.value = analyticsRepo.getMonthlyAnalytics(uid, YearMonth.now().toString())
+            if (uid > 0) { // Hanya load jika userId valid
+                // Format YearMonth ke string "YYYY-MM"
+                val yearMonthString = month.format(DateTimeFormatter.ofPattern("yyyy-MM"))
+                Log.d("ProfileViewModel", "Loading analytics for user $uid, month $yearMonthString")
+                _analytics.value = analyticsRepo.getMonthlyAnalytics(uid, yearMonthString)
+            } else {
+                Log.w("ProfileViewModel", "Cannot load analytics, invalid userId: $uid")
+                _analytics.value = SoundCapsule(month = month) // Atau state default lainnya
+            }
         }
     }
 
