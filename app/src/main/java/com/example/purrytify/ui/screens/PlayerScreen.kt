@@ -264,7 +264,7 @@ fun PlayerModalBottomSheet(
             if (shouldClose) {
                 sheetState.hide()
                 onDismiss()
-                playerViewModel.resetCloseSheetFlag()
+                playerViewModel.triggerClosePlayerSheet()
             }
         }
         ModalBottomSheet(

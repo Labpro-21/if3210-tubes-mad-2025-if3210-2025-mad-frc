@@ -101,8 +101,9 @@ dependencies {
     implementation(libs.androidx.room.paging)
     testImplementation(libs.androidx.room.testing)
 
-    implementation("androidx.media3:media3-exoplayer:1.3.1")
-    implementation("androidx.media3:media3-ui:1.3.1")
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
+    implementation(libs.androidx.media3.common)
     implementation("androidx.compose.material:material-icons-extended:<version>")
     implementation ("androidx.datastore:datastore-preferences:1.0.0")
 

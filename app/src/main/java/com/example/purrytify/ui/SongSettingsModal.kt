@@ -67,8 +67,7 @@ private fun ConfirmDelete(
                     currentSong?.let {
                         songViewModel.deleteSong(it)
                         playerViewModel.stopPlayer()
-                        playerViewModel.closePlayerSheet() // Ini yang trigger penutupan sheet
-
+                        playerViewModel.triggerClosePlayerSheet() // Ini yang trigger penutupan sheet
                     }
                     showDialog = false
                 }) {
