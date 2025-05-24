@@ -1,6 +1,5 @@
  package com.example.purrytify.ui.navigation
 
-import android.app.Activity
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -12,7 +11,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.purrytify.data.AppDatabase
 import com.example.purrytify.repository.SongRepository
-import com.example.purrytify.ui.screens.HomeScreenWithBottomNav
 import com.example.purrytify.ui.screens.LibraryScreenWithBottomNav
 import com.example.purrytify.ui.screens.LoginScreen
 import com.example.purrytify.ui.screens.ProfileScreenWithBottomNav
@@ -23,7 +21,6 @@ import com.example.purrytify.viewmodel.SongViewModelFactory
 import com.example.purrytify.viewmodel.NetworkViewModel
 import com.example.purrytify.utils.TokenManager
 import androidx.compose.runtime.livedata.observeAsState
-import com.example.purrytify.repository.UserRepository
 import com.example.purrytify.ui.screens.HomeScreenResponsive
 import com.example.purrytify.utils.SessionManager
 import com.example.purrytify.viewmodel.PlayerViewModel
@@ -111,7 +108,8 @@ fun AppNavigation() {
                     }
                     songViewModel.reset()
                 },
-                songViewModel = songViewModel
+                songViewModel = songViewModel,
+                playerViewModel = playerViewModel
             )
         }
     }

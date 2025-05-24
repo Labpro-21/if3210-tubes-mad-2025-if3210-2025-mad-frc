@@ -11,8 +11,8 @@ class AnalyticsRepository(
     private val dao: SongDao,
     private val context: Context          // ← tambahkan Context
 ) {
-    suspend fun getMonthlyAnalytics(userId: Int, month: YearMonth): SoundCapsule {
-        val ym = month.toString() // “YYYY-MM”
+    suspend fun getMonthlyAnalytics(userId: Int, yearMonth: String): SoundCapsule {
+        val month = YearMonth.parse(yearMonth)
         val start = month.atDay(1)
             .atStartOfDay(ZoneId.systemDefault())
             .toInstant().toEpochMilli()
@@ -22,10 +22,15 @@ class AnalyticsRepository(
 
         return SoundCapsule(
             month = month,
-            timeListenedMillis = dao.sumTimeListened(userId, ym),
-            topArtist = dao.topArtist(userId, ym),
-            topSong = dao.topSong(userId, ym),
-            dayStreak = dao.dayStreak(userId, start, next)
+            timeListenedMillis = dao.sumTimeListened(userId, yearMonth),
+            topArtist = dao.topArtist(userId, yearMonth),
+            topSong = dao.topSong(userId, yearMonth),
+            dayStreak = dao.dayStreak(userId, start, next),
+            topArtistImageUrl = null,
+            topSongImageUrl = null,
+            streakCoverUrl = null,
+            streakDescription = null,
+            streakPeriod = null
         )
     }
 

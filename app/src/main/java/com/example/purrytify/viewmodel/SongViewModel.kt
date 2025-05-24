@@ -1,20 +1,18 @@
 package com.example.purrytify.viewmodel
 
-import android.R
 import android.util.Log
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.purrytify.model.PlayHistory
 import com.example.purrytify.repository.SongRepository
 import com.example.purrytify.model.Song
-import com.example.purrytify.utils.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.Date
 
-class SongViewModel(private val repository: SongRepository,userId: Int) : ViewModel() {
+class SongViewModel(private val repository: SongRepository, private val userId: Int) : ViewModel() {
 
     private val _songs = MutableStateFlow<List<Song>>(emptyList())
     private val _liked_songs = MutableStateFlow<List<Song>>(emptyList())
@@ -29,7 +27,6 @@ class SongViewModel(private val repository: SongRepository,userId: Int) : ViewMo
     val recentlyPlayed : StateFlow<List<Song>> = _recently_played.asStateFlow()
 
     init {
-
         loadSongs(userId)
     }
 
@@ -83,11 +80,10 @@ class SongViewModel(private val repository: SongRepository,userId: Int) : ViewMo
     }
 
 
-    fun toggleLikeSong(song : Song){
+    fun toggleLikeSong(song : Song) {
         viewModelScope.launch {
             repository.toggleLike(song.id)
             val updatedSong = repository.getSong(song.id)
-//            println("Updated liked status: ${updatedSong.liked}")
             Log.d("SongViewModel", "Updated liked status: ${updatedSong.liked}")
             Log.d("SongViewModel", "Updated liked songs: ${likedSongs.value}")
             loadSongs(song.userId)
@@ -132,5 +128,16 @@ class SongViewModel(private val repository: SongRepository,userId: Int) : ViewMo
     }
 
 
-
+    fun recordPlayTick() {
+        viewModelScope.launch {
+            val songId = _current_song.value?.id ?: return@launch
+            val history = PlayHistory(
+                user_id = userId,
+                played_at = Date(),
+                duration_ms = 1_000L,
+                song_id = songId
+            )
+            repository.addPlayHistory(history)
+        }
+    }
 }

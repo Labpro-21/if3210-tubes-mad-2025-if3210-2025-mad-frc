@@ -158,7 +158,7 @@ class PlayerViewModel @Inject constructor(
                     song_id = song.id,
                     user_id = song.userId,
                     played_at = Date(now),
-                    duration_ms = listenedMs
+                    duration_ms = listenedMs,
                 )
             )
         }

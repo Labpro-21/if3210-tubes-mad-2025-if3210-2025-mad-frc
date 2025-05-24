@@ -16,9 +16,9 @@ import java.util.*
 )
 
 data class PlayHistory(
-  @PrimaryKey(autoGenerate = true) val id: Int = 0,
-  val song_id: Int,
-  val user_id: Int,
-  val played_at: Date,
-  val duration_ms: Long
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val song_id: Int,
+    val user_id: Int,
+    val played_at: Date,
+    val duration_ms: Long
 )

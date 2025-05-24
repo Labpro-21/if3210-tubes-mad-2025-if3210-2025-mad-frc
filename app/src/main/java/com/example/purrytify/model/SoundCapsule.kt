@@ -1,31 +1,31 @@
 package com.example.purrytify.model
 
 import java.time.YearMonth
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
-/**
- * Representasi data analitik bulanan (“Sound Capsule”) untuk setiap pengguna.
- *
- * @property month          Bulan dan tahun (YearMonth) data ini diambil.
- * @property timeListenedMillis  Total durasi mendengarkan (ms) pada bulan tersebut.
- * @property topArtist      Artis yang paling sering didengar.
- * @property topSong        Lagu yang paling sering diputar.
- * @property dayStreak      Jumlah hari berturut-turut (>=2 hari) mendengarkan lagu.
- */
 data class SoundCapsule(
     val month: YearMonth? = null,
     val timeListenedMillis: Long? = null,
     val topArtist: String? = null,
     val topSong: String? = null,
-    val dayStreak: Int? = null
+    val dayStreak: Int? = null,
+
+    val topArtistImageUrl: String?   = null,
+    val topSongImageUrl: String?     = null,
+    val streakCoverUrl: String?      = null,
+    val streakDescription: String?   = null,
+    val streakPeriod: String? = null
 ) {
-    /**
-     * Format durasi listen dalam "H:mm:ss", atau teks fallback jika null.
-     */
+    /** "April 2025" */
+    val monthYear: String
+        get() = month
+            ?.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault()))
+            ?.replaceFirstChar { it.uppercase() }
+        ?: ""
+
     fun formattedTimeListened(): String = timeListenedMillis?.let {
-        val totalSec = it / 1000
-        val h = totalSec / 3600
-        val m = (totalSec % 3600) / 60
-        val s = totalSec % 60
-        "%d:%02d:%02d".format(h, m, s)
+        val tot = it/1000
+        "%d:%02d:%02d".format(tot/3600, (tot%3600)/60, tot%60)
     } ?: "No data available"
 }

@@ -78,7 +78,7 @@ class ProfileViewModel(
     fun loadAnalytics(month: YearMonth = YearMonth.now()) {
         viewModelScope.launch {
             val uid = sessionManager.getUserId()
-            _analytics.value = analyticsRepo.getMonthlyAnalytics(uid, month)
+            _analytics.value = analyticsRepo.getMonthlyAnalytics(uid, YearMonth.now().toString())
         }
     }
 
