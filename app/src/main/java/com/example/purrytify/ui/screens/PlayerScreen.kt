@@ -64,6 +64,8 @@ import com.example.purrytify.viewmodel.PlayerViewModelFactory
 import com.example.purrytify.viewmodel.SongViewModel
 import com.example.purrytify.ui.LockScreenOrientation
 import android.content.pm.ActivityInfo
+import androidx.compose.material.icons.filled.Share
+import com.example.purrytify.utils.shareServerSong
 
 
 @Composable
@@ -154,6 +156,14 @@ fun PlayerScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.Gray
                 )
+            }
+
+            currentSong?.let { song ->
+                if (song.audioPath.startsWith("http") && !song.isExplicitlyAdded && song.serverId != null) { // Cek apakah lagu server (belum eksplisit jadi lokal)
+                    IconButton(onClick = { shareServerSong(context, song) }) {
+                        Icon(Icons.Default.Share, contentDescription = "Share Song")
+                    }
+                }
             }
 
             IconButton(onClick = { currentSong?.let { songViewModel.toggleLikeSong(it) } }) {

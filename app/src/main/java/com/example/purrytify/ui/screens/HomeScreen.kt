@@ -64,6 +64,7 @@ import androidx.compose.ui.graphics.Brush
 import java.util.Date
 import com.example.purrytify.ui.components.SongSettingsModal
 import com.example.purrytify.ui.components.TopModalBottomSheet
+import com.example.purrytify.utils.shareServerSong
 
 @Composable
 fun HomeScreenContent(
@@ -235,22 +236,23 @@ fun HomeScreenContent(
 
     // Modal Settings & Delete Dialog (sama seperti sebelumnya)
     SongSettingsModal(
+        song = selectedSong,
         visible = showSongSettings,
         onDismiss = { showSongSettings = false },
-        onEdit = {
+        onEdit = { 
             selectedSong?.let { song ->
                 // Implementasi edit logic
             }
-        },
-        onDelete = {
+         },
+        onDelete = { 
             showDeleteDialog = true
-        },
-        onShare = {
-            selectedSong?.let { song ->
-                shareOnlineSong(context, song)
+         },
+        onShareUrl = {
+            selectedSong?.let { songToShare ->
+                shareServerSong(context, songToShare)
             }
         },
-        isOnlineSong = selectedSong?.audioPath?.startsWith("http") == true
+        isOnlineSong = selectedSong?.serverId != null
     )
 
     // Top50 Modal Bottom Sheet - TAMBAHAN BARU

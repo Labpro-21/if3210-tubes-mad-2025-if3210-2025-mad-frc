@@ -14,14 +14,16 @@ fun NetworkSong.toLocalSong(userId: Int): Song {
         0L
     }
     return Song(
-        id          = this.id,
-        title       = this.title,
-        artist      = this.artist,
-        duration    = ms,
+        id = 0,
+        serverId = this.id,
+        title = this.title,
+        artist = this.artist,
+        duration = ms,
         artworkPath = this.artwork,
-        audioPath   = this.url,
-        addedDate   = Date(),
-        lastPlayed  = null,
-        userId      = userId
+        audioPath = this.url,
+        addedDate = Date(),
+        lastPlayed = null,
+        userId = userId,
+        isExplicitlyAdded = false
     )
 }

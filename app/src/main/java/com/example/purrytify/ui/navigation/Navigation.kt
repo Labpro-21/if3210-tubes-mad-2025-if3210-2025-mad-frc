@@ -38,8 +38,9 @@ import com.example.purrytify.viewmodel.OnlineSongViewModelFactory
 }
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(onScanQrClicked: () -> Unit) {
     val context = LocalContext.current
+    val activity = LocalContext.current as ComponentActivity
     val tokenManager = remember { TokenManager(context) }
     val sessionManager = remember { SessionManager(context) }
     val navController = rememberNavController()
@@ -57,27 +58,17 @@ fun AppNavigation() {
 
     Log.d("AppNavigation", "Read from SessionManager: currentSessionUserId = $currentSessionUserId. Calculated userIdForViewModel = $userIdForViewModel")
 
-    // Tentukan startDestination berdasarkan status login
-    // Jika sudah login, pastikan userIdForViewModel adalah ID yang valid sebelum mengarah ke Home
-    val startDestination = if (tokenManager.isLoggedIn() && userIdForViewModel > 0) {
+    val startDestination = if (tokenManager.isLoggedIn() && currentSessionUserId > 0) {
         Screen.Home.route
     } else {
-        // Jika tidak login atau userId tidak valid, paksa ke Login & hapus session jika ada ketidaksesuaian
-        if (tokenManager.isLoggedIn() && userIdForViewModel <= 0) {
-            Log.w("AppNavigation", "Token exists but userId invalid ($userIdForViewModel). Forcing logout.")
+        if (tokenManager.isLoggedIn() && currentSessionUserId <= 0) {
+            Log.w("AppNavigation", "Token exists but session userId is invalid ($currentSessionUserId). Forcing logout and redirect to Login.")
             tokenManager.clearTokens()
             sessionManager.clearSession()
         }
         Screen.Login.route
     }
-    Log.d("AppNavigation", "Final startDestination = $startDestination")
-
-
-    // SongViewModel hanya dibuat jika kita berada di rute yang memerlukannya DAN userId valid
-    // Kita akan membuat SongViewModel di dalam composable Home, Library, Profile jika diperlukan,
-    // atau melewatkannya dari sini jika userIdForViewModel sudah pasti valid.
-    // Untuk sekarang, kita buat di sini tapi dengan kesadaran bahwa ini hanya valid jika userIdForViewModel > 0
-    // Jika tidak, operasinya akan gagal.
+    Log.d("AppNavigation", "Determined startDestination: $startDestination")
 
     val songViewModel: SongViewModel = viewModel(
         key = "songViewModel_${userIdForViewModel}", // Key akan berubah jika userIdForViewModel berubah
@@ -98,6 +89,9 @@ fun AppNavigation() {
     )
     // ----- END USER ID HANDLING -----
 
+    LaunchedEffect(currentSessionUserId, tokenManager.isLoggedIn()) {
+        Log.d("AppNavigation_Recompose", "Recomposing. SessionUserId: $currentSessionUserId, IsLoggedIn: ${tokenManager.isLoggedIn()}")
+    }
 
     NavHost(navController = navController, startDestination = startDestination) {
         composable(route = Screen.Login.route) {
@@ -156,17 +150,10 @@ fun AppNavigation() {
                 )
             }
         }
-        composable(route = Screen.Profile.route) {
-            val currentProfileUserId = sessionManager.getUserId()
-            if (currentProfileUserId <= 0) {
-                Log.e("AppNavigation_Profile", "Accessed Profile with invalid userId: $currentProfileUserId. Navigating to Login.")
-                LaunchedEffect(Unit) {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Profile.route) { inclusive = true }
-                        launchSingleTop = true
-                    }
-                }
-            } else {
+        composable(Screen.Profile.route) {
+            val sessionUserId = sessionManager.getUserId()
+            if (sessionUserId > 0) {
+                val vmToUse: SongViewModel = viewModel(viewModelStoreOwner = activity, key = "songViewModel_user_${sessionUserId}", factory = SongViewModelFactory(songRepository, sessionUserId))
                 ProfileScreenWithBottomNav(
                     onNavigateToHome = { navController.navigate(Screen.Home.route) },
                     onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
@@ -174,16 +161,19 @@ fun AppNavigation() {
                     onLogout = {
                         playerViewModel.stopPlayer()
                         tokenManager.clearTokens()
-                        sessionManager.clearSession() // Hapus session UserId
-                        // Navigasi ke Login dan bersihkan semua backstack
+                        sessionManager.clearSession()
+                        Log.i("AppNavigation_Logout", "User logged out. Navigating to Login.")
                         navController.navigate(Screen.Login.route) {
                             popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                            launchSingleTop = true
                         }
-                        songViewModel.reset() // Reset state di SongViewModel
                     },
-                    songViewModel = songViewModel,
-                    playerViewModel = playerViewModel
+                    songViewModel = vmToUse,
+                    playerViewModel = playerViewModel,
+                    onScanQrClicked = onScanQrClicked // Teruskan callback ke ProfileScreen jika tombol ada di sana
                 )
+            } else {
+                LaunchedEffect(Unit) { navController.navigate(Screen.Login.route) { popUpTo(Screen.Profile.route) { inclusive = true }; launchSingleTop = true } }
             }
         }
     }

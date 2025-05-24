@@ -3,9 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-<!--    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />-->
-
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
 
     <application
         android:allowBackup="true"
@@ -19,14 +19,43 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.example.purrytify.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="Purritify"
-            android:theme="@style/Theme.Purrytify">
+            android:label="Purritify" android:theme="@style/Theme.Purrytify"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter android:label="Purrytify Song Link">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="purrytify"
+                    android:host="song" />
+                <!-- {/* Tidak perlu android:pathPattern jika Anda menangkap ID sebagai segment terakhir dari host.
+                    Jika URI Anda adalah "purrytify://song/191", maka "song" adalah host, dan "191" adalah path atau pathSegment.
+                    Jika Anda ingin lebih spesifik dengan path, Anda bisa menggunakan:
+                    <data android:scheme="purrytify"
+                        android:host="song"
+                        android:pathPrefix="/" />
+                    atau
+                    <data android:scheme="purrytify"
+                        android:host="song"
+                        android:pathPattern="/.*" />
+                    Namun, untuk "purrytify://song/ID_LAGU", host "song" biasanya sudah cukup karena sisanya akan dianggap path.
+                */} -->
             </intent-filter>
         </activity>
     </application>

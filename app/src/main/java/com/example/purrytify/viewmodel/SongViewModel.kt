@@ -157,10 +157,10 @@ class SongViewModel(private val repository: SongRepository, private val userId: 
                 if (localCopy == null) {
                     Log.i("SongViewModel_setCurrentSong", "Online song '${songData.title}' not in local DB. Inserting...")
                     val entryForDb = songData.copy(
-                        id = 0, // Untuk auto-generate ID oleh Room
+                        id = 0, // Untuk ID lokal baru
                         userId = effectiveUserId,
                         addedDate = Date(),
-                        lastPlayed = null, // Akan diupdate setelah ini
+                        lastPlayed = null,
                         liked = false,
                         isExplicitlyAdded = false
                     )

@@ -51,13 +51,16 @@ import com.example.purrytify.viewmodel.PlayerViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import android.util.Log
+import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.icons.filled.QrCodeScanner
 
 @Composable
 fun ProfileScreen(
     isConnected: Boolean,
     onLogout: () -> Unit,
     songViewModel: SongViewModel,
-    playerViewModel: PlayerViewModel
+    playerViewModel: PlayerViewModel,
+    onScanQrClicked: () -> Unit
 ) {
     val context = LocalContext.current
 
@@ -99,7 +102,8 @@ fun ProfileScreen(
         onLogout = onLogout,
         songViewModel = songViewModel,
         analytics = analytics,
-        playerViewModel = playerViewModel
+        playerViewModel = playerViewModel,
+        onScanQrCodeClick = onScanQrClicked // Tambahkan parameter untuk fungsi scan QR
     )
 }
 
@@ -114,7 +118,8 @@ fun ProfileContent(
     onLogout: () -> Unit,
     songViewModel: SongViewModel,
     analytics: SoundCapsule,
-    playerViewModel: PlayerViewModel
+    playerViewModel: PlayerViewModel,
+    onScanQrCodeClick: () -> Unit // Tambahkan parameter untuk fungsi scan QR
 ) {
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
     // Background gradasi dari #006175 ke #121212
@@ -201,6 +206,21 @@ fun ProfileContent(
                 StatItem(count = likedSongs, label = "LIKED")
                 StatItem(count = listenedSongs, label = "LISTENED")
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = {
+                    // Panggil fungsi untuk memulai pemindaian QR
+                    // Kita akan menggunakan ActivityResultLauncher untuk ini
+//                     onScanQrCodeClick() -> ini akan jadi parameter ke ProfileScreen
+                },
+                // ... modifier dan style lainnya ...
+            ) {
+                Icon(Icons.Filled.QrCodeScanner, contentDescription = "Scan QR Code", modifier = Modifier.size(ButtonDefaults.IconSize))
+                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                Text("Scan Song QR")
+            }
+
             SoundCapsuleSection(
                 analytics = analytics,
                 onDownload = { /* export CSV / PDF */ },
@@ -240,7 +260,8 @@ fun ProfileScreenWithBottomNav(
     isConnected: Boolean,
     onLogout: () -> Unit,
     songViewModel: SongViewModel,
-    playerViewModel: PlayerViewModel
+    playerViewModel: PlayerViewModel,
+    onScanQrClicked: () -> Unit
 ) {
     Scaffold(
         bottomBar = {
@@ -257,7 +278,7 @@ fun ProfileScreenWithBottomNav(
         }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
-            ProfileScreen(isConnected = isConnected, onLogout = onLogout, songViewModel = songViewModel, playerViewModel = playerViewModel)
+            ProfileScreen(isConnected = isConnected, onLogout = onLogout, songViewModel = songViewModel, playerViewModel = playerViewModel, onScanQrClicked = onScanQrClicked)
         }
     }
 }
