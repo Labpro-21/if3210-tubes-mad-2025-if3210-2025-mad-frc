@@ -15,7 +15,6 @@ import com.example.purrytify.repository.SongRepository
 import com.example.purrytify.ui.navigation.AppNavigation
 import com.example.purrytify.ui.theme.PurrytifyTheme
 import com.example.purrytify.utils.SessionManager
-import com.example.purrytify.utils.toLocalSong
 import com.example.purrytify.viewmodel.OnlineSongViewModel
 import com.example.purrytify.viewmodel.OnlineSongViewModelFactory
 import com.example.purrytify.viewmodel.PlayerViewModel
@@ -40,9 +39,18 @@ class MainActivity : ComponentActivity() {
     // Untuk sekarang, kita akan coba akses melalui Application Scope atau dengan cara lain jika belum Hilt
     // Cara yang lebih sederhana adalah dengan membuat instance factory di sini jika belum menggunakan Hilt
     private lateinit var onlineSongViewModelInstance: OnlineSongViewModel
-    private lateinit var songViewModelInstance: SongViewModel
     private lateinit var playerViewModelInstance: PlayerViewModel
     private lateinit var qrScanLauncher: ActivityResultLauncher<ScanOptions>
+
+    val songViewModel: SongViewModel by viewModels {
+        val sm = SessionManager(applicationContext)
+        val sId = sm.getUserId().let { if (it == -1) 0 else it } // Hati-hati dengan ID 0 jika tidak valid
+        Log.d("MainActivity_VM", "Creating SongViewModel in MainActivity for userId: $sId")
+        SongViewModelFactory(
+            SongRepository(AppDatabase.getDatabase(applicationContext).songDao(), AppDatabase.getDatabase(applicationContext).userDao()),
+            sId
+        )
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,10 +69,6 @@ class MainActivity : ComponentActivity() {
         val sessionManager = SessionManager(applicationContext)
         val db = AppDatabase.getDatabase(applicationContext)
         val songRepository = SongRepository(db.songDao(), db.userDao())
-
-        // Factory untuk SongViewModel
-        val songViewModelFactory = SongViewModelFactory(songRepository, sessionManager.getUserId().let { if (it == -1) 0 else it })
-        songViewModelInstance = ViewModelProvider(this, songViewModelFactory).get(SongViewModel::class.java)
 
         // Factory untuk PlayerViewModel
         val playerViewModelFactory = PlayerViewModelFactory(application)
@@ -87,6 +91,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             PurrytifyTheme {
                 AppNavigation(
+                    songViewModelFromActivity = songViewModel,
                     onScanQrClicked = { launchQrScanner() } // Ini sudah benar
                 )
             }

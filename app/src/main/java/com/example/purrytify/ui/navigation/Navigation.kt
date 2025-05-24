@@ -42,7 +42,7 @@ import com.example.purrytify.viewmodel.OnlineSongViewModelFactory
 }
 
 @Composable
-fun AppNavigation(onScanQrClicked: () -> Unit) {
+fun AppNavigation(onScanQrClicked: () -> Unit, songViewModelFromActivity: SongViewModel) {
     val context = LocalContext.current
     val activity = LocalContext.current as ComponentActivity
     val tokenManager = remember { TokenManager(context) }
@@ -126,9 +126,9 @@ fun AppNavigation(onScanQrClicked: () -> Unit) {
             } else {
                 // userId sudah valid, gunakan SongViewModel yang sudah dibuat dengan userId yang benar
                 HomeScreenResponsive(
+                    songViewModel = songViewModelFromActivity,
                     onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
                     onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                    songViewModel = songViewModel, // songViewModel dari AppNavigation (seharusnya sudah benar)
                     playerViewModel = playerViewModel,
                     // onlineViewModel dilewatkan langsung
                     onNavigateToTopSong = { chartType ->
@@ -150,7 +150,7 @@ fun AppNavigation(onScanQrClicked: () -> Unit) {
             } else {
                 LibraryScreenWithBottomNav(
                     onBack = { navController.popBackStack() },
-                    songViewModel = songViewModel,
+                    songViewModel = songViewModelFromActivity,
                     onNavigateToHome = { navController.navigate(Screen.Home.route) },
                     onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                     playerViewModel = playerViewModel,

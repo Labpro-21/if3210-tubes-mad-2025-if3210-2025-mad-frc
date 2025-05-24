@@ -77,22 +77,33 @@ class SongViewModel(private val repository: SongRepository, private val userId: 
         }
 
         viewModelScope.launch {
-            repository.getAllSongsInternal(userIdToLoad).collect { allSongsList ->
-                 val currentSongSnapshot = _current_song.value
-                 if (currentSongSnapshot != null && currentSongSnapshot.id != 0) {
-                    val songFromDbList = allSongsList.find { it.id == currentSongSnapshot.id && it.userId == currentSongSnapshot.userId }
-                    if (songFromDbList != null) {
-                        if (currentSongSnapshot != songFromDbList) {
-                           Log.d("SongViewModel_loadSongs", "Updating _current_song (ID: ${currentSongSnapshot.id}) with fresh data from DB.")
-                           _current_song.value = songFromDbList
-                        }
-                    } else {
-                        Log.d("SongViewModel_loadSongs", "Nullifying _current_song (ID: ${currentSongSnapshot.id}) as it's no longer in DB (and not a new online song).")
-                        _current_song.value = null
+        repository.getAllSongsInternal(userIdToLoad).collect { allSongsList ->
+             val currentSongSnapshot = _current_song.value
+             if (currentSongSnapshot != null && currentSongSnapshot.id != 0) { // Hanya jika ada current song yang valid
+                val songFromDbList = allSongsList.find { it.id == currentSongSnapshot.id && it.userId == currentSongSnapshot.userId }
+                if (songFromDbList != null) {
+                    // Hanya update _current_song jika ada perubahan relevan (misal status liked, atau jika objeknya berbeda instance)
+                    // dan BUKAN jika setCurrentSong baru saja mengaturnya.
+                    // Untuk menghindari race condition, mungkin lebih baik jika setCurrentSong adalah satu-satunya yang mengatur _current_song secara langsung
+                    // dan loadSongs hanya memicu refresh data lagu lain.
+                    // Atau, pastikan objeknya benar-benar berbeda sebelum update.
+                    if (currentSongSnapshot.liked != songFromDbList.liked ||
+                        currentSongSnapshot.title != songFromDbList.title || // Contoh field lain jika bisa berubah
+                        currentSongSnapshot.artist != songFromDbList.artist ||
+                        currentSongSnapshot.artworkPath != songFromDbList.artworkPath) {
+                       Log.d("SongViewModel_loadSongs", "Updating _current_song (ID: ${currentSongSnapshot.id}) due to changes in DB (e.g., liked status).")
+                       _current_song.value = songFromDbList
                     }
-                 }
-            }
+                } else {
+                    // Jika lagu yang sebelumnya current sudah tidak ada di DB (dan bukan online song yang baru diproses setCurrentSong)
+                    // Kita bisa null-kan _current_song jika memang sudah dihapus.
+                    // Namun, setCurrentSong yang baru saja dijalankan dari deep link akan menangani ini.
+                    // Jadi, mungkin tidak perlu null-kan di sini jika setCurrentSong sudah benar.
+                    Log.d("SongViewModel_loadSongs", "Current song (ID: ${currentSongSnapshot.id}) not found in allSongsList. setCurrentSong should handle if it was deleted.")
+                }
+             }
         }
+    }
 
         viewModelScope.launch {
             repository.getNewSongs(userIdToLoad).collect { _new_songs.value = it }
@@ -206,15 +217,14 @@ class SongViewModel(private val repository: SongRepository, private val userId: 
                 val finalSongToShow = repository.getSong(fullyProcessedSong.id)
                 _current_song.value = finalSongToShow
                 if (finalSongToShow != null) {
-                    Log.i("SongViewModel_setCurrentSong", "SUCCESS: _current_song.value set to ID: ${finalSongToShow.id}, Title: ${finalSongToShow.title}, LastPlayed: ${finalSongToShow.lastPlayed}")
+                    Log.i("SongViewModel_setCurrentSong", "SUCCESS: _current_song.value FINALIZED to ID: ${finalSongToShow.id}, Title: ${finalSongToShow.title}, Path: ${finalSongToShow.audioPath}")
                 } else {
-                    Log.e("SongViewModel_setCurrentSong", "ERROR: Failed to get final song from DB for ID ${fullyProcessedSong.id}. _current_song.value might be stale or null.")
-                    _current_song.value = null // Safety net
+                    Log.e("SongViewModel_setCurrentSong", "ERROR: finalSongToShow is null. _current_song.value set to null.")
+                    _current_song.value = null
                 }
             } else {
-                Log.e("SongViewModel_setCurrentSong", "Could not obtain a valid local song instance for ${songData.title}. _current_song remains null or its previous state if path was same.")
-                // Jika _current_song sudah di-null-kan di awal, biarkan. Jika tidak (karena audioPath sama tapi proses gagal), null-kan sekarang.
-                if (fullyProcessedSong == null) _current_song.value = null
+                Log.e("SongViewModel_setCurrentSong", "Could not obtain valid local song. _current_song.value set/remains null.")
+                 _current_song.value = null // Pastikan null jika tidak valid
             }
 
             // loadSongs akan dipanggil setelahnya untuk merefresh semua list UI

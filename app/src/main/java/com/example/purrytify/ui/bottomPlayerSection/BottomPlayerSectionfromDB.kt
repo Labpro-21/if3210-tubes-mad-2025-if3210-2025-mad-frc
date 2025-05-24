@@ -1,6 +1,7 @@
 package com.example.purrytify.ui.screens
 
 import android.app.Activity
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,6 +32,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextOverflow
@@ -74,76 +76,92 @@ fun BottomPlayerSectionFromDB(
         return
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.DarkGray)
-            .clickable { onSectionClick() }
-            .padding(16.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
+    LaunchedEffect(currentSong) {
+        if (currentSong != null) {
+            Log.d("BottomPlayer_Update", "Observed currentSong update: ${currentSong}")
+        } else {
+            Log.d("BottomPlayer_Update", "Observed currentSong update: null")
+        }
+    }
+
+    currentSong?.let { song ->
+        // Log untuk memastikan recomposition terjadi dengan lagu yang benar
+        Log.d("BottomPlayer", "Recomposing for song: ${song.title} (ID: ${song.id})")
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.DarkGray) // Atau warna tema Anda
+                .clickable { onSectionClick() }
+                .padding(8.dp) // Padding disesuaikan
         ) {
-            // ✅ Handle artwork untuk online songs dan local songs
-            if (!currentSong!!.artworkPath.isNullOrEmpty()) {
-                Image(
-                    painter = rememberAsyncImagePainter(
-                        model = if (currentSong!!.artworkPath!!.startsWith("http")) {
-                            // Online song - gunakan URL langsung
-                            currentSong!!.artworkPath
-                        } else {
-                            // Local song - convert ke URI
-                            currentSong!!.artworkPath!!.toUri()
-                        }
-                    ),
-                    contentDescription = currentSong!!.title,
-                    modifier = Modifier
-                        .size(imageSize)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Icon(
-                    imageVector = Icons.Default.MusicNote,
-                    contentDescription = "No artwork",
-                    tint = Color.White.copy(alpha = 0.7f),
-                    modifier = Modifier.size(imageSize)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = currentSong!!.title,
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = currentSong!!.artist,
-                    color = Color.Gray,
-                    fontSize = 12.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-
-            IconButton(
-                onClick = { onPlayPause() },
-                modifier = Modifier
-                    .size(iconButtonSize)
-                    .background(MaterialTheme.colorScheme.primary, shape = CircleShape)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(
-                    imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    contentDescription = "Play/Pause",
-                    tint = Color.White,
-                    modifier = Modifier.size(iconSize)
-                )
+                // Artwork
+                if (!song.artworkPath.isNullOrEmpty()) {
+                    Image(
+                        painter = rememberAsyncImagePainter(
+                            model = if (song.artworkPath!!.startsWith("http")) {
+                                song.artworkPath
+                            } else {
+                                song.artworkPath!!.toUri()
+                            }
+                        ),
+                        contentDescription = song.title,
+                        modifier = Modifier
+                            .size(48.dp) // Ukuran artwork disesuaikan
+                            .clip(RoundedCornerShape(4.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.MusicNote,
+                        contentDescription = "No artwork",
+                        tint = Color.White.copy(alpha = 0.7f),
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = song.title,
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = song.artist,
+                        color = Color.Gray,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                // Tombol Play/Pause (dari PlayerViewModel, status isPlaying dilewatkan)
+                IconButton(
+                    onClick = { onPlayPause() },
+                    modifier = Modifier
+                        .size(48.dp) // Ukuran tombol disesuaikan
+                        // .background(MaterialTheme.colorScheme.primary, shape = CircleShape) // Opsional background
+                ) {
+                    Icon(
+                        imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        contentDescription = "Play/Pause",
+                        tint = Color.White, // Atau MaterialTheme.colorScheme.onPrimary
+                        modifier = Modifier.size(32.dp) // Ukuran ikon disesuaikan
+                    )
+                }
             }
         }
+    } ?: run {
+        // Jika currentSong null, tidak tampilkan apa-apa atau placeholder
+        // Box(modifier = Modifier.fillMaxWidth().height(56.dp)) // Placeholder kosong
+        Log.d("BottomPlayer", "No current song, BottomPlayerSection is empty.")
     }
 }
