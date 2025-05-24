@@ -38,7 +38,6 @@ import com.example.purrytify.viewmodel.OnlineSongViewModelFactory
     object Home : Screen("home")
     object Library : Screen("library")
     object Profile : Screen("profile")
-    // Player screen tidak didefinisikan sebagai rute terpisah di sini, tapi sebagai modal.
 }
 
 @Composable
@@ -81,12 +80,10 @@ fun AppNavigation(onScanQrClicked: () -> Unit, songViewModelFromActivity: SongVi
     Log.d("AppNavigation", "SongViewModel instance created/obtained with key: songViewModel_${userIdForViewModel}. Passed userId to factory: $userIdForViewModel")
 
 
-    // PlayerViewModel (tetap seperti sebelumnya)
     val playerViewModel: PlayerViewModel = viewModel<PlayerViewModel>(
         factory = PlayerViewModelFactory((context as ComponentActivity).application)
     )
 
-    // OnlineSongViewModel (tetap seperti sebelumnya)
     val api = remember { RetrofitClient.create(tokenManager) } // RetrofitClient mungkin perlu context untuk TokenManager
     val onlineSongViewModel: OnlineSongViewModel = viewModel(
         factory = OnlineSongViewModelFactory(api, sessionManager)
@@ -195,7 +192,7 @@ fun AppNavigation(onScanQrClicked: () -> Unit, songViewModelFromActivity: SongVi
             TopScreen(
                 chartType = chartType,
                 onlineViewModel = onlineSongViewModel,
-                songViewModel = songViewModel,
+                songViewModel = songViewModelFromActivity,
                 playerViewModel = playerViewModel,
                 onBack = { navController.popBackStack() },
                 onNavigateToHome = {

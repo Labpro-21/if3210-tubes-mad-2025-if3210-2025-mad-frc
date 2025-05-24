@@ -247,11 +247,6 @@ fun HomeScreenContent(
                 shareServerSong(context, songToShare)
             }
         },
-        onDownload = {
-            selectedSong?.let { song ->
-                downloadSong(context, song, songVm)
-            }
-        },
         isOnlineSong = selectedSong?.audioPath?.startsWith("http") == true
     )
 }
@@ -563,49 +558,4 @@ fun HomeScreenResponsive(
             onNavigateToTopSong = onNavigateToTopSong
         )
     }
-}
-
-// helper untuk download + simpan ke DB
-private fun downloadSong(
-    context: Context,
-    networkSong: Song,
-    songVm: SongViewModel
-) {
-    val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-    val req = DownloadManager.Request(Uri.parse(networkSong.audioPath))
-        .setTitle(networkSong.title)
-        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-        .setDestinationInExternalFilesDir(
-            context, Environment.DIRECTORY_MUSIC, "${networkSong.title}.mp3"
-        )
-    val id = dm.enqueue(req)
-
-    val receiver = object : BroadcastReceiver() {
-        override fun onReceive(ctx: Context, intent: Intent) {
-            if (intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1) == id) {
-                val q = DownloadManager.Query().setFilterById(id)
-                dm.query(q).use { c ->
-                    if (c.moveToFirst()) {
-                        val idx = c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)
-                        if (idx >= 0) {
-                            val uri = c.getString(idx)
-                            val offline = networkSong.copy(
-                                id = 0,
-                                audioPath = uri,
-                                addedDate = Date(),
-                                lastPlayed = null
-                            )
-                            songVm.addSong(offline)
-                        }
-                    }
-                }
-                ctx.unregisterReceiver(this)
-            }
-        }
-    }
-    context.registerReceiver(
-        receiver,
-        IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
-        Context.RECEIVER_NOT_EXPORTED
-    )
 }

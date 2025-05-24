@@ -33,10 +33,9 @@ fun SongSettingsModal(
     onDelete: () -> Unit,
     onShareUrl: () -> Unit, // Untuk share URL biasa
     // onShareQr: () -> Unit, // Kita akan handle langsung di sini
-    onDownload: () -> Unit,
     isOnlineSong: Boolean = false
 ) {
-    if (!visible || song == null) return // Pastikan song tidak null
+    if (!visible || song == null) return
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -70,7 +69,6 @@ fun SongSettingsModal(
                         Icon(Icons.Default.Download, contentDescription = null)
                     },
                     modifier = Modifier.clickable {
-                        onDownload()
                         onDismiss()
                     }
                 )

@@ -6,7 +6,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
+import androidx.media3.common.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -21,8 +23,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.media3.common.util.UnstableApi
+import com.example.purrytify.model.Song
+import com.example.purrytify.utils.SessionManager
 import com.example.purrytify.viewmodel.PlayerViewModel
 import com.example.purrytify.viewmodel.SongViewModel
+import com.example.purrytify.utils.downloadSong
 import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,6 +41,7 @@ fun SongSettingsModal(
     val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState()
     var showSheet by remember { mutableStateOf(false) }
+    val session = remember<SessionManager> { SessionManager(context) }
 
     IconButton(onClick = { showSheet = true }) {
         Icon(Icons.Default.MoreVert, contentDescription = "More Options")
@@ -51,14 +58,12 @@ fun SongSettingsModal(
                     .padding(16.dp)
             ) {
                 if (!isOnlineSong) {
-                    // ✅ Options for LOCAL songs
                     val currentSong by songViewModel.current_song.collectAsState()
-                    EditSongOption(songViewModel, currentSong)
+                    InsertSongPopUp(songViewModel,currentSong)
                     ConfirmDelete(songViewModel, playerViewModel)
                 } else {
-                    // ✅ Options for ONLINE songs
                     val currentSong by songViewModel.current_song.collectAsState()
-                    DownloadSongOption(context, songViewModel, currentSong)
+                    DownloadSongOption(context, songViewModel,session, currentSong)
                     ShareSongOption(context, currentSong)
                 }
 
@@ -68,11 +73,11 @@ fun SongSettingsModal(
     }
 }
 
-// ✅ Download option for online songs
 @Composable
 private fun DownloadSongOption(
     context: Context,
     songViewModel: SongViewModel,
+    sessionManager: SessionManager,
     currentSong: com.example.purrytify.model.Song?
 ) {
     var isDownloading by remember { mutableStateOf(false) }
@@ -83,7 +88,7 @@ private fun DownloadSongOption(
             .fillMaxWidth()
             .clickable {
                 currentSong?.let { song ->
-                    downloadSong(context, song, songViewModel) {
+                    downloadSong(context, song, songViewModel, sessionManager) {
                         isDownloading = false
                         downloadComplete = true
                     }
@@ -114,7 +119,6 @@ private fun DownloadSongOption(
     }
 }
 
-// ✅ Share option for online songs
 @Composable
 private fun ShareSongOption(
     context: Context,
@@ -140,102 +144,6 @@ private fun ShareSongOption(
     }
 }
 
-// ✅ Edit option for local songs
-@Composable
-private fun EditSongOption(
-    songViewModel: SongViewModel,
-    currentSong: com.example.purrytify.model.Song?
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                // TODO: Navigate to edit screen
-                currentSong?.let {
-                    // Implement edit functionality
-                }
-            }
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.Default.Edit,
-            contentDescription = "Edit Song"
-        )
-        Spacer(modifier = Modifier.width(16.dp))
-        Text("Edit Song", style = MaterialTheme.typography.bodyLarge)
-    }
-}
-
-// ✅ Download function implementation
-private fun downloadSong(
-    context: Context,
-    song: com.example.purrytify.model.Song,
-    songViewModel: SongViewModel,
-    onComplete: () -> Unit
-) {
-    try {
-        val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        val req = DownloadManager.Request(Uri.parse(song.audioPath))
-            .setTitle("${song.title} - ${song.artist}")
-            .setDescription("Downloading song...")
-            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            .setDestinationInExternalFilesDir(
-                context,
-                Environment.DIRECTORY_MUSIC,
-                "${song.title} - ${song.artist}.mp3"
-            )
-            .setAllowedOverMetered(true)
-            .setAllowedOverRoaming(true)
-
-        val downloadId = dm.enqueue(req)
-
-        // ✅ Listen for download completion
-        val receiver = object : BroadcastReceiver() {
-            override fun onReceive(ctx: Context, intent: Intent) {
-                val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
-                if (id == downloadId) {
-                    val query = DownloadManager.Query().setFilterById(downloadId)
-                    dm.query(query).use { cursor ->
-                        if (cursor.moveToFirst()) {
-                            val columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
-                            if (columnIndex >= 0) {
-                                val status = cursor.getInt(columnIndex)
-                                if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                                    // ✅ Save to local database
-                                    val localUriIndex = cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)
-                                    if (localUriIndex >= 0) {
-                                        val localUri = cursor.getString(localUriIndex)
-                                        val localSong = song.copy(
-                                            id = 0, // Auto-generate new ID
-                                            audioPath = localUri,
-                                            addedDate = Date(),
-                                            lastPlayed = null
-                                        )
-                                        songViewModel.addSong(localSong)
-                                    }
-                                    onComplete()
-                                }
-                            }
-                        }
-                    }
-                    ctx.unregisterReceiver(this)
-                }
-            }
-        }
-
-        context.registerReceiver(
-            receiver,
-            IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
-        )
-
-    } catch (e: Exception) {
-        e.printStackTrace()
-        onComplete()
-    }
-}
-
-// ✅ Share function implementation
 private fun shareSong(context: Context, song: com.example.purrytify.model.Song) {
     val shareText = "🎵 Check out this song: ${song.title} by ${song.artist}\n\n${song.audioPath}"
     val intent = Intent().apply {

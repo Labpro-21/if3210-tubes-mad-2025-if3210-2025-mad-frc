@@ -114,9 +114,6 @@ fun LoginScreen(
                         emailError = "Invalid input"
                     errorText.contains("401", ignoreCase = true) ->
                         passwordError = "Invalid credential"
-                    else -> {
-                        // Bisa juga menampilkan error umum di dialog
-                    }
                 }
             }
         }

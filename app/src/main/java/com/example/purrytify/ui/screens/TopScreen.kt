@@ -31,6 +31,8 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.purrytify.model.Song
 import com.example.purrytify.ui.components.SongSettingsModal
 import com.example.purrytify.ui.navBar.BottomNavBar
+import com.example.purrytify.utils.SessionManager
+import com.example.purrytify.utils.downloadSong
 import com.example.purrytify.viewmodel.OnlineSongViewModel
 import com.example.purrytify.viewmodel.PlayerViewModel
 import com.example.purrytify.viewmodel.SongViewModel
@@ -48,6 +50,8 @@ fun TopScreen(
     onNavigateToProfile: () -> Unit
 ) {
     val context = LocalContext.current
+    val sessionManager = remember { SessionManager(context) }
+
     val onlineSongs by onlineViewModel.onlineSongs.collectAsState()
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     val currentSong by songViewModel.current_song.collectAsState()
@@ -57,6 +61,8 @@ fun TopScreen(
     var showSongSettings by remember { mutableStateOf(false) }
     var selectedOnlineSong by remember { mutableStateOf<Song?>(null) }
 
+    var isDownloadingAll by remember { mutableStateOf(false) }
+    var downloadedCount by remember { mutableStateOf(0) }
 
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = false,
@@ -75,11 +81,6 @@ fun TopScreen(
         onDismiss = { showSongSettings = false },
         onEdit = { }, // Not used for online songs
         onDelete = { }, // Not used for online songs
-        onDownload = {
-//            selectedOnlineSong?.let { song ->
-//                downloadSong(context, song, songViewModel)
-//            }
-        },
         onShareUrl = {},
         isOnlineSong = currentSong?.audioPath?.startsWith("http") == true
     )
@@ -95,11 +96,14 @@ fun TopScreen(
     LaunchedEffect(currentSong, onlineSongs) {
         currentSong?.let { song ->
             if (onlineSongs.isNotEmpty()) {
-                val index = onlineSongs.indexOfFirst {
-                    it.id == song.id || it.title == song.title
+                val index = onlineSongs.indexOfFirst { onlineSongItem ->
+                    // dan onlineSongItem dari OnlineSongViewModel juga memiliki serverId yang sama.
+                    (song.serverId != null && onlineSongItem.serverId == song.serverId) ||
+                            (song.serverId == null && onlineSongItem.audioPath == song.audioPath) // Fallback jika tidak ada serverId (misalnya lagu lokal murni)
                 }
                 if (index != -1) {
                     currentPlaylistIndex = index
+                    Log.d("Online Song", "currenPlayListIndex: ${currentPlaylistIndex}")
                 }
             }
         }
@@ -109,6 +113,8 @@ fun TopScreen(
         if (onlineSongs.isNotEmpty() && currentPlaylistIndex >= 0) {
             val nextIndex = (currentPlaylistIndex + 1) % onlineSongs.size
             val nextSong = onlineSongs[nextIndex]
+            Log.d("Online Song", "next index: ${nextIndex}")
+            Log.d("Online Song", "Nest Online Songs : ${onlineSongs[nextIndex].title}")
             currentPlaylistIndex = nextIndex
             songViewModel.setCurrentSong(nextSong)
 
@@ -135,6 +141,20 @@ fun TopScreen(
 
             playerViewModel.prepareAndPlay(prevSong.audioPath.toUri()) {
                 playNextInSequence()
+            }
+        }
+    }
+
+    fun downloadAll() {
+        if (onlineSongs.isEmpty()) return
+        isDownloadingAll = true
+        downloadedCount = 0
+
+        onlineSongs.forEach { song ->
+            // langsung enqueue tanpa tunggu callback terakhir
+            downloadSong(context, song, songViewModel, sessionManager) {
+                downloadedCount++
+                if (downloadedCount == onlineSongs.size) isDownloadingAll = false
             }
         }
     }
@@ -272,7 +292,7 @@ fun TopScreen(
                 ) {
                     // Download button
                     OutlinedButton(
-                        onClick = { /* TODO: Implement download all functionality */ },
+                        onClick = { if (!isDownloadingAll) downloadAll() },
                         modifier = Modifier.size(48.dp),
                         shape = CircleShape,
                         colors = ButtonDefaults.outlinedButtonColors(
@@ -347,7 +367,6 @@ fun TopScreen(
                             onClick = {
                                 currentPlaylistIndex = index
                                 songViewModel.setCurrentSong(song)
-
                                 playerViewModel.prepareAndPlay(song.audioPath.toUri()) {
                                     playNextInSequence()
                                 }

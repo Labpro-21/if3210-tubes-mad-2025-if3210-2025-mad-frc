@@ -160,8 +160,6 @@ fun BottomPlayerSectionFromDB(
             }
         }
     } ?: run {
-        // Jika currentSong null, tidak tampilkan apa-apa atau placeholder
-        // Box(modifier = Modifier.fillMaxWidth().height(56.dp)) // Placeholder kosong
         Log.d("BottomPlayer", "No current song, BottomPlayerSection is empty.")
     }
 }

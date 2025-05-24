@@ -224,7 +224,7 @@ class SongViewModel(private val repository: SongRepository, private val userId: 
                 }
             } else {
                 Log.e("SongViewModel_setCurrentSong", "Could not obtain valid local song. _current_song.value set/remains null.")
-                 _current_song.value = null // Pastikan null jika tidak valid
+                 _current_song.value = null
             }
 
             // loadSongs akan dipanggil setelahnya untuk merefresh semua list UI
