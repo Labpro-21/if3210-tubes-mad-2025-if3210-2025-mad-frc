@@ -1,5 +1,6 @@
 package com.example.purrytify.ui.navigation
 
+import android.R.attr.type
 import android.util.Log // Tambahkan import Log
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
@@ -21,11 +22,14 @@ import com.example.purrytify.viewmodel.NetworkViewModel
 import com.example.purrytify.utils.TokenManager
 import androidx.compose.runtime.LaunchedEffect // Untuk side-effect logging
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.example.purrytify.ui.screens.HomeScreenResponsive
 import com.example.purrytify.utils.SessionManager
 import com.example.purrytify.viewmodel.PlayerViewModel
 import com.example.purrytify.viewmodel.PlayerViewModelFactory
 import com.example.purrytify.network.RetrofitClient
+import com.example.purrytify.ui.screens.TopScreen
 import com.example.purrytify.viewmodel.OnlineSongViewModel
 import com.example.purrytify.viewmodel.OnlineSongViewModelFactory
 
@@ -190,7 +194,7 @@ fun AppNavigation(onScanQrClicked: () -> Unit) {
             val chartType = backStackEntry.arguments?.getString("chartType") ?: "global"
             TopScreen(
                 chartType = chartType,
-                onlineViewModel = onlineViewModel,
+                onlineViewModel = onlineSongViewModel,
                 songViewModel = songViewModel,
                 playerViewModel = playerViewModel,
                 onBack = { navController.popBackStack() },

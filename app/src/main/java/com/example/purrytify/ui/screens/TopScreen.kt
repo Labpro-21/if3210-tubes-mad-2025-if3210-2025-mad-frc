@@ -70,20 +70,17 @@ fun TopScreen(
         "Your daily update of the most played tracks right now - Indonesia"
 
     SongSettingsModal(
+        song = currentSong,
         visible = showSongSettings,
         onDismiss = { showSongSettings = false },
         onEdit = { }, // Not used for online songs
         onDelete = { }, // Not used for online songs
-        onShare = {
-//            selectedOnlineSong?.let { song ->
-//                shareOnlineSong(context, song)
-//            }
-        },
         onDownload = {
 //            selectedOnlineSong?.let { song ->
 //                downloadSong(context, song, songViewModel)
 //            }
         },
+        onShareUrl = {},
         isOnlineSong = currentSong?.audioPath?.startsWith("http") == true
     )
 
