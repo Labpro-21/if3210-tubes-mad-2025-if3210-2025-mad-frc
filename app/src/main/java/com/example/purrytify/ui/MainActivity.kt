@@ -105,6 +105,7 @@ class MainActivity : ComponentActivity() {
     }
 
     fun launchQrScanner() {
+        Log.d("MainActivity_QR", "launchQrScanner() CALLED")
         val options = ScanOptions()
         options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
         options.setPrompt("Scan a Purrytify Song QR Code")

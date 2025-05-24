@@ -212,7 +212,8 @@ fun ProfileContent(
                 onClick = {
                     // Panggil fungsi untuk memulai pemindaian QR
                     // Kita akan menggunakan ActivityResultLauncher untuk ini
-//                     onScanQrCodeClick() -> ini akan jadi parameter ke ProfileScreen
+                    Log.d("ProfileContent", "Scan QR Button CLICKED")
+                    onScanQrCodeClick()
                 },
                 // ... modifier dan style lainnya ...
             ) {

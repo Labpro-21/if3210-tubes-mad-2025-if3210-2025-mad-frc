@@ -153,7 +153,11 @@ fun AppNavigation(onScanQrClicked: () -> Unit) {
         composable(Screen.Profile.route) {
             val sessionUserId = sessionManager.getUserId()
             if (sessionUserId > 0) {
-                val vmToUse: SongViewModel = viewModel(viewModelStoreOwner = activity, key = "songViewModel_user_${sessionUserId}", factory = SongViewModelFactory(songRepository, sessionUserId))
+                val vmToUse: SongViewModel = viewModel(
+                    viewModelStoreOwner = activity,
+                    key = "songViewModel_user_${sessionUserId}",
+                    factory = SongViewModelFactory(songRepository, sessionUserId)
+                )
                 ProfileScreenWithBottomNav(
                     onNavigateToHome = { navController.navigate(Screen.Home.route) },
                     onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
