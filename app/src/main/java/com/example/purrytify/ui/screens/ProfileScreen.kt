@@ -36,14 +36,28 @@ import com.example.purrytify.ui.LockScreenOrientation
 import android.content.pm.ActivityInfo
 import androidx.compose.material.Card
 import com.example.purrytify.viewmodel.SongViewModel
-import androidx.compose.material3.MaterialTheme
 import com.example.purrytify.model.SoundCapsule
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import com.example.purrytify.viewmodel.PlayerViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import android.util.Log
 
 @Composable
 fun ProfileScreen(
     isConnected: Boolean,
     onLogout: () -> Unit,
     songViewModel: SongViewModel,
+    playerViewModel: PlayerViewModel
 ) {
     val context = LocalContext.current
 
@@ -85,7 +99,7 @@ fun ProfileScreen(
         onLogout = onLogout,
         songViewModel = songViewModel,
         analytics = analytics,
-        profileViewModel = profileViewModel
+        playerViewModel = playerViewModel
     )
 }
 
@@ -100,7 +114,7 @@ fun ProfileContent(
     onLogout: () -> Unit,
     songViewModel: SongViewModel,
     analytics: SoundCapsule,
-    profileViewModel: ProfileViewModel
+    playerViewModel: PlayerViewModel
 ) {
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
     // Background gradasi dari #006175 ke #121212
@@ -116,6 +130,7 @@ fun ProfileContent(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -186,27 +201,13 @@ fun ProfileContent(
                 StatItem(count = likedSongs, label = "LIKED")
                 StatItem(count = listenedSongs, label = "LISTENED")
             }
-        }
-    }
-
-    Text("Sound Capsule", style = MaterialTheme.typography.titleMedium)
-    Spacer(Modifier.height(8.dp))
-
-    if (analytics.month == null) {
-        Text("No data available", color = Color.Gray)
-    } else {
-        Column(Modifier.padding(16.dp)) {
-            Text("Time listened: ${analytics.formattedTimeListened()}")
-            Text("Top artist: ${analytics.topArtist ?: "No data"}")
-            Text("Top song: ${analytics.topSong ?: "No data"}")
-            Text("Day-streak: ${analytics.dayStreak ?: 0} days")
-            Spacer(Modifier.height(12.dp))
-            Button(onClick = {
-                val file = profileViewModel.exportCsv()
-                /* share via Intent jika perlu */
-            }) {
-                Text("Export CSV")
-            }
+            SoundCapsuleSection(
+                analytics = analytics,
+                onDownload = { /* export CSV / PDF */ },
+                onShareMonth = { /* share summary bulan ini */ },
+                playerViewModel = playerViewModel,
+                songViewModel = songViewModel
+            )
         }
     }
 }
@@ -238,7 +239,8 @@ fun ProfileScreenWithBottomNav(
     onNavigateToLibrary: () -> Unit,
     isConnected: Boolean,
     onLogout: () -> Unit,
-    songViewModel: SongViewModel
+    songViewModel: SongViewModel,
+    playerViewModel: PlayerViewModel
 ) {
     Scaffold(
         bottomBar = {
@@ -255,7 +257,283 @@ fun ProfileScreenWithBottomNav(
         }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
-            ProfileScreen(isConnected = isConnected, onLogout = onLogout, songViewModel = songViewModel)
+            ProfileScreen(isConnected = isConnected, onLogout = onLogout, songViewModel = songViewModel, playerViewModel = playerViewModel)
         }
     }
 }
+
+@Composable
+fun SoundCapsuleSection(
+    analytics: SoundCapsule,
+    onDownload: () -> Unit,
+    onShareMonth: () -> Unit,
+    songViewModel: SongViewModel,
+    playerViewModel: PlayerViewModel
+) {
+    val isPlaying by playerViewModel.isPlaying.collectAsState()
+
+    val baseMillis = analytics.timeListenedMillis ?: 0L
+    var extraMillis by remember { mutableStateOf(0L) }
+//    print information to logcat tentang analytics
+    Log.d("SoundCapsuleSection", "analytics: $analytics")
+
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            delay(1_000L)
+            Log.d("SoundCapsuleSection", "isActive=$isActive, isPlaying=$isPlaying, extra=$extraMillis")
+            if (isPlaying) {
+                extraMillis += 1_000L
+                songViewModel.recordPlayTick()
+            }
+        }
+    }
+
+    val total = baseMillis + extraMillis
+    val formatted = run {
+        val sec = total / 1_000
+        "%d:%02d:%02d".format(sec / 3600, (sec % 3600) / 60, sec % 60)
+    }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // Section header: "Your Sound Capsule" + download icon
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Your Sound Capsule",
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            IconButton(onClick = onDownload) {
+                Icon(
+                    imageVector = Icons.Default.FileDownload,
+                    contentDescription = "Download",
+                    tint = Color.White
+                )
+            }
+        }
+
+        // Month header: e.g. "April 2025" + share icon
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = analytics.monthYear ?: "",
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
+            IconButton(
+                onClick = onShareMonth,
+                modifier = Modifier.size(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Share,
+                    contentDescription = "Share Month",
+                    tint = Color.White
+                )
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+
+        // Time listened card
+        Card(
+            backgroundColor = Color(0xFF1F1F1F),
+            shape = RoundedCornerShape(8.dp),
+            modifier = Modifier
+              .fillMaxWidth()
+              .padding(horizontal = 16.dp)
+        ) {
+            Row(
+              modifier = Modifier.padding(16.dp),
+              verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Time listened",
+                        color = Color(0xFFB3B3B3),
+                        fontSize = 14.sp
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "$formatted minutes",
+                        color = Color(0xFF3CDC76),
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Icon(
+                    imageVector = Icons.Default.ArrowForward,
+                    contentDescription = null,
+                    tint = Color.White
+                )
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        // Row: Top artist & Top song
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Top Artist
+            Card(
+                backgroundColor = Color(0xFF1F1F1F),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    AsyncImage(
+                        model = analytics.topArtistImageUrl,
+                        contentDescription = "Artist",
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Top artist",
+                            color = Color(0xFFB3B3B3),
+                            fontSize = 12.sp
+                        )
+                        Text(
+                            text = analytics.topArtist ?: "-",
+                            color = Color(0xFF3884FF),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    Icon(
+                        imageVector = Icons.Default.ArrowForward,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+            // Top Song
+            Card(
+                backgroundColor = Color(0xFF1F1F1F),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    AsyncImage(
+                        model = analytics.topSongImageUrl,
+                        contentDescription = "Song",
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Top song",
+                            color = Color(0xFFB3B3B3),
+                            fontSize = 12.sp
+                        )
+                        Text(
+                            text = analytics.topSong ?: "-",
+                            color = Color(0xFFFFE400),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    Icon(
+                        imageVector = Icons.Default.ArrowForward,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        // Streak card with cover image
+        Card(
+            backgroundColor = Color(0xFF1F1F1F),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+        ) {
+            Column {
+                AsyncImage(
+                    model = analytics.streakCoverUrl,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)),
+                    contentScale = ContentScale.Crop
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = "You had a ${analytics.dayStreak}-day streak",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+                Text(
+                    text = analytics.streakDescription ?: "",
+                    color = Color(0xFFB3B3B3),
+                    fontSize = 12.sp,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 4.dp, bottom = 8.dp)
+                )
+                Text(
+                    text = analytics.streakPeriod ?: "",
+                    color = Color(0xFFB3B3B3),
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(end = 16.dp, bottom = 12.dp)
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(end = 16.dp, bottom = 12.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    IconButton(onClick = { /* share streak */ }) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "Share streak",
+                            tint = Color.White
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(24.dp))
+    }
+}
+
+//@Composable
+//fun IconButton(onClick: () -> Unit, content: @Composable () -> Icon) {
+//    TODO("Not yet implemented")
+//}
