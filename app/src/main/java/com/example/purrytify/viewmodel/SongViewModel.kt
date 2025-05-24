@@ -27,13 +27,17 @@ class SongViewModel(private val repository: SongRepository, private val userId: 
     val recentlyPlayed : StateFlow<List<Song>> = _recently_played.asStateFlow()
 
     init {
-        loadSongs(userId)
+        loadSongs(this.userId)
     }
 
     fun addSong(song: Song) {
         viewModelScope.launch {
-            repository.insertSong(song)
-            loadSongs(song.userId)
+            val songToInsert = song.copy(
+                id = if (song.id == 0) 0 else song.id,
+                userId = this@SongViewModel.userId
+            )
+            repository.insertSong(songToInsert)
+            loadSongs(this@SongViewModel.userId)
         }
     }
 
@@ -52,46 +56,45 @@ class SongViewModel(private val repository: SongRepository, private val userId: 
         }
     }
 
-    fun loadSongs(userId:Int) {
-        Log.d("SongViewModel", "Loading songs for userId: $userId")
+    fun loadSongs(userIdToLoad:Int) { // Ganti nama parameter agar tidak ambigu
+        Log.d("SongViewModel", "Loading songs for userId: $userIdToLoad")
         viewModelScope.launch {
-            repository.getAllSongs(userId).collect { songList ->
+            repository.getAllSongs(userIdToLoad).collect { songList ->
                 _songs.value = songList
-
-                // Update _current_song jika ID-nya masih ada di list
                 _current_song.value?.let { current ->
-                    val updated = songList.find { it.id == current.id }
-                    _current_song.value = updated
+                    val updatedCurrentSong = songList.find { it.id == current.id }
+                    if (updatedCurrentSong == null && current.audioPath.startsWith("http")) {
+                        // Current song was an online song and might not be in the main list yet
+                        // or was deleted. Keep it as is if it's still relevant.
+                    } else {
+                        _current_song.value = updatedCurrentSong
+                    }
                 }
             }
         }
 
         viewModelScope.launch {
-            repository.getAllLikedSongs(userId).collect { _liked_songs.value = it }
+            repository.getAllLikedSongs(userIdToLoad).collect { _liked_songs.value = it }
         }
 
         viewModelScope.launch {
-            repository.getNewSongs(userId).collect { _new_songs.value = it }
+            repository.getNewSongs(userIdToLoad).collect { _new_songs.value = it }
         }
 
         viewModelScope.launch {
-            repository.getRecentlyPlayed(userId).collect { _recently_played.value = it }
+            repository.getRecentlyPlayed(userIdToLoad).collect { _recently_played.value = it }
         }
     }
 
 
     fun toggleLikeSong(song : Song) {
         viewModelScope.launch {
-            repository.toggleLike(song.id)
-            // Fix: Tambahkan null-safety check
-            val updatedSong = repository.getSong(song.id)
-            if (updatedSong != null) {
-                Log.d("SongViewModel", "Updated liked status: ${updatedSong.liked}")
+            if (_current_song.value?.id == song.id && song.id != 0 && song.userId == this@SongViewModel.userId) {
+                repository.toggleLike(song.id)
+                loadSongs(song.userId)
             } else {
-                Log.d("SongViewModel", "Song not found in database after toggle")
+                Log.w("SongViewModel", "Attempted to toggle like on a song not properly set for current user.")
             }
-            Log.d("SongViewModel", "Updated liked songs: ${likedSongs.value}")
-            loadSongs(song.userId)
         }
     }
 
@@ -101,56 +104,91 @@ class SongViewModel(private val repository: SongRepository, private val userId: 
         val newTitle = song.title
         val newArtwork = song.artworkPath
         viewModelScope.launch {
-            repository.updateSong(id,newArtist,newTitle,newArtwork)
-            loadSongs(song.userId)
+            if (song.userId == this@SongViewModel.userId) {
+                repository.updateSong(id,newArtist,newTitle,newArtwork)
+                loadSongs(song.userId)
+            }
         }
     }
 
-    fun setCurrentSong(song: Song) {
-        if (song == current_song.value) {
-            return
-        }
+    fun setCurrentSong(songData: Song) {
         viewModelScope.launch {
-            try {
-                val dbSong = repository.getSong(song.id)
-                
-                if (dbSong != null) {
-                    if (dbSong.lastPlayed == null) {
-                        repository.incrementListenedSongs(song.userId)
+            val effectiveUserId = this@SongViewModel.userId
+
+            if (songData.audioPath.startsWith("http")) {
+                var songToPlay = repository.getSongByAudioPathAndUserId(songData.audioPath, effectiveUserId)
+
+                if (songToPlay == null) {
+                    Log.d("SongViewModel", "Online song '${songData.title}' not in local DB for user $effectiveUserId. Inserting with new local ID.")
+                    val newLocalSongEntry = songData.copy(
+                        id = 0,
+                        userId = effectiveUserId,
+                        addedDate = Date(),
+                        lastPlayed = null,
+                        liked = false
+                    )
+                    val generatedLocalId = repository.insertSong(newLocalSongEntry)
+                    songToPlay = repository.getSong(generatedLocalId.toInt())
+
+                    if (songToPlay == null) {
+                        Log.e("SongViewModel", "Failed to fetch newly inserted online song from DB with generated ID $generatedLocalId.")
+                        _current_song.value = songData
+                        loadSongs(effectiveUserId)
+                        return@launch
                     }
-                    repository.updateLastPlayed(song.id, Date())
-                    loadSongs(song.userId)
-                    // Fix: Tambahkan null-safety check juga di sini
-                    _current_song.value = repository.getSong(song.id) ?: song
+                    Log.d("SongViewModel", "Inserted online song as local ID: ${songToPlay.id}, Title: ${songToPlay.title}")
                 } else {
-                    _current_song.value = song
-                    Log.d("SongViewModel", "Setting online song as current: ${song.title}")
+                    Log.d("SongViewModel", "Online song '${songData.title}' found in local DB for user $effectiveUserId with ID: ${songToPlay.id}.")
                 }
-            } catch (e: Exception) {
-                Log.e("SongViewModel", "Error setting current song", e)
-                _current_song.value = song
+                _current_song.value = songToPlay
+                if (songToPlay.lastPlayed == null) {
+                    repository.incrementListenedSongs(songToPlay.userId)
+                }
+                repository.updateLastPlayed(songToPlay.id, Date())
+
+            } else { // Local song
+                val localSongFromDb = repository.getSong(songData.id)
+                // Memastikan lagu milik user yang sedang aktif
+                if (localSongFromDb != null && localSongFromDb.userId == effectiveUserId) {
+                    if (localSongFromDb.lastPlayed == null) {
+                        repository.incrementListenedSongs(localSongFromDb.userId)
+                    }
+                    repository.updateLastPlayed(localSongFromDb.id, Date())
+                    _current_song.value = repository.getSong(localSongFromDb.id)
+                } else {
+                    Log.e("SongViewModel", "Local song with id ${songData.id} not found or doesn't belong to user $effectiveUserId.")
+                    _current_song.value = if(localSongFromDb?.userId == effectiveUserId) localSongFromDb else null
+                }
             }
+            loadSongs(effectiveUserId)
         }
     }
 
     fun updateLastPlayed(song:Song){
         viewModelScope.launch {
-            repository.updateLastPlayed(song.id,Date())
-            loadSongs(song.userId)
+            if (song.id != 0 && song.userId == this@SongViewModel.userId) {
+                repository.updateLastPlayed(song.id,Date())
+                loadSongs(song.userId)
+            }
         }
     }
 
-
     fun recordPlayTick() {
         viewModelScope.launch {
-            val songId = _current_song.value?.id ?: return@launch
-            val history = PlayHistory(
-                user_id = userId,
-                played_at = Date(),
-                duration_ms = 1_000L,
-                song_id = songId
-            )
-            repository.addPlayHistory(history)
+            _current_song.value?.let { currentSong ->
+                if (currentSong.id != 0 && currentSong.userId == this@SongViewModel.userId) {
+                    val history = PlayHistory(
+                        user_id = this@SongViewModel.userId, // Menggunakan userId dari properti kelas
+                        played_at = Date(),
+                        duration_ms = 1_000L,
+                        song_id = currentSong.id
+                    )
+                    repository.addPlayHistory(history)
+                    Log.d("SongViewModel", "Recorded play tick for songId: ${currentSong.id}")
+                } else {
+                    Log.w("SongViewModel", "Skipped recording play tick for song without valid local ID or wrong user: ${currentSong.title}, id: ${currentSong.id}, userId: ${currentSong.userId}, vmUserId: ${this@SongViewModel.userId}")
+                }
+            }
         }
     }
 }

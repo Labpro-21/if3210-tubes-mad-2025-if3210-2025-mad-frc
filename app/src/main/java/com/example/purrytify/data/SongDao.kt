@@ -11,8 +11,8 @@ import java.util.Date
 
 @Dao
 interface SongDao {
-    @Insert
-    suspend fun insertSong(song: Song)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertSong(song: Song): Long
 
     @Query("SELECT * FROM Song WHERE user_id = :userId")
     fun getAllSongs(userId:Int): Flow<List<Song>>
@@ -50,7 +50,6 @@ interface SongDao {
     @Query("SELECT s.artist FROM play_history p JOIN song s ON p.song_id = s.id WHERE p.user_id = :userId AND strftime('%Y-%m', p.played_at/1000, 'unixepoch') = :yearMonth GROUP BY s.artist ORDER BY COUNT(*) DESC LIMIT 1")
     suspend fun topArtist(userId: Int, yearMonth: String): String?
 
-    // Ubah topSong:
     @Query("SELECT s.title FROM play_history p JOIN song s ON p.song_id = s.id WHERE p.user_id = :userId AND strftime('%Y-%m', p.played_at/1000, 'unixepoch') = :yearMonth GROUP BY s.title ORDER BY COUNT(*) DESC LIMIT 1")
     suspend fun topSong(userId: Int, yearMonth: String): String?
 
@@ -59,4 +58,7 @@ interface SongDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPlayHistory(history: PlayHistory)
+
+    @Query("SELECT * FROM Song WHERE audioPath = :audioPath AND user_id = :userId LIMIT 1")
+    suspend fun getSongByAudioPathAndUserId(audioPath: String, userId: Int): Song?
 }
