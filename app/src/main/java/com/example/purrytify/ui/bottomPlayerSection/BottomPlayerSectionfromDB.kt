@@ -1,6 +1,7 @@
 package com.example.purrytify.ui.screens
 
 import android.app.Activity
+import android.media.AudioDeviceInfo
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -37,6 +38,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.layout.ContentScale
+import com.example.purrytify.viewmodel.AudioDeviceViewModel
+import androidx.compose.material.icons.filled.BluetoothAudio
+import androidx.compose.material.icons.filled.Headset
+import androidx.compose.material.icons.filled.Speaker
+import androidx.compose.material.icons.filled.DevicesOther
 
 
 @Composable
@@ -44,7 +50,8 @@ fun BottomPlayerSectionFromDB(
     songViewModel: SongViewModel,
     isPlaying: Boolean,
     onPlayPause: () -> Unit,
-    onSectionClick: () -> Unit
+    onSectionClick: () -> Unit,
+    audioDeviceViewModel: AudioDeviceViewModel,
 ) {
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp
@@ -54,6 +61,8 @@ fun BottomPlayerSectionFromDB(
 
     val context = LocalContext.current
     val appContext = if (!LocalInspectionMode.current) (context as? Activity)?.application else null
+
+    val currentAudioDevice by audioDeviceViewModel.currentOutputDevice.collectAsState()
 
     if (appContext == null) {
         Box(
@@ -81,6 +90,29 @@ fun BottomPlayerSectionFromDB(
             Log.d("BottomPlayer_Update", "Observed currentSong update: ${currentSong}")
         } else {
             Log.d("BottomPlayer_Update", "Observed currentSong update: null")
+        }
+    }
+
+    currentAudioDevice?.let { device ->
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = when (device.type) {
+                    AudioDeviceInfo.TYPE_BLUETOOTH_A2DP -> Icons.Filled.BluetoothAudio
+                    AudioDeviceInfo.TYPE_BUILTIN_SPEAKER -> Icons.Filled.Speaker
+                    AudioDeviceInfo.TYPE_WIRED_HEADSET -> Icons.Filled.Headset
+                    else -> Icons.Filled.DevicesOther
+                },
+                contentDescription = "Output device type",
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = "Playing on: ${device.name}",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.Gray,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 

@@ -60,6 +60,7 @@ import androidx.media3.common.util.UnstableApi
 import com.example.purrytify.ui.SongRecyclerView
 import com.example.purrytify.ui.navBar.BottomNavBar
 import com.example.purrytify.ui.LockScreenOrientation
+import com.example.purrytify.viewmodel.AudioDeviceViewModel
 import com.example.purrytify.viewmodel.PlayerViewModel
 import com.example.purrytify.viewmodel.PlayerViewModelFactory
 
@@ -240,7 +241,8 @@ fun LibraryScreenWithBottomNav(
     onBack: () -> Unit,
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    audioDeviceViewModel: AudioDeviceViewModel
 ) {
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
     val isPlaying by playerViewModel.isPlaying.collectAsState()
@@ -275,9 +277,9 @@ fun LibraryScreenWithBottomNav(
                     isPlaying = isPlaying,
                     onPlayPause = { playerViewModel.playPause() },
                     onSectionClick = {
-
                         showPlayerSheet = true
-                    }  // Buka modal bottom sheet saat area diklik
+                    },
+                    audioDeviceViewModel = audioDeviceViewModel
                 )
                 BottomNavBar(
                     currentRoute = "library",

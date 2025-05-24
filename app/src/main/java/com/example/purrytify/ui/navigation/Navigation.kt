@@ -27,6 +27,8 @@ import com.example.purrytify.viewmodel.PlayerViewModel // Import classnya
 import com.example.purrytify.viewmodel.OnlineSongViewModel // Import classnya
 import com.example.purrytify.viewmodel.ProfileViewModel
 import com.example.purrytify.viewmodel.ProfileViewModelFactory
+import com.example.purrytify.viewmodel.AudioDeviceViewModel
+import com.example.purrytify.viewmodel.AudioDeviceViewModelFactory
 import java.time.YearMonth
 
 
@@ -66,6 +68,11 @@ fun AppNavigation(
         viewModelStoreOwner = activity, // activity adalah LocalContext.current as ComponentActivity
         key = "profileViewModel_user_${currentSessionUserId}", // Key jika bergantung pada user
         factory = ProfileViewModelFactory(context, tokenManager, userRepository, sessionManager) // Sesuaikan factory Anda
+    )
+
+    val audioDeviceViewModel: AudioDeviceViewModel = viewModel(
+        viewModelStoreOwner = activity,
+        factory = AudioDeviceViewModelFactory(activity.application)
     )
 
     val startDestination = if (tokenManager.isLoggedIn() && currentSessionUserId > 0) {
@@ -123,7 +130,8 @@ fun AppNavigation(
                     onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                     songViewModel = songViewModel, // Gunakan instance yang diteruskan
                     playerViewModel = playerViewModel, // Gunakan instance yang diteruskan
-                    onlineViewModel = onlineSongViewModel // Gunakan instance yang diteruskan
+                    onlineViewModel = onlineSongViewModel, // Gunakan instance yang diteruskan
+                    audioDeviceViewModel = audioDeviceViewModel
                 )
             }
         }
@@ -147,7 +155,8 @@ fun AppNavigation(
                     songViewModel = songViewModel, // Gunakan instance yang diteruskan
                     onNavigateToHome = { navController.navigate(Screen.Home.route) },
                     onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                    playerViewModel = playerViewModel, // Gunakan instance yang diteruskan
+                    playerViewModel = playerViewModel,
+                    audioDeviceViewModel = audioDeviceViewModel
                 )
             }
         }

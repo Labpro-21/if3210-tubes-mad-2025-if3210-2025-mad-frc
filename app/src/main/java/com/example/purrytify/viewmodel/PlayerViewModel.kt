@@ -1,8 +1,14 @@
 package com.example.purrytify.viewmodel
 
+import android.Manifest // Pastikan import ini ada
+import android.annotation.SuppressLint
 import android.app.Application
+import android.content.pm.PackageManager // Import untuk PackageManager
+import android.media.AudioDeviceInfo // Import untuk AudioDeviceInfo
 import android.net.Uri
+import android.os.Build // Import untuk Build.VERSION
 import androidx.annotation.OptIn
+import androidx.core.app.ActivityCompat // Import untuk ActivityCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.AudioAttributes
@@ -11,6 +17,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
+// import androidx.media3.common.util.UnstableApi // Hanya jika Anda menggunakan API yang ditandai UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -25,7 +32,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
 
-    private val _currentPositionSeconds = MutableStateFlow(0f) // Progress dalam detik
+    private val _currentPositionSeconds = MutableStateFlow(0f)
     val currentPositionSeconds: StateFlow<Float> = _currentPositionSeconds.asStateFlow()
 
     val isLooping = MutableStateFlow(false)
@@ -33,18 +40,12 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     private var progressUpdateJob: Job? = null
     private var onSongCompleteCallback: (() -> Unit)? = null
 
-    var onPlaybackSecondTick: (() -> Unit)? = null // Callback untuk SongViewModel
+    var onPlaybackSecondTick: (() -> Unit)? = null
 
-    private val _shouldClosePlayerSheet = MutableStateFlow(false)
-    val shouldClosePlayerSheet: StateFlow<Boolean> = _shouldClosePlayerSheet.asStateFlow() // Pastikan expose sebagai StateFlow
+    // StateFlow dan fungsi untuk menutup sheet (jika Anda memindahkannya kembali ke sini atau membutuhkannya)
+    private val _shouldClosePlayerSheetInternal = MutableStateFlow(false)
+    val shouldClosePlayerSheet: StateFlow<Boolean> = _shouldClosePlayerSheetInternal.asStateFlow()
 
-    fun closePlayerSheet() {
-        _shouldClosePlayerSheet.value = true
-    }
-
-    fun resetCloseSheetFlag() {
-        _shouldClosePlayerSheet.value = false
-    }
 
     init {
         val audioAttributes = AudioAttributes.Builder()
@@ -64,14 +65,17 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
             override fun onPlaybackStateChanged(playbackState: Int) {
                 if (playbackState == Player.STATE_ENDED) {
-                    _isPlaying.value = false // Pastikan ini juga diupdate
+                    _isPlaying.value = false
                     stopProgressUpdates()
                     onSongCompleteCallback?.invoke()
                     if (isLooping.value) {
                         _exoPlayer.seekTo(0)
                         _exoPlayer.play()
                     } else {
-                         _currentPositionSeconds.value = (_exoPlayer.duration / 1000).toFloat().coerceAtLeast(0f) // Set ke durasi penuh jika selesai
+                        val durationSeconds = (_exoPlayer.duration / 1000).toFloat().coerceAtLeast(0f)
+                        if (durationSeconds > 0) { // Hanya set ke durasi jika durasi valid
+                            _currentPositionSeconds.value = durationSeconds
+                        }
                     }
                 }
             }
@@ -81,12 +85,12 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     private fun startProgressUpdates() {
         stopProgressUpdates()
         progressUpdateJob = viewModelScope.launch {
-            while (true) { // Loop terus menerus selama job aktif
+            while (true) {
                 if (_exoPlayer.isPlaying) {
                     _currentPositionSeconds.value = (_exoPlayer.currentPosition / 1000).toFloat()
-                    onPlaybackSecondTick?.invoke() // Panggil callback
+                    onPlaybackSecondTick?.invoke()
                 }
-                delay(1000) // Setiap detik
+                delay(1000)
             }
         }
     }
@@ -98,24 +102,37 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     fun prepareAndPlay(uri: Uri, onSongComplete: () -> Unit = {}) {
         if (_exoPlayer.isPlaying) {
-            _exoPlayer.stop() // Hentikan pemutaran lama
+            _exoPlayer.stop()
         }
-        stopProgressUpdates() // Hentikan update progress lama
-        _currentPositionSeconds.value = 0f // Reset progress
+        stopProgressUpdates()
+        _currentPositionSeconds.value = 0f
 
         currentUri = uri
-        onSongCompleteCallback = onSongComplete // Simpan callback
+        onSongCompleteCallback = onSongComplete
         _exoPlayer.setMediaItem(MediaItem.fromUri(uri))
         _exoPlayer.prepare()
-        _exoPlayer.play() // isPlaying akan diupdate oleh listener
+        _exoPlayer.play()
+    }
+
+    fun triggerClosePlayerSheet() {
+        _shouldClosePlayerSheetInternal.value = true
+    }
+
+    fun resetClosePlayerSheetFlag() {
+        _shouldClosePlayerSheetInternal.value = false
     }
 
     fun playPause() {
         if (_exoPlayer.isPlaying) {
             _exoPlayer.pause()
         } else {
-            if (_exoPlayer.playbackState == Player.STATE_ENDED) { // Jika lagu sudah selesai dan ingin play lagi
+            if (_exoPlayer.playbackState == Player.STATE_ENDED) {
                 _exoPlayer.seekTo(0)
+            }
+            // Jika media item belum ada (misal setelah stopPlayer lalu playPause)
+            if (_exoPlayer.currentMediaItem == null && currentUri != null) {
+                _exoPlayer.setMediaItem(MediaItem.fromUri(currentUri!!))
+                _exoPlayer.prepare()
             }
             _exoPlayer.play()
         }
@@ -123,20 +140,18 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     fun seekTo(seconds: Float) {
         _exoPlayer.seekTo((seconds * 1000).toLong())
-        _currentPositionSeconds.value = seconds // Langsung update UI progress
+        _currentPositionSeconds.value = seconds
     }
 
     fun stopPlayer() {
         _exoPlayer.stop()
+        _exoPlayer.clearMediaItems() // Hapus media item juga
         // isPlaying akan diupdate ke false oleh listener
         // stopProgressUpdates() akan dipanggil oleh listener
         _currentPositionSeconds.value = 0f
         currentUri = null
         onSongCompleteCallback = null
     }
-
-    // closePlayerSheet dan resetCloseSheetFlag tidak ada di PlayerViewModel Anda,
-    // jadi saya hapus dari sini. Jika ada, bisa ditambahkan kembali.
 
     override fun onCleared() {
         super.onCleared()
@@ -147,5 +162,37 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     fun toggleLoop() {
         isLooping.value = !isLooping.value
         _exoPlayer.repeatMode = if (isLooping.value) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
+    }
+
+    // Fungsi untuk mengatur output device audio (untuk API 31+)
+    @OptIn(UnstableApi::class)
+    @SuppressLint("MissingPermission") // Izin akan dicek secara eksplisit
+    fun setAudioOutputDevice(audioDeviceInfo: AudioDeviceInfo) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // Hanya untuk Android S (API 31) ke atas
+            // Izin MODIFY_AUDIO_ROUTING adalah izin 'signatureOrSystem',
+            // jadi aplikasi pihak ketiga biasanya tidak bisa mendapatkannya kecuali kondisi tertentu.
+            // Namun, ExoPlayer.setAudioDeviceInfo mungkin tidak selalu memerlukan izin ini secara eksplisit
+            // jika perangkat output adalah bagian dari rute yang valid.
+            // Kita tetap bisa mencoba memanggilnya.
+            Log.d("PlayerViewModel", "Attempting to set audio output device to: ${audioDeviceInfo.productName} (ID: ${audioDeviceInfo.id}, Type: ${audioDeviceInfo.type})")
+            try {
+                // Pengecekan izin MODIFY_AUDIO_ROUTING mungkin tidak diperlukan/efektif di sini
+                // karena aplikasi pihak ketiga umumnya tidak bisa memintanya.
+                // val hasPermission = ActivityCompat.checkSelfPermission(getApplication(), Manifest.permission.MODIFY_AUDIO_ROUTING) == PackageManager.PERMISSION_GRANTED
+                // if (hasPermission) {
+                val success = _exoPlayer.setAudioDeviceInfo(audioDeviceInfo) // Ini adalah metode ExoPlayer
+                Log.d("PlayerViewModel", "ExoPlayer.setAudioDeviceInfo success: $success")
+                if (!success) {
+                    Log.w("PlayerViewModel", "ExoPlayer.setAudioDeviceInfo returned false.")
+                }
+                // } else {
+                //    Log.w("PlayerViewModel", "MODIFY_AUDIO_ROUTING permission not granted. Cannot explicitly set audio device.")
+                // }
+            } catch (e: Exception) {
+                Log.e("PlayerViewModel", "Error setting audio device info on ExoPlayer: ${e.message}", e)
+            }
+        } else {
+            Log.i("PlayerViewModel", "setAudioOutputDevice is only available on API 31+.")
+        }
     }
 }
