@@ -78,10 +78,21 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        playerViewModel.onPlaybackSecondTick = {
+            // Pastikan ada lagu yang sedang diputar di SongViewModel
+            // dan userId valid sebelum mencatat tick.
+            // SongViewModel.recordPlayTick() sendiri sudah punya pengecekan internal.
+            if (songViewModel.current_song.value != null && songViewModel.current_song.value!!.id != 0) {
+                 Log.d("MainActivity_Ticker", "Playback tick received from PlayerViewModel. Calling SongViewModel.recordPlayTick(). Current song: ${songViewModel.current_song.value?.title}")
+                songViewModel.recordPlayTick()
+            } else {
+                Log.w("MainActivity_Ticker", "Playback tick received, but SongViewModel.current_song is null or invalid. Skipping recordPlayTick.")
+            }
+        }
+
         setContent {
             PurrytifyTheme {
                 AppNavigation(
-                    // Teruskan instance ViewModel dari MainActivity
                     songViewModel = this.songViewModel,
                     playerViewModel = this.playerViewModel,
                     onlineSongViewModel = this.onlineSongViewModel,

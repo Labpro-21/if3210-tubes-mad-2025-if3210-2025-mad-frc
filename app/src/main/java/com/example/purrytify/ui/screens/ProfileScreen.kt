@@ -300,16 +300,16 @@ fun SoundCapsuleSection(
     val baseMillis = analytics.timeListenedMillis ?: 0L
     var extraMillis by remember { mutableStateOf(0L) }
 
-    LaunchedEffect(isPlaying) { // Re-launch jika isPlaying berubah
-        while (isActive) {
-            if (isPlaying) {
-                // Log di sini SEBELUM memanggil recordPlayTick
-                Log.d("ProfileScreen_Ticker", "isPlaying is true. Current song in SongVM: ${songViewModel.current_song.value?.title}")
-                songViewModel.recordPlayTick()
-            }
-            delay(1_000L)
-        }
-    }
+//    LaunchedEffect(isPlaying) { // Re-launch jika isPlaying berubah
+//        while (isActive) {
+//            if (isPlaying) {
+//                // Log di sini SEBELUM memanggil recordPlayTick
+//                Log.d("ProfileScreen_Ticker", "isPlaying is true. Current song in SongVM: ${songViewModel.current_song.value?.title}")
+//                songViewModel.recordPlayTick()
+//            }
+//            delay(1_000L)
+//        }
+//    }
 
     val totalTimeListenedMillis = baseMillis + extraMillis
     val formattedTimeListened = run {

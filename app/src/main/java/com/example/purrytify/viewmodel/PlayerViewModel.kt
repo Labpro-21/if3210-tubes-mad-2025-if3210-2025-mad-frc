@@ -12,116 +12,31 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
-import com.example.purrytify.data.AppDatabase
-import com.example.purrytify.model.Song
-import com.example.purrytify.model.PlayHistory
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.util.Date
-import javax.inject.Inject
 
-@HiltViewModel
-class PlayerViewModel @Inject constructor(
-    private val context: Application
-) : AndroidViewModel(context) {
-    private val _shouldClosePlayerSheet = MutableStateFlow(false)
-    val shouldClosePlayerSheet: StateFlow<Boolean> = _shouldClosePlayerSheet
-
-    private val _exoPlayer = ExoPlayer.Builder(context).build()
-//    val exoPlayer: ExoPlayer get() = _exoPlayer
+class PlayerViewModel(application: Application) : AndroidViewModel(application) {
+    private val _exoPlayer = ExoPlayer.Builder(application).build()
 
     private val _isPlaying = MutableStateFlow(false)
-    val isPlaying = _isPlaying.asStateFlow()
+    val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
 
-    private val _progress = MutableStateFlow(1f)
-    val progress = _progress.asStateFlow()
+    private val _currentPositionSeconds = MutableStateFlow(0f) // Progress dalam detik
+    val currentPositionSeconds: StateFlow<Float> = _currentPositionSeconds.asStateFlow()
 
     val isLooping = MutableStateFlow(false)
-
     private var currentUri: Uri? = null
+    private var progressUpdateJob: Job? = null
+    private var onSongCompleteCallback: (() -> Unit)? = null
 
+    var onPlaybackSecondTick: (() -> Unit)? = null // Callback untuk SongViewModel
 
-    init {
-        val audioAttributes = AudioAttributes.Builder()
-            .setUsage(C.USAGE_MEDIA)
-            .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
-            .build()
-
-        _exoPlayer.setAudioAttributes(audioAttributes, true)
-        viewModelScope.launch {
-            while (true) {
-                delay(500)
-                if (_exoPlayer.isPlaying) {
-                    val currentPosition = _exoPlayer.currentPosition
-                    _progress.value = (currentPosition / 1000).toFloat()
-                }
-            }
-        }
-    }
-
-
-    fun prepareAndPlay(uri: Uri, onSongComplete: () -> Unit = {}) {
-        if (currentUri == uri) return
-        currentUri = uri
-
-        _exoPlayer.setMediaItem(MediaItem.fromUri(uri))
-        _exoPlayer.prepare()
-        _exoPlayer.play()
-        _isPlaying.value = true
-
-        _exoPlayer.addListener(object : Player.Listener {
-            override fun onPlaybackStateChanged(state: Int) {
-                if (state == Player.STATE_ENDED) {
-                    _isPlaying.value = false
-                    onSongComplete()
-                }
-            }
-        })
-    }
-
-
-    @OptIn(UnstableApi::class)
-    fun playPause() {
-        Log.d("PlayerViewModel", "playPause() invoked. isPlaying before: ${_exoPlayer.isPlaying}")
-
-        if (_exoPlayer.currentMediaItem == null) {
-            if (currentUri != null) {
-                _exoPlayer.setMediaItem(MediaItem.fromUri(currentUri!!))
-                _exoPlayer.prepare()
-            } else {
-                Log.d("PlayerViewModel", "No media item or currentUri available")
-                return
-            }
-        }
-
-        if (_exoPlayer.isPlaying) {
-            _exoPlayer.pause()
-        } else {
-            _exoPlayer.play()
-        }
-        
-        _isPlaying.value = _exoPlayer.isPlaying
-        Log.d("PlayerViewModel", "playPause() finished. isPlaying now: ${_exoPlayer.isPlaying}")
-    }
-
-    fun seekTo(seconds: Float) {
-//        val duration = _exoPlayer.duration.takeIf { it > 0 } ?: 1L
-        _exoPlayer.seekTo((seconds*1000).toLong())
-    }
-
-    fun stopPlayer() {
-        _exoPlayer.stop()
-        _exoPlayer.clearMediaItems()
-        _isPlaying.value = false
-        _progress.value = 0f
-        currentUri = null
-//        onCleared()
-    }
+    private val _shouldClosePlayerSheet = MutableStateFlow(false)
+    val shouldClosePlayerSheet: StateFlow<Boolean> = _shouldClosePlayerSheet.asStateFlow() // Pastikan expose sebagai StateFlow
 
     fun closePlayerSheet() {
         _shouldClosePlayerSheet.value = true
@@ -131,38 +46,106 @@ class PlayerViewModel @Inject constructor(
         _shouldClosePlayerSheet.value = false
     }
 
+    init {
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(C.USAGE_MEDIA)
+            .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+            .build()
+        _exoPlayer.setAudioAttributes(audioAttributes, true)
+        _exoPlayer.addListener(object : Player.Listener {
+            override fun onIsPlayingChanged(isPlayingValue: Boolean) {
+                _isPlaying.value = isPlayingValue
+                if (isPlayingValue) {
+                    startProgressUpdates()
+                } else {
+                    stopProgressUpdates()
+                }
+            }
+
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                if (playbackState == Player.STATE_ENDED) {
+                    _isPlaying.value = false // Pastikan ini juga diupdate
+                    stopProgressUpdates()
+                    onSongCompleteCallback?.invoke()
+                    if (isLooping.value) {
+                        _exoPlayer.seekTo(0)
+                        _exoPlayer.play()
+                    } else {
+                         _currentPositionSeconds.value = (_exoPlayer.duration / 1000).toFloat().coerceAtLeast(0f) // Set ke durasi penuh jika selesai
+                    }
+                }
+            }
+        })
+    }
+
+    private fun startProgressUpdates() {
+        stopProgressUpdates()
+        progressUpdateJob = viewModelScope.launch {
+            while (true) { // Loop terus menerus selama job aktif
+                if (_exoPlayer.isPlaying) {
+                    _currentPositionSeconds.value = (_exoPlayer.currentPosition / 1000).toFloat()
+                    onPlaybackSecondTick?.invoke() // Panggil callback
+                }
+                delay(1000) // Setiap detik
+            }
+        }
+    }
+
+    private fun stopProgressUpdates() {
+        progressUpdateJob?.cancel()
+        progressUpdateJob = null
+    }
+
+    fun prepareAndPlay(uri: Uri, onSongComplete: () -> Unit = {}) {
+        if (_exoPlayer.isPlaying) {
+            _exoPlayer.stop() // Hentikan pemutaran lama
+        }
+        stopProgressUpdates() // Hentikan update progress lama
+        _currentPositionSeconds.value = 0f // Reset progress
+
+        currentUri = uri
+        onSongCompleteCallback = onSongComplete // Simpan callback
+        _exoPlayer.setMediaItem(MediaItem.fromUri(uri))
+        _exoPlayer.prepare()
+        _exoPlayer.play() // isPlaying akan diupdate oleh listener
+    }
+
+    fun playPause() {
+        if (_exoPlayer.isPlaying) {
+            _exoPlayer.pause()
+        } else {
+            if (_exoPlayer.playbackState == Player.STATE_ENDED) { // Jika lagu sudah selesai dan ingin play lagi
+                _exoPlayer.seekTo(0)
+            }
+            _exoPlayer.play()
+        }
+    }
+
+    fun seekTo(seconds: Float) {
+        _exoPlayer.seekTo((seconds * 1000).toLong())
+        _currentPositionSeconds.value = seconds // Langsung update UI progress
+    }
+
+    fun stopPlayer() {
+        _exoPlayer.stop()
+        // isPlaying akan diupdate ke false oleh listener
+        // stopProgressUpdates() akan dipanggil oleh listener
+        _currentPositionSeconds.value = 0f
+        currentUri = null
+        onSongCompleteCallback = null
+    }
+
+    // closePlayerSheet dan resetCloseSheetFlag tidak ada di PlayerViewModel Anda,
+    // jadi saya hapus dari sini. Jika ada, bisa ditambahkan kembali.
+
     override fun onCleared() {
         super.onCleared()
         _exoPlayer.release()
+        stopProgressUpdates()
     }
 
-    fun toggleLoop(){
+    fun toggleLoop() {
         isLooping.value = !isLooping.value
-        if (isLooping.value == true){
-            _exoPlayer.repeatMode = Player.REPEAT_MODE_ONE
-        }else{
-            _exoPlayer.repeatMode = Player.REPEAT_MODE_OFF
-        }
-
-
-    }
-
-    fun recordPlay(song: Song, listenedMs: Long) {
-        val app: Application = getApplication()
-
-        viewModelScope.launch(Dispatchers.IO) {
-            val dao = AppDatabase.getDatabase(app).songDao()
-            val now = System.currentTimeMillis()
-            dao.insertPlayHistory(
-                PlayHistory(
-                    song_id = song.id,
-                    user_id = song.userId,
-                    played_at = Date(now),
-                    duration_ms = listenedMs,
-                )
-            )
-        }
+        _exoPlayer.repeatMode = if (isLooping.value) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
     }
 }
-
-
