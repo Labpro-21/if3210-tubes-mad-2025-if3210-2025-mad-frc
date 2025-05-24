@@ -55,6 +55,8 @@ import com.example.purrytify.ui.InsertSongPopUp
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.media3.common.util.Log
+import androidx.media3.common.util.UnstableApi
 import com.example.purrytify.ui.SongRecyclerView
 import com.example.purrytify.ui.navBar.BottomNavBar
 import com.example.purrytify.ui.LockScreenOrientation
@@ -62,6 +64,7 @@ import com.example.purrytify.viewmodel.PlayerViewModel
 import com.example.purrytify.viewmodel.PlayerViewModelFactory
 
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewModel: SongViewModel, playerViewModel: PlayerViewModel) {
@@ -142,6 +145,7 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
     }
 
     selectedSong?.let { song ->
+        Log.d("Selected Song", "in selected song")
         PlayerModalBottomSheet(
             sheetState = sheetState,
             showSheet = showPlayer,
@@ -252,6 +256,7 @@ fun LibraryScreenWithBottomNav(
         skipPartiallyExpanded = false, // allow partially expanded state
         confirmValueChange = { true } // allow transition freely
     )
+    val allSongs by songViewModel.songs.collectAsState()
 
     if (showPlayerSheet) {
         PlayerModalBottomSheet(
@@ -259,7 +264,11 @@ fun LibraryScreenWithBottomNav(
             onDismiss = { showPlayerSheet = false },
             song = songViewModel.current_song.collectAsState(initial = null).value ?: return,
             songViewModel = songViewModel,
-            onSongChange = { /* logika perubahan lagu */ },
+            onSongChange = { newId ->
+
+                val newSongId = (newId + allSongs.size) % allSongs.size
+                songViewModel.setCurrentSong(allSongs[newSongId])
+                           },
             playerViewModel = playerViewModel,
             sheetState = sheetState
         )
@@ -272,7 +281,10 @@ fun LibraryScreenWithBottomNav(
                     songViewModel = songViewModel,
                     isPlaying = isPlaying,
                     onPlayPause = { playerViewModel.playPause() },
-                    onSectionClick = { showPlayerSheet = true }  // Buka modal bottom sheet saat area diklik
+                    onSectionClick = {
+
+                        showPlayerSheet = true
+                    }  // Buka modal bottom sheet saat area diklik
                 )
                 BottomNavBar(
                     currentRoute = "library",
