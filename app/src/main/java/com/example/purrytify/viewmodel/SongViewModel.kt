@@ -83,11 +83,15 @@ class SongViewModel(private val repository: SongRepository, private val userId: 
     fun toggleLikeSong(song : Song) {
         viewModelScope.launch {
             repository.toggleLike(song.id)
+            // Fix: Tambahkan null-safety check
             val updatedSong = repository.getSong(song.id)
-            Log.d("SongViewModel", "Updated liked status: ${updatedSong.liked}")
+            if (updatedSong != null) {
+                Log.d("SongViewModel", "Updated liked status: ${updatedSong.liked}")
+            } else {
+                Log.d("SongViewModel", "Song not found in database after toggle")
+            }
             Log.d("SongViewModel", "Updated liked songs: ${likedSongs.value}")
             loadSongs(song.userId)
-
         }
     }
 
@@ -102,21 +106,30 @@ class SongViewModel(private val repository: SongRepository, private val userId: 
         }
     }
 
-    fun setCurrentSong(song:Song){
+    fun setCurrentSong(song: Song) {
         if (song == current_song.value) {
             return
         }
         viewModelScope.launch {
-            // Ambil data terbaru dari DB
-            val dbSong = repository.getSong(song.id)
-            // Jika lastPlayed masih null, berarti baru pertama kali diputar
-            if (dbSong.lastPlayed == null) {
-                repository.incrementListenedSongs(song.userId)
+            try {
+                val dbSong = repository.getSong(song.id)
+                
+                if (dbSong != null) {
+                    if (dbSong.lastPlayed == null) {
+                        repository.incrementListenedSongs(song.userId)
+                    }
+                    repository.updateLastPlayed(song.id, Date())
+                    loadSongs(song.userId)
+                    // Fix: Tambahkan null-safety check juga di sini
+                    _current_song.value = repository.getSong(song.id) ?: song
+                } else {
+                    _current_song.value = song
+                    Log.d("SongViewModel", "Setting online song as current: ${song.title}")
+                }
+            } catch (e: Exception) {
+                Log.e("SongViewModel", "Error setting current song", e)
+                _current_song.value = song
             }
-            // Update lastPlayed
-            repository.updateLastPlayed(song.id, Date())
-            // Setelah loadSongs selesai, perbarui state current_song
-            _current_song.value = repository.getSong(song.id)
         }
     }
 

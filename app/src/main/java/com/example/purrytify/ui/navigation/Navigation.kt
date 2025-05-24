@@ -21,10 +21,18 @@ import com.example.purrytify.viewmodel.SongViewModelFactory
 import com.example.purrytify.viewmodel.NetworkViewModel
 import com.example.purrytify.utils.TokenManager
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import com.example.purrytify.repository.UserRepository
 import com.example.purrytify.ui.screens.HomeScreenResponsive
 import com.example.purrytify.utils.SessionManager
 import com.example.purrytify.viewmodel.PlayerViewModel
 import com.example.purrytify.viewmodel.PlayerViewModelFactory
+
+import com.example.purrytify.network.RetrofitClient
+import com.example.purrytify.ui.screens.TopScreen
+import com.example.purrytify.viewmodel.OnlineSongViewModel
+import com.example.purrytify.viewmodel.OnlineSongViewModelFactory
 
  sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -62,6 +70,11 @@ fun AppNavigation() {
         factory = PlayerViewModelFactory((context as ComponentActivity).application)
     )
 
+    // Tambahkan OnlineSongViewModel
+    val api = remember { RetrofitClient.create(tokenManager) }
+    val onlineViewModel: OnlineSongViewModel = viewModel(
+        factory = OnlineSongViewModelFactory(api, sessionManager)
+    )
 
     NavHost(navController = navController, startDestination = startDestination) {
         println("is Connected: $isConnected")
@@ -82,7 +95,7 @@ fun AppNavigation() {
                 onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                 songViewModel = songViewModel,
-                playerViewModel = playerViewModel
+                playerViewModel = playerViewModel,
             )
         }
         composable(route = Screen.Library.route) {
@@ -91,7 +104,7 @@ fun AppNavigation() {
                 songViewModel = songViewModel,
                 onNavigateToHome = { navController.navigate(Screen.Home.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                playerViewModel = playerViewModel
+                playerViewModel = playerViewModel,
             )
         }
         composable(route = Screen.Profile.route) {
