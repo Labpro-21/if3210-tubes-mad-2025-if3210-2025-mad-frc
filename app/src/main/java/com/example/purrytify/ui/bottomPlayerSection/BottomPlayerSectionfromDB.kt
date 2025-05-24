@@ -33,6 +33,8 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.layout.ContentScale
 
 
 @Composable
@@ -66,19 +68,11 @@ fun BottomPlayerSectionFromDB(
 
     val currentSong by songViewModel.current_song.collectAsState()
 
+    // ✅ Tampilkan bottom player jika ada current song (baik dari DB maupun online)
     if (currentSong == null) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.DarkGray)
-                .padding(16.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(text = "No song playing", color = Color.White)
-        }
+        // Tidak tampilkan apa-apa jika tidak ada lagu yang sedang diputar
         return
     }
-
 
     Box(
         modifier = Modifier
@@ -91,35 +85,52 @@ fun BottomPlayerSectionFromDB(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
-            if (!currentSong!!.artworkPath.isNullOrEmpty())
+            // ✅ Handle artwork untuk online songs dan local songs
+            if (!currentSong!!.artworkPath.isNullOrEmpty()) {
                 Image(
-                    painter = rememberAsyncImagePainter(currentSong!!.artworkPath!!.toUri()),
+                    painter = rememberAsyncImagePainter(
+                        model = if (currentSong!!.artworkPath!!.startsWith("http")) {
+                            // Online song - gunakan URL langsung
+                            currentSong!!.artworkPath
+                        } else {
+                            // Local song - convert ke URI
+                            currentSong!!.artworkPath!!.toUri()
+                        }
+                    ),
                     contentDescription = currentSong!!.title,
                     modifier = Modifier
                         .size(imageSize)
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
                 )
-            else
+            } else {
                 Icon(
                     imageVector = Icons.Default.MusicNote,
                     contentDescription = "No artwork",
                     tint = Color.White.copy(alpha = 0.7f),
                     modifier = Modifier.size(imageSize)
                 )
+            }
 
             Spacer(modifier = Modifier.width(8.dp))
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = currentSong!!.title,
                     color = Color.White,
-                    fontSize = 14.sp
+                    fontSize = 14.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = currentSong!!.artist,
                     color = Color.Gray,
-                    fontSize = 12.sp
+                    fontSize = 12.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
+
             IconButton(
                 onClick = { onPlayPause() },
                 modifier = Modifier
