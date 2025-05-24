@@ -64,7 +64,8 @@ fun ProfileScreen(
     onLogout: () -> Unit,
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
-    onScanQrClicked: () -> Unit
+    onScanQrClicked: () -> Unit,
+    onNavigateToTimeListenedDetail: () -> Unit
 ) {
     val context = LocalContext.current
 
@@ -78,7 +79,7 @@ fun ProfileScreen(
     )
 
     val analytics by profileViewModel.analytics.collectAsState()
-    LaunchedEffect(Unit) { profileViewModel.loadAnalytics() }
+    LaunchedEffect(Unit) { profileViewModel.loadMonthlySummaryAnalytics() }
 
     var showNoInternetDialog by remember { mutableStateOf(!isConnected) }
 
@@ -107,7 +108,8 @@ fun ProfileScreen(
         songViewModel = songViewModel,
         analytics = analytics,
         playerViewModel = playerViewModel,
-        onScanQrCodeClick = onScanQrClicked // Tambahkan parameter untuk fungsi scan QR
+        onScanQrCodeClick = onScanQrClicked,
+        onNavigateToTimeListenedDetail = onNavigateToTimeListenedDetail
     )
 }
 
@@ -123,7 +125,8 @@ fun ProfileContent(
     songViewModel: SongViewModel,
     analytics: SoundCapsule,
     playerViewModel: PlayerViewModel,
-    onScanQrCodeClick: () -> Unit // Tambahkan parameter untuk fungsi scan QR
+    onScanQrCodeClick: () -> Unit,
+    onNavigateToTimeListenedDetail: () -> Unit
 ) {
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
     // Background gradasi dari #006175 ke #121212
@@ -231,7 +234,8 @@ fun ProfileContent(
                 onDownload = { /* export CSV / PDF */ },
                 onShareMonth = { /* share summary bulan ini */ },
                 playerViewModel = playerViewModel,
-                songViewModel = songViewModel
+                songViewModel = songViewModel,
+                onNavigateToTimeListenedDetail = onNavigateToTimeListenedDetail
             )
         }
     }
@@ -266,7 +270,8 @@ fun ProfileScreenWithBottomNav(
     onLogout: () -> Unit,
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
-    onScanQrClicked: () -> Unit
+    onScanQrClicked: () -> Unit,
+    onNavigateToTimeListenedDetail: () -> Unit
 ) {
     Scaffold(
         bottomBar = {
@@ -283,7 +288,7 @@ fun ProfileScreenWithBottomNav(
         }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
-            ProfileScreen(isConnected = isConnected, onLogout = onLogout, songViewModel = songViewModel, playerViewModel = playerViewModel, onScanQrClicked = onScanQrClicked)
+            ProfileScreen(isConnected = isConnected, onLogout = onLogout, songViewModel = songViewModel, playerViewModel = playerViewModel, onScanQrClicked = onScanQrClicked, onNavigateToTimeListenedDetail = onNavigateToTimeListenedDetail)
         }
     }
 }
@@ -294,7 +299,8 @@ fun SoundCapsuleSection(
     onDownload: () -> Unit,
     onShareMonth: () -> Unit, // Anda mungkin ingin men-share ringkasan teks dari sini
     songViewModel: SongViewModel, // Tetap diperlukan untuk recordPlayTick
-    playerViewModel: PlayerViewModel // Tetap diperlukan untuk status isPlaying
+    playerViewModel: PlayerViewModel, // Tetap diperlukan untuk status isPlaying
+    onNavigateToTimeListenedDetail: () -> Unit
 ) {
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     val baseMillis = analytics.timeListenedMillis ?: 0L
@@ -383,7 +389,7 @@ fun SoundCapsuleSection(
             modifier = Modifier
               .fillMaxWidth()
               .padding(horizontal = 16.dp)
-              .clickable { /* Mungkin ada detail view untuk time listened */ }
+              .clickable { onNavigateToTimeListenedDetail() }
         ) {
             Row(
               modifier = Modifier.padding(horizontal = 16.dp, vertical = 20.dp), // Padding lebih besar

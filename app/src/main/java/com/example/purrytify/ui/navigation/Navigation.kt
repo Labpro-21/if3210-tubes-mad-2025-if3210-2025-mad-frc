@@ -1,6 +1,7 @@
 package com.example.purrytify.ui.navigation
 
 import android.util.Log
+import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -17,10 +18,16 @@ import com.example.purrytify.viewmodel.SongViewModel // Import classnya
 import com.example.purrytify.viewmodel.NetworkViewModel
 import com.example.purrytify.utils.TokenManager
 import androidx.compose.runtime.livedata.observeAsState
+import com.example.purrytify.data.AppDatabase
+import com.example.purrytify.repository.UserRepository
 import com.example.purrytify.ui.screens.HomeScreenResponsive
+import com.example.purrytify.ui.screens.TimeListenedScreen
 import com.example.purrytify.utils.SessionManager
 import com.example.purrytify.viewmodel.PlayerViewModel // Import classnya
 import com.example.purrytify.viewmodel.OnlineSongViewModel // Import classnya
+import com.example.purrytify.viewmodel.ProfileViewModel
+import com.example.purrytify.viewmodel.ProfileViewModelFactory
+import java.time.YearMonth
 
 
 sealed class Screen(val route: String) {
@@ -28,6 +35,7 @@ sealed class Screen(val route: String) {
     object Home : Screen("home")
     object Library : Screen("library")
     object Profile : Screen("profile")
+    object TimeListenedDetail : Screen("time_listened_detail")
 }
 
 @Composable
@@ -39,9 +47,13 @@ fun AppNavigation(
     onScanQrClicked: () -> Unit
 ) {
     val context = LocalContext.current
+    val activity = LocalContext.current as ComponentActivity
     val tokenManager = remember { TokenManager(context) }
     val sessionManager = remember { SessionManager(context) }
     val navController = rememberNavController()
+
+    val db = remember { AppDatabase.getDatabase(context) }
+    val userRepository = remember { UserRepository(db.userDao()) }
 
     // NetworkViewModel masih bisa dibuat di sini jika hanya digunakan oleh AppNavigation/UI
     val networkViewModel: NetworkViewModel = viewModel()
@@ -49,6 +61,12 @@ fun AppNavigation(
 
     val currentSessionUserId = sessionManager.getUserId()
     Log.d("AppNavigation", "SessionManager userId: $currentSessionUserId. Received SongViewModel hash: ${System.identityHashCode(songViewModel)}")
+
+    val profileViewModel: ProfileViewModel = viewModel(
+        viewModelStoreOwner = activity, // activity adalah LocalContext.current as ComponentActivity
+        key = "profileViewModel_user_${currentSessionUserId}", // Key jika bergantung pada user
+        factory = ProfileViewModelFactory(context, tokenManager, userRepository, sessionManager) // Sesuaikan factory Anda
+    )
 
     val startDestination = if (tokenManager.isLoggedIn() && currentSessionUserId > 0) {
         Screen.Home.route
@@ -164,9 +182,22 @@ fun AppNavigation(
                     },
                     songViewModel = songViewModel, // Gunakan instance yang diteruskan
                     playerViewModel = playerViewModel, // Gunakan instance yang diteruskan
-                    onScanQrClicked = onScanQrClicked
+                    onScanQrClicked = onScanQrClicked,
+                    onNavigateToTimeListenedDetail = {
+                        profileViewModel.loadDailyListenDetailsForMonth(YearMonth.now()) // Default ke bulan ini
+                        navController.navigate(Screen.TimeListenedDetail.route)
+                    },
                 )
             }
+        }
+
+        composable(Screen.TimeListenedDetail.route) {
+            // Asumsi ProfileViewModel sudah di-scope ke Activity atau NavGraph yang lebih tinggi
+            // sehingga bisa diakses di sini juga.
+            TimeListenedScreen(
+                profileViewModel = profileViewModel,
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }

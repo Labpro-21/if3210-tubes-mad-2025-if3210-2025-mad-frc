@@ -21,6 +21,11 @@ data class SongPlayDate(
     @ColumnInfo(name = "playDate") val playDate: String // Format "YYYY-MM-DD"
 )
 
+data class DailyListenDuration(
+    @ColumnInfo(name = "playDate") val playDate: String, // Format "YYYY-MM-DD"
+    @ColumnInfo(name = "totalDurationMillis") val totalDurationMillis: Long
+)
+
 @Dao
 interface SongDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
@@ -91,4 +96,17 @@ interface SongDao {
 
     @Query("SELECT * FROM Song WHERE audioPath = :audioPath AND user_id = :userId LIMIT 1")
     suspend fun getSongByAudioPathAndUserId(audioPath: String, userId: Int): Song?
+
+    @Query("""
+        SELECT 
+            strftime('%Y-%m-%d', ph.played_at/1000, 'unixepoch') AS playDate,
+            SUM(ph.duration_ms) AS totalDurationMillis
+        FROM play_history ph
+        WHERE ph.user_id = :userId 
+          AND ph.played_at >= :startOfMonthMillis 
+          AND ph.played_at < :startOfNextMonthMillis
+        GROUP BY playDate
+        ORDER BY playDate ASC
+    """)
+    suspend fun getDailyListenDurationsForMonth(userId: Int, startOfMonthMillis: Long, startOfNextMonthMillis: Long): List<DailyListenDuration>
 }
