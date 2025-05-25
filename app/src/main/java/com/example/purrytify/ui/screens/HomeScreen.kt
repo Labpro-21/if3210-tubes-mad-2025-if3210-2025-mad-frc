@@ -52,18 +52,13 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.purrytify.network.ApiService
-import com.example.purrytify.network.RetrofitClient
-import com.example.purrytify.utils.TokenManager
-import com.example.purrytify.utils.SessionManager
-import com.example.purrytify.viewmodel.OnlineSongViewModelFactory
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.ui.graphics.Brush
 import java.util.Date
 import com.example.purrytify.ui.components.SongSettingsModal
 import com.example.purrytify.utils.shareServerSong
+import com.example.purrytify.viewmodel.AudioOutputViewModel
 
 @Composable
 fun HomeScreenContent(
@@ -424,7 +419,8 @@ fun HomeScreenWithBottomNav(
     recentlyPlayedFromDb: List<Song>,
     onlineSongViewModel: OnlineSongViewModel,
     songVm: SongViewModel,
-    onNavigateToTopSong: (String) -> Unit
+    onNavigateToTopSong: (String) -> Unit,
+    audioOutputViewModel: AudioOutputViewModel
 ) {
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     var showPlayerSheet by remember { mutableStateOf(false) }
@@ -441,7 +437,8 @@ fun HomeScreenWithBottomNav(
             songViewModel = songViewModel,
             onSongChange = { },
             playerViewModel = playerViewModel,
-            sheetState = sheetState
+            sheetState = sheetState,
+            audioOutputViewModel = audioOutputViewModel
         )
     }
 
@@ -489,6 +486,7 @@ fun HomeScreenResponsive(
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
     onlineSongViewModel: OnlineSongViewModel,
+    audioOutputViewModel: AudioOutputViewModel,
     onNavigateToTopSong: (String) -> Unit = {}
 ) {
     val configuration = LocalConfiguration.current
@@ -533,7 +531,8 @@ fun HomeScreenResponsive(
                 recentlyPlayedFromDb = recentlyPlayedFromDb,
                 onlineSongViewModel = onlineSongViewModel,
                 songVm = songViewModel,
-                onNavigateToTopSong = onNavigateToTopSong
+                onNavigateToTopSong = onNavigateToTopSong,
+                audioOutputViewModel = audioOutputViewModel
             )
         }
     } else {
@@ -546,7 +545,53 @@ fun HomeScreenResponsive(
             recentlyPlayedFromDb = recentlyPlayedFromDb,
             onlineSongViewModel = onlineSongViewModel,
             songVm = songViewModel,
-            onNavigateToTopSong = onNavigateToTopSong
+            onNavigateToTop50 = onNavigateToTop50,
+            audioOutputViewModel = audioOutputViewModel
         )
     }
+}
+
+// helper untuk download + simpan ke DB
+private fun downloadSong(
+    context: Context,
+    networkSong: Song,
+    songVm: SongViewModel
+) {
+    val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+    val req = DownloadManager.Request(Uri.parse(networkSong.audioPath))
+        .setTitle(networkSong.title)
+        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+        .setDestinationInExternalFilesDir(
+            context, Environment.DIRECTORY_MUSIC, "${networkSong.title}.mp3"
+        )
+    val id = dm.enqueue(req)
+
+    val receiver = object : BroadcastReceiver() {
+        override fun onReceive(ctx: Context, intent: Intent) {
+            if (intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1) == id) {
+                val q = DownloadManager.Query().setFilterById(id)
+                dm.query(q).use { c ->
+                    if (c.moveToFirst()) {
+                        val idx = c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)
+                        if (idx >= 0) {
+                            val uri = c.getString(idx)
+                            val offline = networkSong.copy(
+                                id = 0,
+                                audioPath = uri,
+                                addedDate = Date(),
+                                lastPlayed = null
+                            )
+                            songVm.addSong(offline)
+                        }
+                    }
+                }
+                ctx.unregisterReceiver(this)
+            }
+        }
+    }
+    context.registerReceiver(
+        receiver,
+        IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
+        Context.RECEIVER_NOT_EXPORTED
+    )
 }

@@ -1,6 +1,5 @@
 package com.example.purrytify.ui.screens
 
-import android.app.Activity
 import android.content.pm.ActivityInfo
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -10,8 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -28,12 +25,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.purrytify.repository.SongRepository
-import com.example.purrytify.data.AppDatabase
 import com.example.purrytify.model.Song
 import com.example.purrytify.viewmodel.SongViewModel
-import com.example.purrytify.viewmodel.SongViewModelFactory
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MusicNote
@@ -52,22 +45,20 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import com.example.purrytify.ui.InsertSongPopUp
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import com.example.purrytify.ui.SongRecyclerView
 import com.example.purrytify.ui.navBar.BottomNavBar
 import com.example.purrytify.ui.LockScreenOrientation
+import com.example.purrytify.viewmodel.AudioOutputViewModel
 import com.example.purrytify.viewmodel.PlayerViewModel
-import com.example.purrytify.viewmodel.PlayerViewModelFactory
 
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewModel: SongViewModel, playerViewModel: PlayerViewModel) {
+fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewModel: SongViewModel, playerViewModel: PlayerViewModel, audioOutputViewModel: AudioOutputViewModel) {
     val context = LocalContext.current
 
 
@@ -166,7 +157,8 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
                 }
                 setSelectedSong(allSongs[currentSongId])
             },
-            playerViewModel = playerViewModel
+            playerViewModel = playerViewModel,
+            audioOutputViewModel = audioOutputViewModel
         )
         songViewModel.setCurrentSong(song)
 
@@ -247,7 +239,8 @@ fun LibraryScreenWithBottomNav(
     onBack: () -> Unit,
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    audioOutputViewModel: AudioOutputViewModel
 ) {
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
     val isPlaying by playerViewModel.isPlaying.collectAsState()
@@ -270,7 +263,8 @@ fun LibraryScreenWithBottomNav(
                 songViewModel.setCurrentSong(allSongs[newSongId])
                            },
             playerViewModel = playerViewModel,
-            sheetState = sheetState
+            sheetState = sheetState,
+            audioOutputViewModel = audioOutputViewModel
         )
     }
 
@@ -302,7 +296,8 @@ fun LibraryScreenWithBottomNav(
             LibraryScreen(
                 onBack = onBack,
                 songViewModel = songViewModel,
-                playerViewModel = playerViewModel
+                playerViewModel = playerViewModel,
+                audioOutputViewModel = audioOutputViewModel,
             )
         }
     }
