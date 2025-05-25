@@ -71,12 +71,12 @@ class MusicService : Service() {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 when (reason) {
                     Player.MEDIA_ITEM_TRANSITION_REASON_SEEK -> {
-                        // Ini terjadi saat user skip/previous manual (seekTo)
+
                         onSongChanged()
                         Log.d("PLAYER", "Transition by seek (manual skip)")
                     }
                     Player.MEDIA_ITEM_TRANSITION_REASON_AUTO -> {
-                        // Ini terjadi otomatis saat lagu selesai
+
                         skipNext()
                         Log.d("PLAYER", "Transition by auto (end of media)")
                     }
@@ -107,7 +107,7 @@ class MusicService : Service() {
                 val songs: ArrayList<Song>? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     intent.getParcelableArrayListExtra("playlist", Song::class.java)
                 } else {
-                    intent.getParcelableArrayListExtra("playlist") // deprecated, tapi masih bisa dipakai untuk API < 33
+                    intent.getParcelableArrayListExtra("playlist")
                 }
                 Log.d("MusicService", "Playlist updated: ${playlist.size} songs")
 
@@ -168,12 +168,12 @@ class MusicService : Service() {
         progressRunnable = object : Runnable {
             override fun run() {
                 if (exoPlayer.isPlaying) {
-                    // Tambahkan ini untuk update progress
+
                     MusicServiceManager.updateSongProgress(progress/1000)
                     updateNotification()
                 }
 
-                progressHandler?.postDelayed(this, 1000) // 1 detik sekali
+                progressHandler?.postDelayed(this, 1000)
             }
         }
         progressHandler?.post(progressRunnable!!)
@@ -198,10 +198,10 @@ class MusicService : Service() {
 
     @OptIn(UnstableApi::class)
     private suspend fun createNotification(): Notification {
-//        Log.d("MusicService", "CreatingNotification")
 
 
-        // Kalau lagi tidak memainkan lagu
+
+
         if (currentSongId == null || playlist.isEmpty()) {
 
 
@@ -245,7 +245,7 @@ class MusicService : Service() {
     }
 
     private fun skipNext() {
-        // contoh: skip ke lagu berikutnya
+
         Log.d("ONNEXT", "currentSongId: $currentSongId")
         exoPlayer.seekToNext()
         Log.d("ONNEXT", "new currentSongId: $currentSongId")
@@ -253,7 +253,7 @@ class MusicService : Service() {
     }
 
     private fun skipPrevious() {
-        // contoh: kembali ke lagu sebelumnya
+
         Log.d("ONPREVIOUS", "currentSongId: $currentSongId")
         exoPlayer.seekToPrevious()
         Log.d("ONPREVIOUS", " new currentSongId: $currentSongId")

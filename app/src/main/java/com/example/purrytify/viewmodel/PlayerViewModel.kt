@@ -97,7 +97,7 @@ class PlayerViewModel @Inject constructor(
 
     fun prepareAndPlay(id: Int) {
         Log.d("PlayerViewModel", "Mengirim intent ke music service untuk memainkan lagu dengan id:$id")
-        // Kirim intent ke MusicService untuk memainkan lagu
+
         val intent = Intent(context, MusicService::class.java).apply {
             action = MyApp.ACTION_PLAY
             putExtra("SONG_ID", id)
@@ -124,11 +124,6 @@ class PlayerViewModel @Inject constructor(
 
     }
 
-
-//    override fun onCleared() {
-//        super.onCleared()
-//    }
-
     fun seekTo(seconds: Float) {
         val intent = Intent(context, MusicService::class.java).apply {
             action = MyApp.ACTION_SEEK
@@ -148,118 +143,7 @@ class PlayerViewModel @Inject constructor(
 
     init {
     }
-//
-//    @OptIn(UnstableApi::class)
-//    fun prepareAndPlay(uri: Uri) {
-//        Log.d("PlayerVM", "prepareAndPlay called with URI: $uri. Current URI: $currentUri, IsPlaying: ${_isPlaying.value}")
-//
-//        // Jika URI sama dengan yang sedang aktif dan player sudah siap (prepared)
-//        if (uri == currentUri && _exoPlayer.playbackState != Player.STATE_IDLE && _exoPlayer.playbackState != Player.STATE_ENDED) {
-//            Log.d("PlayerVM", "URI is the same and player is already prepared. Ensuring playback.")
-//            if (!_exoPlayer.isPlaying) { // Jika sedang dijeda, lanjutkan
-//                _exoPlayer.playWhenReady = true
-//            }
-//            // Tidak perlu setMediaItem, prepare, atau menambahkan listener ulang jika hanya melanjutkan
-//            return
-//        }
-//
-//        Log.d("PlayerVM", "New URI or player not ready. Full preparation for URI: $uri")
-//
-//        // Hapus listener lama sebelum menambahkan yang baru
-//        currentPlayerListener?.let {
-//            _exoPlayer.removeListener(it)
-//            Log.d("PlayerVM", "Previous listener removed.")
-//        }
-//
-//        currentUri = uri
-//        val mediaItem = MediaItem.fromUri(uri)
-//        _exoPlayer.setMediaItem(mediaItem) // Selalu set media item baru jika berbeda atau belum siap
-//        _exoPlayer.prepare()               // Selalu prepare ulang
-//        _exoPlayer.playWhenReady = true    // Selalu mulai/lanjutkan dari awal setelah prepare
-//
-//        currentPlayerListener = object : Player.Listener {
-//            override fun onPlaybackStateChanged(playbackState: Int) {
-//                Log.d("PlayerVM", "onPlaybackStateChanged: $playbackState, URI: $currentUri")
-//                when (playbackState) {
-//                    Player.STATE_ENDED -> {
-//                        val playbackError = _exoPlayer.playerError
-//                        if (playbackError != null) {
-//                            Log.e("PlayerVM", "STATE_ENDED for $currentUri due to error: ${playbackError.message}. NOT calling onSongComplete.")
-//                            _isPlaying.value = false
-//                        } else if (_exoPlayer.repeatMode == Player.REPEAT_MODE_ONE && isLooping.value) {
-//                            Log.d("PlayerVM", "STATE_ENDED for $currentUri: Looping current song.")
-//                            _exoPlayer.seekTo(0)
-//                            _exoPlayer.playWhenReady = true
-//                            // _isPlaying.value akan diupdate oleh onIsPlayingChanged
-//                        } else {
-//                            Log.i("PlayerVM", "STATE_ENDED for $currentUri: Song finished naturally. Calling onSongComplete.")
-//                            _isPlaying.value = false
-//                        }
-//                    }
-//                }
-//            }
-//
-//            override fun onIsPlayingChanged(isPlayingValue: Boolean) {
-//                Log.d("PlayerVM", "onIsPlayingChanged: $isPlayingValue for $currentUri")
-//                _isPlaying.value = isPlayingValue
-//                if (isPlayingValue) { // Jika mulai bermain, update progress ticker
-//                    val currentPosition = _exoPlayer.currentPosition
-//                    _progress.value = (currentPosition / 1000).toFloat()
-//                }
-//            }
-//
-//            override fun onPlayerError(error: PlaybackException) {
-//                Log.e("PlayerVM", "onPlayerError for $currentUri: ${error.message}", error)
-//                _isPlaying.value = false
-//                if (playbackState == Player.STATE_ENDED) {
-//                    _isPlaying.value = false
-//                    stopProgressUpdates()
-//                    onSongCompleteCallback?.invoke()
-//                    if (isLooping.value) {
-//                        _exoPlayer.seekTo(0)
-//                        _exoPlayer.play()
-//                    } else {
-//                        _currentPositionSeconds.value = (_exoPlayer.duration / 1000).toFloat().coerceAtLeast(0f)
-//                    }
-//                }
-//            }
-//
-//            // Listener onAudioDeviceInfoChanged dan onDeviceInfoChanged dihapus
-//            // karena API yang dibutuhkan (getAudioDeviceInfo) tidak tersedia.
-//        })
-//        // Tidak bisa set _activeAudioDevice dari ExoPlayer di sini jika API tidak ada.
-//        // Akan di-set ke null atau default saat UI membutuhkan atau saat setPreferredAudioOutput.
-//        Log.d("PlayerViewModel", "Initial audio device state is null (pending selection or system default).")
-//    }
 
-
-//    @OptIn(UnstableApi::class)
-//    fun stopPlayer() {
-//        currentUri = null // Reset currentUri
-//        // Hapus listener jika ada, agar tidak ada callback yang tertinggal
-//        currentPlayerListener?.let {
-////            _exoPlayer.removeListener(it)
-//            currentPlayerListener = null
-//            Log.d("PlayerVM", "Listener removed on stopPlayer.")
-//        }
-//
-//    }
-
-//    override fun onCleared() {
-//        super.onCleared()
-//        Log.d("PlayerVM", "onCleared: Releasing ExoPlayer.")
-//        _exoPlayer.release()
-//        currentPlayerListener?.let {
-//            try {
-//                _exoPlayer.removeListener(it) // Mungkin error jika _exoPlayer sudah direlease
-//            } catch (e: Exception) {
-//                Log.w("PlayerVM", "Error removing listener onCleared: ${e.message}")
-//            }
-//            currentPlayerListener = null
-//        }
-//    }
-
-    // Fungsi untuk memilih perangkat output audio
     @OptIn(UnstableApi::class)
     @Suppress("DEPRECATION")
     fun setPreferredAudioOutput(deviceInfo: AudioDeviceInfo?) {
@@ -277,12 +161,12 @@ class PlayerViewModel @Inject constructor(
     }
 
 
-    // Fungsi ini bisa dipanggil dari MainActivity (BroadcastReceiver)
-    // saat headset dicabut, misalnya.
+
+
     @OptIn(UnstableApi::class)
     fun revertToDefaultAudioOutput() {
-//        _exoPlayer.setPreferredAudioDevice(null) // Minta ExoPlayer kembali ke default
-//        _activeAudioDevice.value = null // Set state kita ke null (mewakili speaker internal/default)
+
+
         Log.d("PlayerViewModel", "Reverted to default audio output. Active device state set to null.")
     }
 }

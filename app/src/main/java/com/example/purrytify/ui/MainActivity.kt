@@ -54,7 +54,7 @@ class MainActivity : ComponentActivity() {
 
     private val songViewModel: SongViewModel by viewModels {
         val sm = SessionManager(applicationContext)
-        val userIdForFactory = sm.getUserId().let { if (it <= 0) 0 else it } // Default ke 0 jika tidak valid
+        val userIdForFactory = sm.getUserId().let { if (it <= 0) 0 else it }
         Log.d("MainActivity_VM", "MainActivity creating SongViewModel with factory for userId: $userIdForFactory")
         SongViewModelFactory(
             SongRepository(AppDatabase.getDatabase(applicationContext).songDao(), AppDatabase.getDatabase(applicationContext).userDao()),
@@ -312,7 +312,7 @@ class MainActivity : ComponentActivity() {
                                             playerViewModel.prepareAndPlay(songViewModel.getSongIndex(songToPlay))
 
                                         }
-                                        // TODO: Secara otomatis tampilkan UI player
+
                                     } catch (e: Exception) {
                                         Log.e("MainActivity_DeepLink", "Invalid audio path URI: $audioPathString", e)
                                         Toast.makeText(this@MainActivity, "Error playing song: Invalid audio path", Toast.LENGTH_SHORT).show()

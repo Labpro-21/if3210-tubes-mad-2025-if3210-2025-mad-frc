@@ -69,24 +69,24 @@ fun UserTopSongsScreen(
             }
         }
     }
-//
-//    fun playNextInTopSongs() {
-//        if (topPlayedSongs.isNotEmpty()) {
-//            currentPlaylistIndex = (currentPlaylistIndex + 1) % topPlayedSongs.size
-//            val nextSong = topPlayedSongs[currentPlaylistIndex]
-//            songViewModel.setCurrentSong(nextSong)
-//            playerViewModel.prepareAndPlay(nextSong.audioPath.toUri()) { playNextInTopSongs() }
-//        }
-//    }
-//
-//    fun playPreviousInTopSongs() {
-//        if (topPlayedSongs.isNotEmpty()) {
-//            currentPlaylistIndex = if (currentPlaylistIndex - 1 < 0) topPlayedSongs.size - 1 else currentPlaylistIndex - 1
-//            val prevSong = topPlayedSongs[currentPlaylistIndex]
-//            songViewModel.setCurrentSong(prevSong)
-//            playerViewModel.prepareAndPlay(prevSong.audioPath.toUri()) { playNextInTopSongs() }
-//        }
-//    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     Scaffold(
         topBar = {
@@ -171,9 +171,9 @@ fun UserTopSongsScreen(
                                 songViewModel.setCurrentSong(song)
                                 profileViewModel.sendSongsToMusicService()
                                 playerViewModel.prepareAndPlay(index)
-//                                playerViewModel.prepareAndPlay(song.audioPath.toUri()) {
-//                                    playNextInTopSongs()
-//                                }
+
+
+
                                 showPlayerSheet = true
                             }
                         )

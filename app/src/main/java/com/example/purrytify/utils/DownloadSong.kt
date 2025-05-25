@@ -47,7 +47,7 @@ fun downloadSong(
         return
     }
     CoroutineScope(Dispatchers.IO).launch {
-        // ① cek serverId + explicitly
+
         val already = songViewModel.isDownloadedByServerId(songToDownload.serverId)
         if (already) {
             Log.i(
@@ -58,7 +58,7 @@ fun downloadSong(
             return@launch
         }
 
-        // ② baru lanjutkan enqueue di Main
+
         withContext(Dispatchers.Main)
         {
             try {

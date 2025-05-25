@@ -4,7 +4,7 @@ import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import com.example.purrytify.model.Song  // sesuaikan path model Song-mu
+import com.example.purrytify.model.Song
 import com.example.purrytify.viewmodel.SongViewModel
 
 object MusicServiceManager {
@@ -31,7 +31,7 @@ object MusicServiceManager {
 
     fun updateSongProgress(position: Float) {
         _songProgress.value = position
-//        Log.d("MusicServiceManager", "Current song is ${position}s in")
+
     }
 
     fun updateLooping(isLooping: Boolean) {

@@ -53,7 +53,7 @@ fun TopScreen(
     audioOutputViewModel: AudioOutputViewModel,
     isConnected: Boolean
 ) {
-    // Kalau tidak connected pop back
+
     var showNoInternetDialog by remember { mutableStateOf(!isConnected) }
 
     if (showNoInternetDialog) {
@@ -133,9 +133,9 @@ fun TopScreen(
             currentPlaylistIndex = nextIndex
             songViewModel.setCurrentSong(nextSong)
 
-//            playerViewModel.prepareAndPlay(nextSong.audioPath.toUri()) {
-//                playNextInSequence()
-//            }
+
+
+
         }
     }
 
@@ -153,10 +153,10 @@ fun TopScreen(
             val prevSong = onlineSongs[prevIndex]
             currentPlaylistIndex = prevIndex
             songViewModel.setCurrentSong(prevSong)
-//
-//            playerViewModel.prepareAndPlay(prevSong.audioPath.toUri()) {
-//                playNextInSequence()
-//            }
+
+
+
+
         }
     }
 
@@ -394,9 +394,9 @@ fun TopScreen(
                                 songViewModel.setCurrentSong(song)
                                 onlineViewModel.sendSongsToMusicService()
                                 playerViewModel.prepareAndPlay(index)
-//                                playerViewModel.prepareAndPlay(song.audioPath.toUri()) {
-//                                    playNextInSequence()
-//                                }
+
+
+
                             }
                         )
                     }

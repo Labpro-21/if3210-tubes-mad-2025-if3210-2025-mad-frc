@@ -13,9 +13,9 @@ object BitmapUtils {
 
     suspend fun getBitmapFromString(context: Context, source: String): Bitmap? {
         val data = if (source.startsWith("http")) {
-            source // dianggap sebagai URL
+            source
         } else {
-            source.toUri() // dianggap sebagai URI
+            source.toUri()
         }
 
         val request = ImageRequest.Builder(context)

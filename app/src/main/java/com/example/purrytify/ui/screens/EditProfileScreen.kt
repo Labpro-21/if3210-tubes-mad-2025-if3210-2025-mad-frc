@@ -32,7 +32,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush // Import Brush
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -53,7 +53,7 @@ import java.io.File
 import java.io.IOException
 import java.util.Locale
 
-// --- Fungsi Utilitas untuk Negara (TETAP SAMA) ---
+
 private var countryNameToCodeCache: Map<String, String>? = null
 private var countryCodeToDisplayNameCache: Map<String, String>? = null
 
@@ -103,7 +103,7 @@ fun getDisplayCountryNameFromAlpha2Code(alpha2Code: String, defaultLocale: Local
     if (alpha2Code.isBlank()) return "Not Set"
     return getCountryCodeToDisplayNameMap(defaultLocale)[alpha2Code] ?: alpha2Code
 }
-// --- Akhir Fungsi Utilitas ---
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -180,12 +180,12 @@ fun EditProfileScreen(
         )
     }
 
-    // Menggunakan Box dengan background gradasi seperti di ProfileScreen
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                Brush.verticalGradient( // Background gradasi yang sama
+                Brush.verticalGradient(
                     colors = listOf(Color(0xFF006175), Color(0xFF121212))
                 )
             )
@@ -193,18 +193,18 @@ fun EditProfileScreen(
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
-                    title = { Text("Edit Profile", fontWeight = FontWeight.SemiBold, color = Color.White) }, // Teks putih
+                    title = { Text("Edit Profile", fontWeight = FontWeight.SemiBold, color = Color.White) },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White) // Ikon putih
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color.Transparent // TopAppBar transparan agar gradasi terlihat
+                        containerColor = Color.Transparent
                     )
                 )
             },
-            containerColor = Color.Transparent // Scaffold transparan agar background Box terlihat
+            containerColor = Color.Transparent
         ) { paddingValues ->
             Column(
                 modifier = Modifier
@@ -218,7 +218,7 @@ fun EditProfileScreen(
                     modifier = Modifier
                         .size(120.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)) // Background foto sedikit transparan
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
                         .clickable { showPhotoSourceDialog = true },
                     contentAlignment = Alignment.Center
                 ) {
@@ -243,30 +243,30 @@ fun EditProfileScreen(
                 }
                 Spacer(Modifier.height(8.dp))
                 TextButton(onClick = { showPhotoSourceDialog = true }) {
-                    Text("Change Photo", color = Color.White.copy(alpha = 0.8f)) // Teks lebih terang
+                    Text("Change Photo", color = Color.White.copy(alpha = 0.8f))
                 }
 
                 Spacer(Modifier.height(32.dp))
 
-                SectionTitle("Location", color = Color.White.copy(alpha = 0.9f)) // Warna judul disesuaikan
+                SectionTitle("Location", color = Color.White.copy(alpha = 0.9f))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 56.dp)
-                        .border(1.dp, Color.White.copy(alpha = 0.5f), MaterialTheme.shapes.extraSmall) // Border lebih terang
+                        .border(1.dp, Color.White.copy(alpha = 0.5f), MaterialTheme.shapes.extraSmall)
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Filled.LocationOn,
                         contentDescription = "Location Icon",
-                        tint = Color.White.copy(alpha = 0.7f), // Ikon lebih terang
+                        tint = Color.White.copy(alpha = 0.7f),
                         modifier = Modifier.padding(end = 8.dp)
                     )
                     Text(
                         text = displayCountryName,
                         style = MaterialTheme.typography.bodyLarge,
-                        color = Color.White // Teks lokasi putih
+                        color = Color.White
                     )
                 }
 
@@ -275,7 +275,7 @@ fun EditProfileScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Tombol "Current" dengan gaya yang lebih cocok untuk background gelap
+
                     Button(
                         onClick = {
                             when (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)) {
@@ -289,8 +289,8 @@ fun EditProfileScreen(
                         },
                         modifier = Modifier.weight(1f),
                         shape = MaterialTheme.shapes.medium,
-                        colors = ButtonDefaults.buttonColors( // Menggunakan Material3 ButtonColors
-                            containerColor = Color.White.copy(alpha = 0.2f), // Background semi-transparan
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White.copy(alpha = 0.2f),
                             contentColor = Color.White
                         )
                     ) {
@@ -298,8 +298,8 @@ fun EditProfileScreen(
                         Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                         Text("Current")
                     }
-                    // Tombol "On Map" dengan gaya yang sama
-                    Button( // Diubah dari OutlinedButton menjadi Button agar seragam
+
+                    Button(
                         onClick = { showMapDialog = true },
                         modifier = Modifier.weight(1f),
                         shape = MaterialTheme.shapes.medium,
@@ -319,7 +319,7 @@ fun EditProfileScreen(
                 profileViewModel.errorMsg?.let { serverError ->
                     Text(
                         text = serverError,
-                        color = MaterialTheme.colorScheme.error, // Warna error standar M3
+                        color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(vertical = 8.dp),
                         textAlign = TextAlign.Center
@@ -328,7 +328,7 @@ fun EditProfileScreen(
 
                 Spacer(Modifier.height(12.dp))
 
-                // Tombol Save Changes dengan gaya yang lebih menonjol di background gelap
+
                 Button(
                     onClick = {
                         profileViewModel.clearErrorMsg()
@@ -341,9 +341,9 @@ fun EditProfileScreen(
                     modifier = Modifier.fillMaxWidth().height(48.dp),
                     enabled = !profileViewModel.isLoading,
                     shape = MaterialTheme.shapes.medium,
-                    colors = ButtonDefaults.buttonColors( // Menggunakan Material3 ButtonColors
-                        containerColor = Color.White, // Tombol Save dengan background putih solid
-                        contentColor = Color.Black    // Teks hitam agar kontras
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White,
+                        contentColor = Color.Black
                     )
                 ) {
                     if (profileViewModel.isLoading) {
@@ -358,20 +358,20 @@ fun EditProfileScreen(
     }
 }
 
-// Modifikasi SectionTitle agar bisa menerima warna
+
 @Composable
-fun SectionTitle(title: String, color: Color = MaterialTheme.colorScheme.onSurface) { // Warna default dari tema
+fun SectionTitle(title: String, color: Color = MaterialTheme.colorScheme.onSurface) {
     Text(
         text = title,
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.SemiBold,
-        color = color, // Gunakan parameter warna
+        color = color,
         modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
     )
 }
 
-// PhotoSourcePickerDialog dan requestCurrentLocation tetap sama
-// ... (kode PhotoSourcePickerDialog dan requestCurrentLocation)
+
+
 @Composable
 fun PhotoSourcePickerDialog(
     onDismiss: () -> Unit,

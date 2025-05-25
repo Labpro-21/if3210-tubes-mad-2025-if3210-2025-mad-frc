@@ -201,17 +201,17 @@ fun ProfileContent(
             )
             Spacer(modifier = Modifier.height(24.dp))
 
-// Tombol Edit Profile (Outlined dengan Border dan Teks yang Lebih Jelas)
+
             OutlinedButton(
                 onClick = onEditProfile,
                 modifier = Modifier
                     .fillMaxWidth(0.7f)
                     .height(48.dp),
                 shape = RoundedCornerShape(24.dp),
-                border = BorderStroke(1.5.dp, Color.White), // Border lebih tebal
+                border = BorderStroke(1.5.dp, Color.White),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = Color.White, // Teks dan ikon putih
-                    backgroundColor = Color.Transparent // Pastikan background transparan
+                    contentColor = Color.White,
+                    backgroundColor = Color.Transparent
                 )
             ) {
                 Icon(
@@ -236,8 +236,8 @@ fun ProfileContent(
                 modifier = Modifier.fillMaxWidth(0.5f),
                 shape = RoundedCornerShape(24.dp),
                 colors = androidx.compose.material.ButtonDefaults.buttonColors(
-                    backgroundColor = Color.DarkGray.copy(alpha = 0.5f), // Background sedikit berbeda dari layar
-                    contentColor = MaterialTheme.colors.error // Menggunakan warna error dari tema Material (merah)
+                    backgroundColor = Color.DarkGray.copy(alpha = 0.5f),
+                    contentColor = MaterialTheme.colors.error
                 )
             ) {
                 Text(

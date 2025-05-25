@@ -24,7 +24,7 @@ class SongViewModel(
     private val _new_songs = MutableStateFlow<List<Song>>(emptyList())
     private val _recently_played = MutableStateFlow<List<Song>>(emptyList())
 
-    // Expose songs as StateFlow
+
     val songs: StateFlow<List<Song>> = _songs.asStateFlow()
     val likedSongs: StateFlow<List<Song>> = _liked_songs.asStateFlow()
     val newSongs: StateFlow<List<Song>> = _new_songs.asStateFlow()
@@ -88,7 +88,7 @@ class SongViewModel(
             repository.getAllExplicitlyAddedSongs(userIdToLoad).collect { songList ->
                 _songs.value = songList
 
-                // Update current song jika masih valid
+
                 MusicServiceManager.currentSong.value?.let { current ->
                     val updated = songList.find { it.id == current.id }
                     if (updated != null) {
@@ -151,7 +151,7 @@ class SongViewModel(
     fun setCurrentSong(songData: Song) {
         viewModelScope.launch {
             val effectiveUserId = this@SongViewModel.userId
-            val previousSongPath = currentSong.value?.audioPath // Simpan path lagu sebelumnya
+            val previousSongPath = currentSong.value?.audioPath
             Log.i("SongViewModel_setCurrentSong", "START: Setting current song: ${songData.title} (Original ID: ${songData.id}, Path: ${songData.audioPath}) for user $effectiveUserId")
 
             var fullyProcessedSong: Song? = null
@@ -206,7 +206,7 @@ class SongViewModel(
                 MusicServiceManager.updateCurrentSong(null)
             }
 
-            loadSongs(effectiveUserId) // Panggil loadSongs setelah currentSong di-set
+            loadSongs(effectiveUserId)
             Log.i("SongViewModel_setCurrentSong", "END: setCurrentSong for ${songData.title}. Final currentSong: ${currentSong.value?.title}")
         }
     }
@@ -268,7 +268,7 @@ class SongViewModel(
     fun recordPlayTick() {
         viewModelScope.launch {
             currentSong.value?.let { currentSong ->
-                // Kondisi paling penting: ID harus valid (bukan 0) dan milik user saat ini.
+
                 if (currentSong.id != 0 && currentSong.userId == this@SongViewModel.userId) {
                     Log.d("SongViewModel_recordPlayTick", "Attempting tick. Current Song ID: ${currentSong.id}, Title: ${currentSong.title}, UserID: ${currentSong.userId}, Path: ${currentSong.audioPath}")
                     val history = PlayHistory(
@@ -298,7 +298,7 @@ class SongViewModel(
                 if (playing) {
                     while (isPlaying.value) {
                         recordPlayTick()
-                        delay(1000L) // delay 1 detik antar tick
+                        delay(1000L)
                     }
                 }
             }

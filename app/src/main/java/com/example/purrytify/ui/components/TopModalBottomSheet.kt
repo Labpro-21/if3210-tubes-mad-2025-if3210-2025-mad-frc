@@ -64,7 +64,7 @@ fun TopModalBottomSheet(
         }
     }
 
-    // ✅ Modal dengan height terbatas agar tidak menutupi bottom section
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false),
@@ -79,11 +79,11 @@ fun TopModalBottomSheet(
             ) {}
         }
     ) {
-        // ✅ Column dengan height terbatas (70% dari screen height)
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(screenHeight * 0.7f) // ✅ Batasi height ke 70% dari screen
+                .height(screenHeight * 0.7f)
                 .background(Color(0xFF121212))
         ) {
             LazyColumn(
@@ -92,7 +92,7 @@ fun TopModalBottomSheet(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Header
+
                 item {
                     Text(
                         text = title,
@@ -103,16 +103,16 @@ fun TopModalBottomSheet(
                     )
                 }
 
-                // Cover dan description
+
                 item {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Cover image (gradient box) - Lebih kecil untuk modal
+
                         Box(
                             modifier = Modifier
-                                .size(140.dp) // ✅ Diperkecil lagi ke 140dp
+                                .size(140.dp)
                                 .clip(RoundedCornerShape(16.dp))
                                 .background(
                                     if (chartType == "global")
@@ -132,7 +132,7 @@ fun TopModalBottomSheet(
                                 Text(
                                     text = if (chartType == "global") "Top 50" else "Top 10",
                                     color = Color.White,
-                                    fontSize = 16.sp, // Font lebih kecil lagi
+                                    fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
@@ -145,26 +145,26 @@ fun TopModalBottomSheet(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Description
+
                         Text(
                             text = description,
                             color = Color.Gray,
-                            fontSize = 10.sp, // Font lebih kecil
+                            fontSize = 10.sp,
                             modifier = Modifier.padding(horizontal = 8.dp)
                         )
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // Download dan Play buttons
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Download button
+
                             OutlinedButton(
                                 onClick = { /* Download all */ },
-                                modifier = Modifier.size(52.dp), // Slightly smaller
+                                modifier = Modifier.size(52.dp),
                                 shape = CircleShape,
                                 colors = ButtonDefaults.outlinedButtonColors(
                                     contentColor = Color.White
@@ -182,18 +182,18 @@ fun TopModalBottomSheet(
                                 )
                             }
 
-                            // Play button - ✅ Button 60dp dengan icon 36dp
+
                             Button(
                                 onClick = {
                                     if (onlineSongs.isNotEmpty()) {
                                         val firstSong = onlineSongs.first()
                                         onlineViewModel.sendSongsToMusicService()
                                         songViewModel.setCurrentSong(firstSong)
-                                        //playerViewModel.prepareAndPlay(firstSong.audioPath.toUri()) { }
+
                                         playerViewModel.prepareAndPlay(0)
                                     }
                                 },
-                                modifier = Modifier.size(60.dp), // Size sesuai permintaan
+                                modifier = Modifier.size(60.dp),
                                 shape = CircleShape,
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Color(0xFF1ED760)
@@ -204,7 +204,7 @@ fun TopModalBottomSheet(
                                     imageVector = Icons.Default.PlayArrow,
                                     contentDescription = "Play All",
                                     tint = Color.Black,
-                                    modifier = Modifier.size(36.dp) // ✅ Icon size sesuai permintaan
+                                    modifier = Modifier.size(36.dp)
                                 )
                             }
                         }
@@ -213,7 +213,7 @@ fun TopModalBottomSheet(
                     }
                 }
 
-                // List lagu
+
                 if (onlineSongs.isEmpty()) {
                     item {
                         Text(
@@ -231,7 +231,7 @@ fun TopModalBottomSheet(
                             onClick = {
                                 onlineViewModel.sendSongsToMusicService()
                                 songViewModel.setCurrentSong(song)
-//                        playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
+
                                 Log.d("TopScreen", "Prepare and Play song ID-${index}")
                                 playerViewModel.prepareAndPlay(index)
                             }
@@ -239,7 +239,7 @@ fun TopModalBottomSheet(
                     }
                 }
 
-                // ✅ Spacer tambahan untuk memastikan content terakhir tidak tertutup
+
                 item {
                     Spacer(modifier = Modifier.height(20.dp))
                 }
@@ -258,44 +258,44 @@ fun TopSongItemModal(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
-            .padding(vertical = 4.dp), // Padding lebih kecil lagi
+            .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Rank number
+
         Text(
             text = "$rank",
             color = Color.Gray,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
-            modifier = Modifier.width(22.dp) // Width lebih kecil
+            modifier = Modifier.width(22.dp)
         )
 
         Spacer(modifier = Modifier.width(6.dp))
 
-        // Album art - ✅ Handle online song artwork
+
         Image(
             painter = rememberAsyncImagePainter(
                 model = if (song.artworkPath?.startsWith("http") == true) {
-                    song.artworkPath // Online song - URL langsung
+                    song.artworkPath
                 } else {
-                    song.artworkPath?.toUri() // Local song - convert ke URI
+                    song.artworkPath?.toUri()
                 }
             ),
             contentDescription = song.title,
             modifier = Modifier
-                .size(40.dp) // Smaller artwork
+                .size(40.dp)
                 .clip(RoundedCornerShape(4.dp)),
             contentScale = ContentScale.Crop
         )
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        // Song info
+
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = song.title,
                 color = Color.White,
-                fontSize = 12.sp, // Font lebih kecil
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -303,17 +303,17 @@ fun TopSongItemModal(
             Text(
                 text = song.artist,
                 color = Color.Gray,
-                fontSize = 10.sp, // Font lebih kecil
+                fontSize = 10.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
         }
 
-        // Duration
+
         Text(
             text = formatDuration(song.duration),
             color = Color.Gray,
-            fontSize = 10.sp // Font lebih kecil
+            fontSize = 10.sp
         )
     }
 }

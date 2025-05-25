@@ -68,10 +68,10 @@ fun AudioRoutingModal(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color.LightGray) // 👈 ini memberi warna abu-abu
+                        .background(Color.LightGray)
                         .padding(12.dp)
                 ) {
-//                    Icon(Icons.Default.Delete, contentDescription = "Delete Button")
+
 
                     Image(
                         painter = painterResource(id = R.drawable.baseline_phone_iphone_24),
