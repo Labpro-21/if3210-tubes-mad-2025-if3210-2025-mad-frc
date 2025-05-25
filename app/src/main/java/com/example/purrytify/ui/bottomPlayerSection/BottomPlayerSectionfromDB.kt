@@ -79,9 +79,7 @@ fun BottomPlayerSectionFromDB(
 
     val currentSong by songViewModel.current_song.collectAsState()
 
-    // ✅ Tampilkan bottom player jika ada current song (baik dari DB maupun online)
     if (currentSong == null) {
-        // Tidak tampilkan apa-apa jika tidak ada lagu yang sedang diputar
         return
     }
 
@@ -117,15 +115,14 @@ fun BottomPlayerSectionFromDB(
     }
 
     currentSong?.let { song ->
-        // Log untuk memastikan recomposition terjadi dengan lagu yang benar
         Log.d("BottomPlayer", "Recomposing for song: ${song.title} (ID: ${song.id})")
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.DarkGray) // Atau warna tema Anda
+                .background(Color.DarkGray)
                 .clickable { onSectionClick() }
-                .padding(8.dp) // Padding disesuaikan
+                .padding(8.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -143,7 +140,7 @@ fun BottomPlayerSectionFromDB(
                         ),
                         contentDescription = song.title,
                         modifier = Modifier
-                            .size(48.dp) // Ukuran artwork disesuaikan
+                            .size(48.dp) 
                             .clip(RoundedCornerShape(4.dp)),
                         contentScale = ContentScale.Crop
                     )
@@ -175,25 +172,22 @@ fun BottomPlayerSectionFromDB(
                     )
                 }
 
-                // Tombol Play/Pause (dari PlayerViewModel, status isPlaying dilewatkan)
                 IconButton(
                     onClick = { onPlayPause() },
                     modifier = Modifier
-                        .size(48.dp) // Ukuran tombol disesuaikan
-                        // .background(MaterialTheme.colorScheme.primary, shape = CircleShape) // Opsional background
+                        .size(48.dp) 
+                        .background(MaterialTheme.colorScheme.primary, shape = CircleShape)
                 ) {
                     Icon(
                         imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                         contentDescription = "Play/Pause",
-                        tint = Color.White, // Atau MaterialTheme.colorScheme.onPrimary
-                        modifier = Modifier.size(32.dp) // Ukuran ikon disesuaikan
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
                     )
                 }
             }
         }
     } ?: run {
-        // Jika currentSong null, tidak tampilkan apa-apa atau placeholder
-        // Box(modifier = Modifier.fillMaxWidth().height(56.dp)) // Placeholder kosong
         Log.d("BottomPlayer", "No current song, BottomPlayerSection is empty.")
     }
 }

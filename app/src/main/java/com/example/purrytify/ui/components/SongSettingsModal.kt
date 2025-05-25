@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
@@ -34,7 +35,7 @@ fun SongSettingsModal(
     // onShareQr: () -> Unit, // Kita akan handle langsung di sini
     isOnlineSong: Boolean = false
 ) {
-    if (!visible || song == null) return // Pastikan song tidak null
+    if (!visible || song == null) return
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -62,6 +63,16 @@ fun SongSettingsModal(
 
             // Opsi Share URL (hanya untuk lagu server)
             if (song.serverId != null) { // Cek serverId
+                ListItem(
+                    headlineContent = { Text("Download Song") },
+                    leadingContent = {
+                        Icon(Icons.Default.Download, contentDescription = null)
+                    },
+                    modifier = Modifier.clickable {
+                        onDismiss()
+                    }
+                )
+
                 ListItem(
                     headlineContent = { Text("Share via URL") },
                     leadingContent = { Icon(Icons.Default.Share, contentDescription = "Share via URL") },

@@ -1,6 +1,7 @@
 package com.example.purrytify.ui.navigation
 
-import android.util.Log
+import android.R.attr.type
+import android.util.Log // Tambahkan import Log
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,6 +21,8 @@ import com.example.purrytify.utils.TokenManager
 import androidx.compose.runtime.livedata.observeAsState
 import com.example.purrytify.data.AppDatabase
 import com.example.purrytify.repository.UserRepository
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.example.purrytify.ui.screens.HomeScreenResponsive
 import com.example.purrytify.ui.screens.TimeListenedScreen
 import com.example.purrytify.utils.SessionManager
@@ -30,7 +33,10 @@ import com.example.purrytify.viewmodel.ProfileViewModelFactory
 import com.example.purrytify.viewmodel.AudioDeviceViewModel
 import com.example.purrytify.viewmodel.AudioDeviceViewModelFactory
 import java.time.YearMonth
-
+import com.example.purrytify.viewmodel.PlayerViewModelFactory
+import com.example.purrytify.network.RetrofitClient
+import com.example.purrytify.ui.screens.TopScreen
+import com.example.purrytify.viewmodel.OnlineSongViewModelFactory
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -132,7 +138,10 @@ fun AppNavigation(
                     playerViewModel = playerViewModel, // Gunakan instance yang diteruskan
                     onlineViewModel = onlineSongViewModel, // Gunakan instance yang diteruskan
                     audioDeviceViewModel = audioDeviceViewModel
-                )
+                    onNavigateToTopSong = { chartType ->
+                    navController.navigate("top/$chartType")
+                }
+            )
             }
         }
         composable(Screen.Library.route) {
@@ -189,23 +198,32 @@ fun AppNavigation(
                             launchSingleTop = true
                         }
                     },
-                    songViewModel = songViewModel, // Gunakan instance yang diteruskan
-                    playerViewModel = playerViewModel, // Gunakan instance yang diteruskan
-                    onScanQrClicked = onScanQrClicked,
-                    onNavigateToTimeListenedDetail = {
-                        profileViewModel.loadDailyListenDetailsForMonth(YearMonth.now()) // Default ke bulan ini
-                        navController.navigate(Screen.TimeListenedDetail.route)
-                    },
+                    songViewModel = vmToUse,
+                    playerViewModel = playerViewModel,
+                    onScanQrClicked = onScanQrClicked // Teruskan callback ke ProfileScreen jika tombol ada di sana
                 )
+            } else {
+                LaunchedEffect(Unit) { navController.navigate(Screen.Login.route) { popUpTo(Screen.Profile.route) { inclusive = true }; launchSingleTop = true } }
             }
         }
-
-        composable(Screen.TimeListenedDetail.route) {
-            // Asumsi ProfileViewModel sudah di-scope ke Activity atau NavGraph yang lebih tinggi
-            // sehingga bisa diakses di sini juga.
-            TimeListenedScreen(
-                profileViewModel = profileViewModel,
-                onBack = { navController.popBackStack() }
+        composable(
+            route = "top/{chartType}",
+            arguments = listOf(navArgument("chartType") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val chartType = backStackEntry.arguments?.getString("chartType") ?: "global"
+            TopScreen(
+                chartType = chartType,
+                onlineViewModel = onlineSongViewModel,
+                songViewModel = songViewModelFromActivity,
+                playerViewModel = playerViewModel,
+                onBack = { navController.popBackStack() },
+                onNavigateToHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
+                },
+                onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
+                onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
             )
         }
     }

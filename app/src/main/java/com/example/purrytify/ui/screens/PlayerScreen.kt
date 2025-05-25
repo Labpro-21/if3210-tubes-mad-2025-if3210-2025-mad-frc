@@ -74,7 +74,8 @@ fun PlayerScreen(
     onNext: () -> Unit,
     onPrevious: () -> Unit,
     songViewModel: SongViewModel,
-    playerViewModel: PlayerViewModel
+    playerViewModel: PlayerViewModel,
+    isOnlineSong: Boolean = false
 ) {
     val context = LocalContext.current
 
@@ -109,7 +110,7 @@ fun PlayerScreen(
                 Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Minimize Player")
             }
 
-            SongSettingsModal(songViewModel,playerViewModel)
+            SongSettingsModal(songViewModel,playerViewModel, isOnlineSong = currentSong?.audioPath?.startsWith("http") == true)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -211,7 +212,7 @@ fun PlayerScreen(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { }) {
+            IconButton(onClick = {}) {
                 Icon(Icons.Default.Shuffle, contentDescription = "Shuffle")
             }
             IconButton(onClick = { onPrevious() }) {
@@ -274,8 +275,8 @@ fun PlayerModalBottomSheet(
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
         ) {
             PlayerScreen(
-                onNext = { onSongChange(song.id+1) },
-                onPrevious = { onSongChange(song.id - 1) },
+                onNext = { onSongChange(1) },      // Kirim +1 untuk next
+                onPrevious = { onSongChange(-1) }, // Kirim -1 untuk previous,
                 songViewModel = songViewModel,
                 playerViewModel = playerViewModel
             )

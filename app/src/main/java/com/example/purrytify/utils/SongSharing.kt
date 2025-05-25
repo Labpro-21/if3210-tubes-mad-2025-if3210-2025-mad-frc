@@ -21,7 +21,7 @@ fun shareServerSong(context: Context, song: Song) {
         return
     }
 
-    val songId = song.id // Ini harus ID server asli
+    val songId = song.id
     val shareText = "$deepLinkUrl"
 
     val sendIntent: Intent = Intent().apply {

@@ -34,7 +34,10 @@ import com.journeyapps.barcodescanner.ScanOptions
 
 class MainActivity : ComponentActivity() {
 
-    // Gunakan by viewModels untuk cara yang lebih bersih dan direkomendasikan
+    private lateinit var onlineSongViewModelInstance: OnlineSongViewModel
+    private lateinit var playerViewModelInstance: PlayerViewModel
+    private lateinit var qrScanLauncher: ActivityResultLauncher<ScanOptions>
+
     private val songViewModel: SongViewModel by viewModels {
         val sm = SessionManager(applicationContext)
         // Penting: userId harus valid saat ViewModel dibuat atau bisa menyebabkan masalah FK

@@ -154,11 +154,18 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
                 setShowPlayer(false) },
             song = song,
             songViewModel = songViewModel,
-            onSongChange = { newId ->
-
-                currentSongId = (newId + allSongs.size) % allSongs.size
+            onSongChange = { direction ->
+                when {
+                    direction > 0 -> {
+                        // Next song
+                        currentSongId = (currentSongId + 1) % allSongs.size
+                    }
+                    direction < 0 -> {
+                        // Previous song
+                        currentSongId = if (currentSongId - 1 < 0) allSongs.size - 1 else currentSongId - 1
+                    }
+                }
                 setSelectedSong(allSongs[currentSongId])
-
             },
             playerViewModel = playerViewModel
         )
