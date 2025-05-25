@@ -152,7 +152,7 @@ fun PlayerScreen(
                 IconButton(onClick = { showAudioOutputSelector = true }) {
                     Icon(Icons.Default.VolumeUp, contentDescription = "Select Output Device")
                 }
-                SongSettingsModal(songViewModel, playerViewModel)
+                SongSettingsModal(songViewModel, playerViewModel, isOnlineSong = currentSong?.audioPath?.startsWith("http") == true)
             }
         }
 

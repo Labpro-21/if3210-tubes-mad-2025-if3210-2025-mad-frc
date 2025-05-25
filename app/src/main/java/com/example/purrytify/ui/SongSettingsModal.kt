@@ -36,7 +36,7 @@ import java.util.Date
 fun SongSettingsModal(
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
-    isOnlineSong: Boolean = false
+    isOnlineSong: Boolean
 ) {
     val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState()

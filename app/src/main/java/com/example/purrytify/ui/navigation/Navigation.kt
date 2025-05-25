@@ -217,7 +217,6 @@ fun AppNavigation(
                         onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                         playerViewModel = playerViewModel,
                         isOnline = isConnected,
-                        audioOutputViewModel = audioOutputViewModel,
                         audioOutputViewModel = audioOutputViewModel
                     )
                 }

@@ -127,7 +127,6 @@ fun HomeScreenContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-
         item {
             Text(
                 text = "Charts",
@@ -212,18 +211,6 @@ fun HomeScreenContent(
             }
         }
 
-
-        item {
-            Text(
-                text = "Recently played",
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -274,9 +261,6 @@ fun HomeScreenContent(
                     contentPadding = PaddingValues(end = 16.dp)
                 ) {
                     items(dailyMixSongs, key = { it.audioPath }) { song ->
-
-
-
                         NewSongCard(
                             song = song,
                             onClick = {
@@ -292,10 +276,6 @@ fun HomeScreenContent(
                                 }
                             },
                             onMoreClick = {
-
-
-
-
                                 Toast.makeText(context, "More options for ${song.title}", Toast.LENGTH_SHORT).show()
                             },
 
@@ -306,7 +286,15 @@ fun HomeScreenContent(
             }
         }
 
-        item { Spacer(modifier = Modifier.height(60.dp)) }
+        item {
+            Text(
+                text = "Recently played",
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         if (recentlyPlayedFromDb.isEmpty()) {
             item {
@@ -506,17 +494,6 @@ fun RecentlyPlayedRow(
     }
 }
 
-
-private fun shareOnlineSong(context: Context, song: Song) {
-    val shareText = "Check out this song: ${song.title} by ${song.artist}\n${song.audioPath}"
-    val intent = Intent().apply {
-        action = Intent.ACTION_SEND
-        putExtra(Intent.EXTRA_TEXT, shareText)
-        type = "text/plain"
-    }
-    context.startActivity(Intent.createChooser(intent, "Share Song"))
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreenWithBottomNav(
@@ -601,7 +578,6 @@ fun HomeScreenResponsive(
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
     onlineSongViewModel: OnlineSongViewModel,
-    audioOutputViewModel: AudioOutputViewModel,
     onNavigateToTopSong: (String) -> Unit = {},
     recommendationViewModel: RecommendationViewModel,
     isConnected: Boolean,

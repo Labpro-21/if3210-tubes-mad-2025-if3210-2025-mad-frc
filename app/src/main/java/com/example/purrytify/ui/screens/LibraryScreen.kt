@@ -158,7 +158,7 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
                 setSelectedSong(allSongs[currentSongId])
             },
             playerViewModel = playerViewModel,
-            isOnline,
+            isOnline = isOnline,
             audioOutputViewModel = audioOutputViewModel
         )
         songViewModel.setCurrentSong(song)

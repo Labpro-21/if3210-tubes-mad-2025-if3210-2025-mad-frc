@@ -32,7 +32,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
-import javax.inject.Inject
 import com.example.purrytify.viewmodel.AudioOutputViewModel
 import com.example.purrytify.viewmodel.AudioOutputViewModelFactory
 import android.content.BroadcastReceiver
