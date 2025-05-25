@@ -33,29 +33,29 @@ import java.util.Locale
 import kotlinx.coroutines.flow.first
 
 class ProfileViewModel(
-    @SuppressLint("StaticFieldLeak") private val context: Context, // Jika analyticsRepo membutuhkan context
+    @SuppressLint("StaticFieldLeak") private val context: Context,
     private val tokenManager: TokenManager,
     private val userRepository: UserRepository,
     private val sessionManager: SessionManager
 ) : ViewModel() {
 
-    // UiState untuk profil
+
     private val _uiState = mutableStateOf(ProfileUiState())
     val uiState: State<ProfileUiState> get() = _uiState
 
-    // loading & error state untuk editProfile
+
     var isLoading by mutableStateOf(false)
         private set
     var errorMsg by mutableStateOf<String?>(null)
         private set
 
-    // repository untuk edit profile
+
     private val profileRepository = ProfileRepository(tokenManager)
 
-    // AnalyticsRepository sekarang membutuhkan DAO, jadi kita perlu AppDatabase
-    private val appDatabase = AppDatabase.getDatabase(context) // Dapatkan instance AppDatabase
+
+    private val appDatabase = AppDatabase.getDatabase(context)
     private val analyticsRepo = AnalyticsRepository(
-        dao = appDatabase.songDao(), // Berikan SongDao
+        dao = appDatabase.songDao(),
         context = context
     )
     private val _analytics = MutableStateFlow(SoundCapsule())
@@ -105,7 +105,7 @@ class ProfileViewModel(
     }
 
 
-    // Fungsi yang sudah ada untuk mengambil data SoundCapsule ringkasan
+
     fun loadMonthlySummaryAnalytics(month: YearMonth = YearMonth.now()) {
         viewModelScope.launch {
             val uid = sessionManager.getUserId()
@@ -120,9 +120,9 @@ class ProfileViewModel(
         }
     }
 
-    // Fungsi baru untuk mengambil data durasi harian untuk grafik
+
     fun loadDailyListenDetailsForMonth(month: YearMonth = YearMonth.now()) {
-        _selectedMonthData.value = month // Simpan bulan yang dipilih
+        _selectedMonthData.value = month
         viewModelScope.launch {
             val uid = sessionManager.getUserId()
             if (uid > 0) {
@@ -151,7 +151,7 @@ class ProfileViewModel(
         }
         if (currentAnalytics.month == null) {
             Log.w("ProfileViewModel", "Cannot export CSV, analytics data not loaded yet.")
-            return null // Atau coba load analytics di sini
+            return null
         }
         
         val topArtistsList = analyticsRepo.getTopPlayedArtistsForMonth(uid, yearMonthString).first()
@@ -166,7 +166,7 @@ class ProfileViewModel(
         return analyticsRepo.exportToCsv(currentAnalytics, topArtistsList, topSongsList)
     }
 
-    // Fungsi untuk membersihkan pesan error dari ViewModel
+
     fun clearErrorMsg() {
         errorMsg = null
     }
@@ -183,12 +183,12 @@ class ProfileViewModel(
             profileRepository
                 .editProfile(location, photoUri, context)
                 .onSuccess {
-                    // update UI state…
-                    onResult(true)      // <-- sukses
+
+                    onResult(true)
                 }
                 .onFailure { e ->
                     errorMsg = e.message
-                    onResult(false)     // <-- gagal
+                    onResult(false)
                 }
             isLoading = false
         }
@@ -222,18 +222,18 @@ class ProfileViewModel(
     }
 
     fun loadUserTopPlayedArtists(month: YearMonth = YearMonth.now()) {
-        // _selectedMonthForTopArtists.value = month // Jika menggunakan StateFlow bulan terpisah
-        _selectedMonthForTopPlayed.value = month // Atau gunakan yang sudah ada jika sama
+
+        _selectedMonthForTopPlayed.value = month
         viewModelScope.launch {
             val uid = sessionManager.getUserId()
             if (uid > 0) {
                 val yearMonthString = month.format(DateTimeFormatter.ofPattern("yyyy-MM"))
                 Log.d("ProfileViewModel", "Loading top played artists for user $uid, month $yearMonthString")
 
-                // Load total distinct artists
+
                 _totalDistinctArtists.value = analyticsRepo.getTotalDistinctArtistsForMonth(uid, yearMonthString)
 
-                // Load top played artists list
+
                 analyticsRepo.getTopPlayedArtistsForMonth(uid, yearMonthString)
                     .collect { artists ->
                         _userTopPlayedArtists.value = artists

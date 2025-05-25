@@ -26,13 +26,13 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SongSettingsModal(
-    song: Song?, // Tambahkan parameter song
+    song: Song?,
     visible: Boolean,
     onDismiss: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
-    onShareUrl: () -> Unit, // Untuk share URL biasa
-    // onShareQr: () -> Unit, // Kita akan handle langsung di sini
+    onShareUrl: () -> Unit,
+
     isOnlineSong: Boolean = false
 ) {
     if (!visible || song == null) return
@@ -49,8 +49,8 @@ fun SongSettingsModal(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Opsi Edit
-            if (!isOnlineSong && song.isExplicitlyAdded) { // Edit hanya untuk lagu lokal eksplisit
+
+            if (!isOnlineSong && song.isExplicitlyAdded) {
                 ListItem(
                     headlineContent = { Text("Edit Song") },
                     leadingContent = { Icon(Icons.Default.Edit, contentDescription = "Edit Song") },
@@ -61,8 +61,8 @@ fun SongSettingsModal(
                 )
             }
 
-            // Opsi Share URL (hanya untuk lagu server)
-            if (song.serverId != null) { // Cek serverId
+
+            if (song.serverId != null) {
                 ListItem(
                     headlineContent = { Text("Download Song") },
                     leadingContent = {
@@ -82,13 +82,13 @@ fun SongSettingsModal(
                     }
                 )
 
-                // Opsi Share QR (hanya untuk lagu server)
+
                 ListItem(
                     headlineContent = { Text("Share via QR Code") },
                     leadingContent = { Icon(Icons.Filled.QrCode2, contentDescription = "Share via QR Code") },
                     modifier = Modifier.clickable {
-                        scope.launch { // Jalankan di coroutine karena ada operasi file
-                            val deepLink = "purrytify://song/${song.serverId}"
+                        scope.launch {
+                            val deepLink = "purrytify:
                             val qrBitmap = QrCodeGenerator.generateQrBitmap(deepLink)
                             if (qrBitmap != null) {
                                 val imageUri = ImageSharer.saveBitmapToCache(context, qrBitmap, "song_${song.serverId}_qr.png")
@@ -103,7 +103,7 @@ fun SongSettingsModal(
             }
 
 
-            // Opsi Delete (hanya untuk lagu lokal eksplisit)
+
             if (!isOnlineSong && song.isExplicitlyAdded) {
                 ListItem(
                     headlineContent = { Text("Delete Song") },

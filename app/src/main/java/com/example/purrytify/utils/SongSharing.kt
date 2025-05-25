@@ -9,15 +9,15 @@ fun shareServerSong(context: Context, song: Song) {
     val songIdToShare = song.serverId
     if (songIdToShare == null) {
         Log.w("ShareSong", "Attempted to share a song without a server ID.")
-        // Tampilkan pesan ke pengguna jika perlu
+
         return
     }
 
-    val deepLinkUrl = "purrytify://song/$songIdToShare"
+    val deepLinkUrl = "purrytify:
     
     if (!song.audioPath.startsWith("http")) {
         Log.w("ShareSong", "Attempted to share a local song. Sharing is only for server songs.")
-        // Atau tampilkan pesan ke pengguna
+
         return
     }
 

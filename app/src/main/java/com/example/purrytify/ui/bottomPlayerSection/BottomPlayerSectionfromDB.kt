@@ -96,7 +96,7 @@ fun BottomPlayerSectionFromDB(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Artwork
+
                 if (!song.artworkPath.isNullOrEmpty()) {
                     Image(
                         painter = rememberAsyncImagePainter(

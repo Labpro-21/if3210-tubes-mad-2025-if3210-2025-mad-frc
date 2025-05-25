@@ -390,13 +390,13 @@ fun SoundCapsuleSection(
                             try {
                                 val uri = FileProvider.getUriForFile(
                                     context,
-                                    "${context.packageName}.fileprovider", // Sesuaikan dengan authority di AndroidManifest
+                                    "${context.packageName}.fileprovider",
                                     csvFile
                                 )
                                 val sendIntent: Intent = Intent().apply {
                                     action = Intent.ACTION_SEND
                                     putExtra(Intent.EXTRA_STREAM, uri)
-                                    type = "text/csv" // Atau "application/csv"
+                                    type = "text/csv"
                                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                 }
                                 val shareIntent = Intent.createChooser(sendIntent, "Export Analytics As...")
@@ -446,7 +446,7 @@ fun SoundCapsuleSection(
         }
         Spacer(Modifier.height(12.dp))
 
-        // Time listened card
+
         Card(
             backgroundColor = Color(0xFF1A1A1A),
             shape = RoundedCornerShape(12.dp),
@@ -482,16 +482,16 @@ fun SoundCapsuleSection(
             }
         }
 
-        Spacer(Modifier.height(16.dp)) // Jarak antar card
+        Spacer(Modifier.height(16.dp))
 
-        // Row: Top artist & Top song
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Top Artist Card
+
             Card(
                 backgroundColor = Color(0xFF1A1A1A),
                 shape = RoundedCornerShape(12.dp),
@@ -539,7 +539,7 @@ fun SoundCapsuleSection(
                 }
             }
 
-            // Top Song Card
+
             Card(
                 backgroundColor = Color(0xFF1A1A1A),
                 shape = RoundedCornerShape(12.dp),

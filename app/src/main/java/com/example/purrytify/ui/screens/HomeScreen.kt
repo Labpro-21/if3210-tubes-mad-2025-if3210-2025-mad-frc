@@ -82,7 +82,7 @@ fun HomeScreenContent(
         context.applicationContext as? Application
     else null
 
-    // State untuk modal/dialog
+
     var showSongSettings by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var selectedSong by remember { mutableStateOf<Song?>(null) }
@@ -119,7 +119,7 @@ fun HomeScreenContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        // Charts Section
+
         item {
             Text(
                 text = "Charts",
@@ -132,7 +132,7 @@ fun HomeScreenContent(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Top 50 Global
+
                 ChartCard(
                     title = "Top 50",
                     subtitle = "GLOBAL",
@@ -142,7 +142,7 @@ fun HomeScreenContent(
                     }
                 )
                 
-                // Top 50 Indonesia
+
                 ChartCard(
                     title = "Top 10",
                     subtitle = "INDONESIA",
@@ -154,7 +154,7 @@ fun HomeScreenContent(
             }
         }
 
-        // New Songs Section
+
         item {
             Text(
                 text = "New songs",
@@ -196,7 +196,7 @@ fun HomeScreenContent(
             }
         }
 
-        // Recently Played Section
+
         item {
             Text(
                 text = "Recently played",
@@ -207,7 +207,7 @@ fun HomeScreenContent(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // Section Rekomendasi "Daily Mix"
+
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -255,18 +255,18 @@ fun HomeScreenContent(
             item {
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    contentPadding = PaddingValues(end = 16.dp) // Agar item terakhir tidak terpotong
+                    contentPadding = PaddingValues(end = 16.dp)
                 ) {
                     items(dailyMixSongs, key = { it.audioPath }) { song ->
-                        // Gunakan NewSongCard atau buat Composable Card khusus untuk rekomendasi
-                        // Jika menggunakan NewSongCard, pastikan onMoreClick dihandle dengan benar
-                        // atau tidak ditampilkan jika tidak relevan untuk item rekomendasi.
+
+
+
                         NewSongCard(
                             song = song,
                             onClick = {
                                 songViewModel.setCurrentSong(song)
                                 playerViewModel.prepareAndPlay(song.audioPath.toUri()) {
-                                    // Logika jika lagu selesai, misal: putar lagu berikutnya dari dailyMix
+
                                     val currentIndex = dailyMixSongs.indexOf(song)
                                     if (currentIndex != -1 && currentIndex < dailyMixSongs.size - 1) {
                                         val nextSong = dailyMixSongs[currentIndex + 1]
@@ -276,20 +276,20 @@ fun HomeScreenContent(
                                 }
                             },
                             onMoreClick = {
-                                // Implementasi 'more options' untuk lagu rekomendasi (misal: tambahkan ke library, like)
-                                // Ini mungkin memerlukan logika tambahan karena lagu bisa dari server atau lokal.
-                                // selectedSong = song // (Anda perlu state `selectedSong` di HomeScreenContent)
-                                // showSongSettings = true // (Anda perlu state `showSongSettings` di HomeScreenContent)
+
+
+
+
                                 Toast.makeText(context, "More options for ${song.title}", Toast.LENGTH_SHORT).show()
                             },
-                            // Tambahkan parameter untuk menandai apakah lagu sedang diputar
-                            // isPlaying = song.audioPath == currentPlayingSong?.audioPath
+
+
                         )
                     }
                 }
             }
         }
-        // Spacer untuk memberi ruang agar tidak tertutup BottomNavBar
+
         item { Spacer(modifier = Modifier.height(60.dp)) }
 
         if (recentlyPlayedFromDb.isEmpty()) {
@@ -318,14 +318,14 @@ fun HomeScreenContent(
         }
     }
 
-    // Modal Settings
+
     SongSettingsModal(
         song = selectedSong,
         visible = showSongSettings,
         onDismiss = { showSongSettings = false },
         onEdit = { 
             selectedSong?.let { song ->
-                // Implementasi edit logic
+
             }
          },
         onDelete = { 
@@ -414,7 +414,7 @@ fun NewSongCard(
         
         Spacer(modifier = Modifier.height(8.dp))
         
-        // Judul di bawah gambar
+
         Text(
             text = song.title,
             color = Color.White,
@@ -424,7 +424,7 @@ fun NewSongCard(
             overflow = TextOverflow.Ellipsis
         )
         
-        // Artist di bawah judul dengan text lebih kecil
+
         Text(
             text = song.artist,
             color = Color.Gray,
@@ -448,7 +448,7 @@ fun RecentlyPlayedRow(
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Gambar di paling kiri
+
         Image(
             painter = rememberAsyncImagePainter(song.artworkPath?.toUri()),
             contentDescription = song.title,
@@ -460,7 +460,7 @@ fun RecentlyPlayedRow(
         
         Spacer(modifier = Modifier.width(12.dp))
         
-        // Judul dan artist di kanan gambar
+
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = song.title,
@@ -470,7 +470,7 @@ fun RecentlyPlayedRow(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            // Artist di bawah judul
+
             Text(
                 text = song.artist,
                 color = Color.Gray,
@@ -490,7 +490,7 @@ fun RecentlyPlayedRow(
     }
 }
 
-// Helper function untuk share online song
+
 private fun shareOnlineSong(context: Context, song: Song) {
     val shareText = "Check out this song: ${song.title} by ${song.artist}\n${song.audioPath}"
     val intent = Intent().apply {
@@ -650,7 +650,7 @@ fun HomeScreenResponsive(
     }
 }
 
-// helper untuk download + simpan ke DB
+
 private fun downloadSong(
     context: Context,
     networkSong: Song,

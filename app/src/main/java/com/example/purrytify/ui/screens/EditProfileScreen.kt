@@ -7,7 +7,7 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.location.Geocoder
 import android.net.Uri
-import android.util.Log // Pastikan Log diimpor
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -41,18 +41,18 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import coil.compose.AsyncImage
-import com.example.purrytify.R // Pastikan Anda punya placeholder drawable
-import com.example.purrytify.utils.MapPicker // Asumsi MapPicker Anda sudah baik
+import com.example.purrytify.R
+import com.example.purrytify.utils.MapPicker
 import com.example.purrytify.viewmodel.ProfileViewModel
 import com.google.android.gms.location.LocationServices
 import java.io.File
 import java.util.Locale
 
-// Fungsi validasi kode negara (bisa ditaruh di luar Composable atau di file utilitas)
+
 fun isValidCountryCode(code: String): Boolean {
-    // Kode negara ISO 3166-1 alpha-2 biasanya 2 huruf, alpha-3 itu 3 huruf.
-    // Kita akan validasi untuk 2 huruf kapital. Anda bisa sesuaikan.
-    // Regex ini mengecek apakah string terdiri dari tepat 2 huruf alfabet.
+
+
+
     return code.matches(Regex("^[A-Z]{2}$"))
 }
 
@@ -70,7 +70,7 @@ fun EditProfileScreen(
     var showMapDialog by remember { mutableStateOf(false) }
     var showPhotoSourceDialog by remember { mutableStateOf(false) }
 
-    // State baru untuk pesan error validasi input lokasi
+
     var locationInputError by remember { mutableStateOf<String?>(null) }
 
     val context = LocalContext.current
@@ -82,7 +82,7 @@ fun EditProfileScreen(
             requestCurrentLocation(context) { countryCode ->
                 countryCode?.let {
                     displayLocation = it
-                    locationInputError = null // Hapus error jika lokasi diupdate dari GPS
+                    locationInputError = null
                 }
             }
         }
@@ -124,7 +124,7 @@ fun EditProfileScreen(
                     modifier = Modifier.fillMaxSize(),
                     onLocationPicked = { countryCode ->
                         displayLocation = countryCode
-                        locationInputError = null // Hapus error jika lokasi diupdate dari Map
+                        locationInputError = null
                         showMapDialog = false
                     }
                 )
@@ -216,8 +216,8 @@ fun EditProfileScreen(
             OutlinedTextField(
                 value = displayLocation,
                 onValueChange = {
-                    displayLocation = it.uppercase() // Otomatis uppercase
-                    // Hapus error saat pengguna mulai mengetik lagi
+                    displayLocation = it.uppercase()
+
                     if (locationInputError != null) {
                         locationInputError = null
                     }
@@ -225,15 +225,15 @@ fun EditProfileScreen(
                 label = { Text("Country Code (e.g., ID, US)") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                isError = locationInputError != null, // Tampilkan error jika ada
+                isError = locationInputError != null,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
                     unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-                    // Warna error default sudah cukup baik, tapi bisa dikustomisasi
-                    // errorBorderColor = MaterialTheme.colorScheme.error
+
+
                 )
             )
-            // Tampilkan pesan error validasi di bawah TextField
+
             locationInputError?.let { errorText ->
                 Text(
                     text = errorText,
@@ -254,7 +254,7 @@ fun EditProfileScreen(
                                 requestCurrentLocation(context) { countryCode ->
                                     countryCode?.let {
                                         displayLocation = it
-                                        locationInputError = null // Hapus error
+                                        locationInputError = null
                                     }
                                 }
                             }
@@ -283,7 +283,7 @@ fun EditProfileScreen(
 
             Spacer(Modifier.weight(1f))
 
-            // Error dari ViewModel (misalnya error server)
+
             profileViewModel.errorMsg?.let { serverError ->
                 Text(
                     text = serverError,
@@ -296,24 +296,24 @@ fun EditProfileScreen(
 
             Button(
                 onClick = {
-                    // Hapus error ViewModel lama sebelum mencoba lagi
-                    profileViewModel.clearErrorMsg() // Anda perlu menambahkan fungsi ini di ViewModel
 
-                    // Validasi input kode negara
+                    profileViewModel.clearErrorMsg()
+
+
                     val trimmedLocation = displayLocation.trim()
                     if (trimmedLocation.isEmpty() || isValidCountryCode(trimmedLocation)) {
-                        locationInputError = null // Tidak ada error atau input valid
+                        locationInputError = null
                         profileViewModel.updateProfile(
-                            location = if (trimmedLocation.isEmpty()) null else trimmedLocation, // Kirim null jika kosong
+                            location = if (trimmedLocation.isEmpty()) null else trimmedLocation,
                             photoUri = selectedPhotoUri
                         ) { success ->
                             if (success) {
                                 onBack()
                             }
-                            // Pesan error dari ViewModel akan ditampilkan jika 'success' adalah false
+
                         }
                     } else {
-                        // Set pesan error validasi
+
                         locationInputError = "Invalid country code format. Use 2 letters (e.g., ID, US)."
                     }
                 },
@@ -338,7 +338,7 @@ fun EditProfileScreen(
     }
 }
 
-// (SectionTitle, PhotoSourcePickerDialog, requestCurrentLocation tetap sama seperti sebelumnya)
+
 @Composable
 fun SectionTitle(title: String) {
     Text(

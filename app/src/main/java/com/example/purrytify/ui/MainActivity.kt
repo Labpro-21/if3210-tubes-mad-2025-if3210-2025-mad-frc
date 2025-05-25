@@ -11,7 +11,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.viewModels // Import untuk by viewModels
+import androidx.activity.viewModels
 import androidx.core.net.toUri
 import com.example.purrytify.data.AppDatabase
 import com.example.purrytify.repository.SongRepository
@@ -44,14 +44,14 @@ import com.example.purrytify.viewmodel.RecommendationViewModelFactory
 
 class MainActivity : ComponentActivity() {
 
-    // Gunakan by viewModels untuk cara yang lebih bersih dan direkomendasikan
+
     private val songViewModel: SongViewModel by viewModels {
         val sm = SessionManager(applicationContext)
-        // Penting: userId harus valid saat ViewModel dibuat atau bisa menyebabkan masalah FK
-        // Kita akan mengandalkan AppNavigation untuk menangani logika jika user belum login.
-        // Untuk instance di Activity, kita bisa gunakan userId saat ini,
-        // AppNavigation akan membuat ulang VM dengan key baru jika userId berubah.
-        val userIdForFactory = sm.getUserId().let { if (it <= 0) 0 else it } // Default ke 0 jika tidak valid
+
+
+
+
+        val userIdForFactory = sm.getUserId().let { if (it <= 0) 0 else it }
         Log.d("MainActivity_VM", "MainActivity creating SongViewModel with factory for userId: $userIdForFactory")
         SongViewModelFactory(
             SongRepository(AppDatabase.getDatabase(applicationContext).songDao(), AppDatabase.getDatabase(applicationContext).userDao()),
@@ -78,7 +78,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var qrScanLauncher: ActivityResultLauncher<ScanOptions>
 
     private val audioDeviceChangeReceiver = object : BroadcastReceiver() {
-        @SuppressLint("MissingPermission") // Pastikan permission BLUETOOTH_CONNECT sudah dihandle
+        @SuppressLint("MissingPermission")
         override fun onReceive(context: Context?, intent: Intent?) {
             val action = intent?.action
             Log.d("MainActivityAudioReceiver", "Received action: $action")
@@ -99,28 +99,28 @@ class MainActivity : ComponentActivity() {
                     }
                     device?.let { connectedBluetoothDevice ->
                         Log.d("MainActivityAudioReceiver", "ACTION_ACL_CONNECTED: ${connectedBluetoothDevice.name}")
-                        // Sistem mungkin otomatis mengganti output. Kita coba update ViewModel.
-                        // Pertama, refresh daftar perangkat yang tersedia
+
+
                         audioOutputViewModel.loadAvailableOutputDevices()
 
-                        // Kemudian, cari AudioDeviceInfo yang sesuai dengan BluetoothDevice yang baru terhubung
+
                         val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
                         val allOutputDevices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
                         val correspondingAudioDevice = allOutputDevices.find { audioDevInfo ->
-                            // Mencocokkan berdasarkan alamat MAC atau nama jika alamat tidak tersedia/cocok
+
                             (audioDevInfo.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP || audioDevInfo.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO) &&
                                     (audioDevInfo.address == connectedBluetoothDevice.address || audioDevInfo.productName?.toString()?.equals(connectedBluetoothDevice.name, ignoreCase = true) == true)
                         }
 
                         if (correspondingAudioDevice != null) {
                             Log.d("MainActivityAudioReceiver", "Found AudioDeviceInfo for connected BT: ${correspondingAudioDevice.productName}. Setting as preferred.")
-                            // Update PlayerViewModel dengan perangkat yang baru terhubung ini
+
                             playerViewModel.setPreferredAudioOutput(correspondingAudioDevice)
-                            // Tidak perlu Toast di sini karena UI akan update
+
                         } else {
                             Log.w("MainActivityAudioReceiver", "Could not find matching AudioDeviceInfo for newly connected BT device: ${connectedBluetoothDevice.name}")
-                            // Jika tidak ketemu, mungkin biarkan sistem yang menangani atau coba revertToDefault jika ingin lebih eksplisit
-                            // playerViewModel.revertToDefaultAudioOutput() // Atau biarkan saja untuk melihat apakah sistem merutekannya dengan benar
+
+
                         }
                     }
                 }
@@ -134,7 +134,7 @@ class MainActivity : ComponentActivity() {
                     device?.let { disconnectedBluetoothDevice ->
                         Log.d("MainActivityAudioReceiver", "ACTION_ACL_DISCONNECTED: ${disconnectedBluetoothDevice.name}")
                         val currentActiveDevice = playerViewModel.activeAudioDevice.value
-                        // Cek apakah perangkat yang disconnect adalah yang sedang aktif
+
                         if (currentActiveDevice != null &&
                             (currentActiveDevice.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP || currentActiveDevice.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO) &&
                             (currentActiveDevice.address == disconnectedBluetoothDevice.address || currentActiveDevice.productName?.toString()?.equals(disconnectedBluetoothDevice.name, ignoreCase = true) == true)
@@ -182,9 +182,9 @@ class MainActivity : ComponentActivity() {
         }
 
         playerViewModel.onPlaybackSecondTick = {
-            // Pastikan ada lagu yang sedang diputar di SongViewModel
-            // dan userId valid sebelum mencatat tick.
-            // SongViewModel.recordPlayTick() sendiri sudah punya pengecekan internal.
+
+
+
             if (songViewModel.current_song.value != null && songViewModel.current_song.value!!.id != 0) {
                 Log.d("MainActivity_Ticker", "Playback tick received from PlayerViewModel. Calling SongViewModel.recordPlayTick(). Current song: ${songViewModel.current_song.value?.title}")
                 songViewModel.recordPlayTick()
@@ -217,7 +217,7 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         Log.d("MainActivity_Lifecycle", "onNewIntent called with intent: $intent")
         intent?.let {
-            setIntent(it) // Penting untuk update intent Activity jika dipanggil saat sudah berjalan
+            setIntent(it)
             handleIntent(it)
         }
     }
@@ -240,7 +240,7 @@ class MainActivity : ComponentActivity() {
             val scannedUri = Uri.parse(scannedData)
             if (scannedUri.scheme == "purrytify" && scannedUri.host == "song") {
                 val intent = Intent(Intent.ACTION_VIEW, scannedUri)
-                handleIntent(intent) // Panggil handleIntent yang sudah ada
+                handleIntent(intent)
             } else {
                 Log.w("MainActivity_DeepLink", "Scanned QR is not a valid Purrytify song link: $scannedData")
                 Toast.makeText(this, "Invalid Purrytify QR Code", Toast.LENGTH_LONG).show()
@@ -271,15 +271,15 @@ class MainActivity : ComponentActivity() {
                     Log.i("MainActivity_DeepLink", "Processing song ID from deep link/QR: $songId")
                     CoroutineScope(Dispatchers.Main).launch {
                         try {
-                            val songToPlay = onlineSongViewModel.fetchSongById(songId) // Gunakan instance dari Activity
+                            val songToPlay = onlineSongViewModel.fetchSongById(songId)
                             if (songToPlay != null) {
                                 Log.i("MainActivity_DeepLink", "Song fetched: ${songToPlay.title}. Calling setCurrentSong on VM hash: ${System.identityHashCode(songViewModel)}")
-                                songViewModel.setCurrentSong(songToPlay) // Gunakan instance dari Activity
+                                songViewModel.setCurrentSong(songToPlay)
                                 songToPlay.audioPath.let { audioPathString ->
                                     try {
                                         val audioUri = audioPathString.toUri()
-                                        playerViewModel.prepareAndPlay(audioUri) {} // Gunakan instance dari Activity
-                                        // TODO: Secara otomatis tampilkan UI player
+                                        playerViewModel.prepareAndPlay(audioUri) {}
+
                                     } catch (e: Exception) {
                                         Log.e("MainActivity_DeepLink", "Invalid audio path URI: $audioPathString", e)
                                         Toast.makeText(this@MainActivity, "Error playing song: Invalid audio path", Toast.LENGTH_SHORT).show()

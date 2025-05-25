@@ -66,11 +66,11 @@ import com.example.purrytify.ui.LockScreenOrientation
 import android.content.pm.ActivityInfo
 import androidx.compose.material.icons.filled.Share
 import com.example.purrytify.utils.shareServerSong
-import androidx.compose.material.icons.filled.VolumeUp // Contoh ikon untuk output device
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue // Pastikan ini ada
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.purrytify.ui.components.AudioOutputSelectorBottomSheet
 import com.example.purrytify.viewmodel.AudioOutputViewModel
@@ -96,7 +96,7 @@ fun PlayerScreen(
     val activeAudioDevice by playerViewModel.activeAudioDevice.collectAsState()
 
     val songUri = currentSong?.audioPath?.toUri()
-//    val artworkUri = currentSong?.artworkPath?.toUri()
+
     var showAudioOutputSelector by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
@@ -134,18 +134,18 @@ fun PlayerScreen(
 
             SongSettingsModal(songViewModel,playerViewModel, isOnlineSong = currentSong?.audioPath?.startsWith("http") == true)
 
-            // Tampilkan nama perangkat aktif jika ada
+
             activeAudioDevice?.let { device ->
                 Text(
                     text = "Playing on: ${activeDeviceState?.let { audioOutputViewModel.getDeviceName(it) } ?: "Device Speaker"}",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray,
-                    modifier = Modifier.weight(1f).padding(horizontal = 8.dp), // Sesuaikan modifier jika perlu
+                    modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis // Tambahkan jika nama panjang
+                    overflow = TextOverflow.Ellipsis
                 )
             } ?: Text(
-                text = "Playing on: Device Speaker", // Default
+                text = "Playing on: Device Speaker",
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.Gray,
                 modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
@@ -153,12 +153,12 @@ fun PlayerScreen(
 
 
             Row {
-                // Tombol untuk memilih output device
+
                 IconButton(onClick = { showAudioOutputSelector = true }) {
                     Icon(Icons.Default.VolumeUp, contentDescription = "Select Output Device")
                 }
-                // Tombol Song Settings yang sudah ada
-                SongSettingsModal(songViewModel, playerViewModel) //
+
+                SongSettingsModal(songViewModel, playerViewModel)
             }
         }
 
@@ -209,7 +209,7 @@ fun PlayerScreen(
             }
 
             currentSong?.let { song ->
-                if (song.audioPath.startsWith("http") && !song.isExplicitlyAdded && song.serverId != null) { // Cek apakah lagu server (belum eksplisit jadi lokal)
+                if (song.audioPath.startsWith("http") && !song.isExplicitlyAdded && song.serverId != null) {
                     IconButton(onClick = { shareServerSong(context, song) }) {
                         Icon(Icons.Default.Share, contentDescription = "Share Song")
                     }
@@ -320,13 +320,13 @@ fun PlayerModalBottomSheet(
         }
         ModalBottomSheet(
             onDismissRequest = onDismiss,
-            sheetState = sheetState, // Control sheet expand/collapse
+            sheetState = sheetState,
             containerColor = MaterialTheme.colorScheme.background,
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
         ) {
             PlayerScreen(
-                onNext = { onSongChange(1) },      // Kirim +1 untuk next
-                onPrevious = { onSongChange(-1) }, // Kirim -1 untuk previous,
+                onNext = { onSongChange(1) },
+                onPrevious = { onSongChange(-1) },
                 songViewModel = songViewModel,
                 playerViewModel = playerViewModel,
                 audioOutputViewModel = audioOutputViewModel

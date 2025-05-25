@@ -19,7 +19,7 @@ class SessionManager(context: Context) {
     }
 
     fun getUserId(): Int {
-        return prefs.getInt(KEY_USER_ID, -1)  // -1 sebagai nilai default jika tidak ditemukan
+        return prefs.getInt(KEY_USER_ID, -1)
     }
 
     fun clearSession() {

@@ -12,17 +12,17 @@ import com.example.purrytify.model.Song
 import kotlinx.coroutines.flow.Flow
 import java.util.Date
 
-// Data class untuk menampung hasil query streak
+
 data class SongPlayDate(
     @ColumnInfo(name = "songId") val songId: Int,
     @ColumnInfo(name = "songTitle") val songTitle: String?,
     @ColumnInfo(name = "songArtist") val songArtist: String?,
     @ColumnInfo(name = "songArtworkPath") val songArtworkPath: String?,
-    @ColumnInfo(name = "playDate") val playDate: String // Format "YYYY-MM-DD"
+    @ColumnInfo(name = "playDate") val playDate: String
 )
 
 data class DailyListenDuration(
-    @ColumnInfo(name = "playDate") val playDate: String, // Format "YYYY-MM-DD"
+    @ColumnInfo(name = "playDate") val playDate: String,
     @ColumnInfo(name = "totalDurationMillis") val totalDurationMillis: Long
 )
 
@@ -79,23 +79,8 @@ interface SongDao {
     @Query("SELECT s.title FROM play_history p JOIN song s ON p.song_id = s.id WHERE p.user_id = :userId AND strftime('%Y-%m', p.played_at/1000, 'unixepoch') = :yearMonth GROUP BY s.title ORDER BY COUNT(*) DESC LIMIT 1")
     suspend fun topSong(userId: Int, yearMonth: String): String?
 
-    // Query baru untuk mendapatkan data mentah perhitungan streak
-    @Query("""
-        SELECT 
-            ph.song_id as songId, 
-            s.title AS songTitle, 
-            s.artist AS songArtist, 
-            s.artworkPath AS songArtworkPath, 
-            strftime('%Y-%m-%d', ph.played_at/1000, 'unixepoch') AS playDate
-        FROM play_history ph
-        JOIN song s ON ph.song_id = s.id
-        WHERE ph.user_id = :userId 
-          AND ph.played_at >= :startOfMonthMillis 
-          AND ph.played_at < :startOfNextMonthMillis
-        ORDER BY ph.song_id, playDate ASC
-    """)
+    @Query("SELECT ph.song_id as songId, s.title AS songTitle, s.artist AS songArtist, s.artworkPath AS songArtworkPath, strftime('%Y-%m-%d', ph.played_at/1000, 'unixepoch') AS playDate FROM play_history ph JOIN song s ON ph.song_id = s.id WHERE ph.user_id = :userId AND ph.played_at >= :startOfMonthMillis AND ph.played_at < :startOfNextMonthMillis ORDER BY ph.song_id, playDate ASC")
     suspend fun getPlayHistoryDatesForStreak(userId: Int, startOfMonthMillis: Long, startOfNextMonthMillis: Long): List<SongPlayDate>
-
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPlayHistory(history: PlayHistory)
@@ -103,66 +88,16 @@ interface SongDao {
     @Query("SELECT * FROM Song WHERE audioPath = :audioPath AND user_id = :userId LIMIT 1")
     suspend fun getSongByAudioPathAndUserId(audioPath: String, userId: Int): Song?
 
-    @Query("""
-        SELECT 
-            strftime('%Y-%m-%d', ph.played_at/1000, 'unixepoch') AS playDate,
-            SUM(ph.duration_ms) AS totalDurationMillis
-        FROM play_history ph
-        WHERE ph.user_id = :userId 
-          AND ph.played_at >= :startOfMonthMillis 
-          AND ph.played_at < :startOfNextMonthMillis
-        GROUP BY playDate
-        ORDER BY playDate ASC
-    """)
+    @Query("SELECT strftime('%Y-%m-%d', ph.played_at/1000, 'unixepoch') AS playDate, SUM(ph.duration_ms) AS totalDurationMillis FROM play_history ph WHERE ph.user_id = :userId AND ph.played_at >= :startOfMonthMillis AND ph.played_at < :startOfNextMonthMillis GROUP BY playDate ORDER BY playDate ASC")
     suspend fun getDailyListenDurationsForMonth(userId: Int, startOfMonthMillis: Long, startOfNextMonthMillis: Long): List<DailyListenDuration>
 
-    @Query("""
-        SELECT s.*
-        FROM song s
-        INNER JOIN (
-            SELECT song_id, COUNT(song_id) as play_count
-            FROM play_history
-            WHERE user_id = :userId AND strftime('%Y-%m', played_at/1000, 'unixepoch') = :yearMonth
-            GROUP BY song_id
-        ) AS ph_counts ON s.id = ph_counts.song_id
-        WHERE s.user_id = :userId
-        ORDER BY ph_counts.play_count DESC
-        LIMIT 10;
-    """)
+    @Query("SELECT s.* FROM song s INNER JOIN ( SELECT song_id, COUNT(song_id) as play_count FROM play_history WHERE user_id = :userId AND strftime('%Y-%m', played_at/1000, 'unixepoch') = :yearMonth GROUP BY song_id) AS ph_counts ON s.id = ph_counts.song_id WHERE s.user_id = :userId ORDER BY ph_counts.play_count DESC LIMIT 10")
     fun getTopPlayedSongsForMonth(userId: Int, yearMonth: String): Flow<List<Song>>
 
-    @Query("""
-        SELECT
-            s.artist AS artistName,
-            (SELECT s_inner.artworkPath
-             FROM song s_inner
-             INNER JOIN play_history ph_inner ON s_inner.id = ph_inner.song_id
-             WHERE s_inner.artist = s.artist AND s_inner.user_id = :userId
-                   AND strftime('%Y-%m', ph_inner.played_at/1000, 'unixepoch') = :yearMonth
-             ORDER BY ph_inner.played_at DESC LIMIT 1) AS artworkPath,
-            COUNT(ph.song_id) as totalPlays
-        FROM
-            song s
-        INNER JOIN
-            play_history ph ON s.id = ph.song_id
-        WHERE
-            s.user_id = :userId AND strftime('%Y-%m', ph.played_at/1000, 'unixepoch') = :yearMonth
-            AND s.artist IS NOT NULL AND s.artist != '' 
-        GROUP BY
-            s.artist
-        ORDER BY
-            totalPlays DESC
-        LIMIT 10
-    """)
+    @Query("SELECT s.artist AS artistName,(SELECT s_inner.artworkPath FROM song s_inner INNER JOIN play_history ph_inner ON s_inner.id = ph_inner.song_id WHERE s_inner.artist = s.artist AND s_inner.user_id = :userId AND strftime('%Y-%m', ph_inner.played_at/1000, 'unixepoch') = :yearMonth ORDER BY ph_inner.played_at DESC LIMIT 1) AS artworkPath, COUNT(ph.song_id) as totalPlays FROM song s INNER JOIN play_history ph ON s.id = ph.song_id WHERE s.user_id = :userId AND strftime('%Y-%m', ph.played_at/1000, 'unixepoch') = :yearMonth AND s.artist IS NOT NULL AND s.artist != '' GROUP BY s.artist ORDER BY totalPlays DESC LIMIT 10")
     fun getTopPlayedArtistsForMonth(userId: Int, yearMonth: String): Flow<List<ArtistRankInfo>>
 
-    @Query("""
-        SELECT COUNT(DISTINCT s.artist)
-        FROM song s
-        INNER JOIN play_history ph ON s.id = ph.song_id
-        WHERE s.user_id = :userId AND strftime('%Y-%m', ph.played_at/1000, 'unixepoch') = :yearMonth
-        AND s.artist IS NOT NULL AND s.artist != ''
-    """)
+    @Query("SELECT COUNT(DISTINCT s.artist) FROM song s INNER JOIN play_history ph ON s.id = ph.song_id WHERE s.user_id = :userId AND strftime('%Y-%m', ph.played_at/1000, 'unixepoch') = :yearMonth AND s.artist IS NOT NULL AND s.artist != ''")
     suspend fun getTotalDistinctArtistsForMonth(userId: Int, yearMonth: String): Int
 
     @Query("SELECT * FROM song WHERE user_id = :userId AND isExplicitlyAdded = 1 ORDER BY RANDOM() LIMIT :limit")

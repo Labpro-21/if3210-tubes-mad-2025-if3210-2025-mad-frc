@@ -81,8 +81,8 @@ fun TopScreen(
         song = currentSong,
         visible = showSongSettings,
         onDismiss = { showSongSettings = false },
-        onEdit = { }, // Not used for online songs
-        onDelete = { }, // Not used for online songs
+        onEdit = { },
+        onDelete = { },
         onShareUrl = {},
         isOnlineSong = currentSong?.audioPath?.startsWith("http") == true
     )
@@ -99,9 +99,9 @@ fun TopScreen(
         currentSong?.let { song ->
             if (onlineSongs.isNotEmpty()) {
                 val index = onlineSongs.indexOfFirst { onlineSongItem ->
-                    // dan onlineSongItem dari OnlineSongViewModel juga memiliki serverId yang sama.
+
                     (song.serverId != null && onlineSongItem.serverId == song.serverId) ||
-                            (song.serverId == null && onlineSongItem.audioPath == song.audioPath) // Fallback jika tidak ada serverId (misalnya lagu lokal murni)
+                            (song.serverId == null && onlineSongItem.audioPath == song.audioPath)
                 }
                 if (index != -1) {
                     currentPlaylistIndex = index
@@ -153,7 +153,7 @@ fun TopScreen(
         downloadedCount = 0
 
         onlineSongs.forEach { song ->
-            // langsung enqueue tanpa tunggu callback terakhir
+
             downloadSong(context, song, songViewModel, sessionManager) {
                 downloadedCount++
                 if (downloadedCount == onlineSongs.size) isDownloadingAll = false
@@ -210,7 +210,7 @@ fun TopScreen(
                 .background(Color(0xFF121212))
                 .padding(paddingValues)
         ) {
-            // Header dengan back button
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -234,14 +234,14 @@ fun TopScreen(
                 )
             }
 
-            // Cover dan description
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Cover image (gradient box)
+
                 Box(
                     modifier = Modifier
                         .size(200.dp)
@@ -277,7 +277,7 @@ fun TopScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Description
+
                 Text(
                     text = description,
                     color = Color.Gray,
@@ -287,13 +287,13 @@ fun TopScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Download dan Play buttons
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Download button
+
                     OutlinedButton(
                         onClick = { if (!isDownloadingAll) downloadAll(audioOutputViewModel = audioOutputViewModel) },
                         modifier = Modifier.size(50.dp),
@@ -402,7 +402,7 @@ fun TopSongItem(
             .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Rank number
+
         Text(
             text = "$rank",
             color = if (isCurrentSong) Color(0xFF1ED760) else Color.Gray,
@@ -413,13 +413,13 @@ fun TopSongItem(
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        // Album art - Handle online song artwork
+
         Image(
             painter = rememberAsyncImagePainter(
                 model = if (song.artworkPath?.startsWith("http") == true) {
-                    song.artworkPath // Online song - URL langsung
+                    song.artworkPath
                 } else {
-                    song.artworkPath?.toUri() // Local song - convert ke URI
+                    song.artworkPath?.toUri()
                 }
             ),
             contentDescription = song.title,
@@ -431,7 +431,7 @@ fun TopSongItem(
 
         Spacer(modifier = Modifier.width(10.dp))
 
-        // Song info
+
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = song.title,
@@ -450,14 +450,14 @@ fun TopSongItem(
             )
         }
 
-        // Duration
+
         Text(
             text = formatDuration(song.duration),
             color = Color.Gray,
             fontSize = 11.sp
         )
 
-        // Play indicator untuk current song
+
         if (isCurrentSong) {
             Spacer(modifier = Modifier.width(8.dp))
             Icon(

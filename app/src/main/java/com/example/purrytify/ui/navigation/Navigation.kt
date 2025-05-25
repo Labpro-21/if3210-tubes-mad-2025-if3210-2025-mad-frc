@@ -7,7 +7,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel // Tetap gunakan ini untuk ViewModel yang di-scope ke NavGraph jika perlu
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -15,7 +15,7 @@ import com.example.purrytify.ui.screens.LibraryScreenWithBottomNav
 import com.example.purrytify.ui.screens.LoginScreen
 import com.example.purrytify.ui.screens.ProfileScreenWithBottomNav
 import com.example.purrytify.ui.screens.EditProfileScreen
-import com.example.purrytify.viewmodel.SongViewModel // Import classnya
+import com.example.purrytify.viewmodel.SongViewModel
 import com.example.purrytify.viewmodel.NetworkViewModel
 import com.example.purrytify.utils.TokenManager
 import androidx.compose.runtime.livedata.observeAsState
@@ -29,8 +29,8 @@ import com.example.purrytify.ui.screens.HomeScreenResponsive
 import com.example.purrytify.ui.screens.TimeListenedScreen
 import com.example.purrytify.utils.SessionManager
 import com.example.purrytify.viewmodel.AudioOutputViewModel
-import com.example.purrytify.viewmodel.PlayerViewModel // Import classnya
-import com.example.purrytify.viewmodel.OnlineSongViewModel // Import classnya
+import com.example.purrytify.viewmodel.PlayerViewModel
+import com.example.purrytify.viewmodel.OnlineSongViewModel
 import com.example.purrytify.ui.screens.TopScreen
 import com.example.purrytify.ui.screens.UserTopArtistsScreen
 import com.example.purrytify.ui.screens.UserTopSongsScreen
@@ -46,7 +46,7 @@ sealed class Screen(val route: String) {
     object Profile : Screen("profile")
     object EditProfile : Screen("edit_profile")
     object TimeListenedDetail : Screen("time_listened_detail")
-    object UserTopPlayedSongs : Screen("user_top_played_songs/{yearMonth}") { // Terima argumen yearMonth
+    object UserTopPlayedSongs : Screen("user_top_played_songs/{yearMonth}") {
         fun createRoute(yearMonth: YearMonth) = "user_top_played_songs/${yearMonth.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"))}"
     }
     object UserTopArtists : Screen("user_top_artists/{yearMonth}") {
@@ -56,7 +56,7 @@ sealed class Screen(val route: String) {
 
 @Composable
 fun AppNavigation(
-    // Terima ViewModel yang sudah dibuat dari MainActivity
+
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
     onlineSongViewModel: OnlineSongViewModel,
@@ -74,7 +74,7 @@ fun AppNavigation(
     val userRepository      = remember { UserRepository(db.userDao()) }
 
 
-    // NetworkViewModel masih bisa dibuat di sini jika hanya digunakan oleh AppNavigation/UI
+
     val networkViewModel: NetworkViewModel = viewModel()
     val isConnected by networkViewModel.isConnected.observeAsState(initial = true)
 
@@ -85,9 +85,9 @@ fun AppNavigation(
 
 
     val profileViewModel: ProfileViewModel = viewModel(
-        viewModelStoreOwner = activity, // activity adalah LocalContext.current as ComponentActivity
-        key = "profileViewModel_user_${currentSessionUserId}", // Key jika bergantung pada user
-        factory = ProfileViewModelFactory(context, tokenManager, userRepository, sessionManager) // Sesuaikan factory Anda
+        viewModelStoreOwner = activity,
+        key = "profileViewModel_user_${currentSessionUserId}",
+        factory = ProfileViewModelFactory(context, tokenManager, userRepository, sessionManager)
     )
 
     val startDestination = if (tokenManager.isLoggedIn() && currentSessionUserId > 0) {
@@ -95,10 +95,10 @@ fun AppNavigation(
     } else {
         if (tokenManager.isLoggedIn() && currentSessionUserId <= 0) {
             Log.w("AppNavigation", "Token exists but session userId invalid ($currentSessionUserId). Forcing logout.")
-            LaunchedEffect(Unit) { // Side effect harus di LaunchedEffect
+            LaunchedEffect(Unit) {
                 tokenManager.clearTokens()
                 sessionManager.clearSession()
-                // Navigasi ke Login jika startDestination menjadi Login
+
                 if (navController.currentDestination?.route != Screen.Login.route) {
                      navController.navigate(Screen.Login.route) {
                         popUpTo(navController.graph.startDestinationId) { inclusive = true }
@@ -111,7 +111,7 @@ fun AppNavigation(
     }
     Log.d("AppNavigation", "Determined startDestination: $startDestination")
 
-    val api = remember { RetrofitClient.create(tokenManager) } // RetrofitClient mungkin perlu context untuk TokenManager
+    val api = remember { RetrofitClient.create(tokenManager) }
 
     LaunchedEffect(currentSessionUserId, tokenManager.isLoggedIn()) {
         Log.d("AppNavigation_Recompose", "Recomposing. SessionUserId: $currentSessionUserId, IsLoggedIn: ${tokenManager.isLoggedIn()}")
@@ -131,15 +131,15 @@ fun AppNavigation(
         }
 
         composable(Screen.Home.route) {
-            // Validasi userId sebelum menampilkan screen
+
             val homeSessionUserId = sessionManager.getUserId()
-            if (homeSessionUserId <= 0 && tokenManager.isLoggedIn()) { // Jika login tapi sesi aneh
+            if (homeSessionUserId <= 0 && tokenManager.isLoggedIn()) {
                 Log.e("AppNavigation_Home", "Accessed Home with invalid session userId: $homeSessionUserId while logged in. Redirecting to Login.")
                 LaunchedEffect(Unit) {
                     tokenManager.clearTokens(); sessionManager.clearSession()
                     navController.navigate(Screen.Login.route) { popUpTo(Screen.Home.route) { inclusive = true }; launchSingleTop = true }
                 }
-            } else if (!tokenManager.isLoggedIn()){ // Jika tidak login sama sekali
+            } else if (!tokenManager.isLoggedIn()){
                  LaunchedEffect(Unit) {
                     navController.navigate(Screen.Login.route) { popUpTo(Screen.Home.route) { inclusive = true }; launchSingleTop = true }
                 }
@@ -151,7 +151,7 @@ fun AppNavigation(
                     onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                     playerViewModel = playerViewModel,
                     songViewModel = songViewModel,
-                    onlineSongViewModel = onlineSongViewModel, // Gunakan instance yang diteruskan,
+                    onlineSongViewModel = onlineSongViewModel,
                     audioOutputViewModel = audioOutputViewModel,
                     onNavigateToTopSong = { chartType ->
                         navController.navigate("top/$chartType")
@@ -177,11 +177,11 @@ fun AppNavigation(
                 Log.d("AppNavigation_Library", "Displaying Library for user $librarySessionUserId. SongVM hash: ${System.identityHashCode(songViewModel)}")
                 LibraryScreenWithBottomNav(
                     onNavigateToHome = { navController.navigate(Screen.Home.route) },
-                    onNavigateToProfile = { navController.navigate(Screen.Profile.route) }, // Gunakan instance yang diteruskan
+                    onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                     onBack = { navController.popBackStack() },
                     songViewModel = songViewModel,
-                    playerViewModel = playerViewModel, // Gunakan instance yang diteruskan,
-                    audioOutputViewModel = audioOutputViewModel, // Gunakan instance yang diteruskan
+                    playerViewModel = playerViewModel,
+                    audioOutputViewModel = audioOutputViewModel,
                 )
             }
         }
@@ -214,18 +214,18 @@ fun AppNavigation(
                             launchSingleTop = true
                         }
                     },
-                    songViewModel = songViewModel, // Gunakan instance yang diteruskan
-                    playerViewModel = playerViewModel, // Gunakan instance yang diteruskan
+                    songViewModel = songViewModel,
+                    playerViewModel = playerViewModel,
                     onScanQrClicked = onScanQrClicked,
                     onNavigateToTimeListenedDetail = {
-                        profileViewModel.loadDailyListenDetailsForMonth(YearMonth.now()) // Default ke bulan ini
+                        profileViewModel.loadDailyListenDetailsForMonth(YearMonth.now())
                         navController.navigate(Screen.TimeListenedDetail.route)
                     },
                     onEditProfile = {navController.navigate(Screen.EditProfile.route)},
-                    onNavigateToUserTopSongs = { yearMonth -> // Tambahkan parameter ini ke ProfileScreenWithBottomNav
+                    onNavigateToUserTopSongs = { yearMonth ->
                         navController.navigate(Screen.UserTopPlayedSongs.createRoute(yearMonth))
                     },
-                    onNavigateToUserTopArtists = { yearMonth -> // Tambahkan parameter ini
+                    onNavigateToUserTopArtists = { yearMonth ->
                         navController.navigate(Screen.UserTopArtists.createRoute(yearMonth))
                     },
                 )
@@ -233,8 +233,8 @@ fun AppNavigation(
         }
 
         composable(Screen.TimeListenedDetail.route) {
-            // Asumsi ProfileViewModel sudah di-scope ke Activity atau NavGraph yang lebih tinggi
-            // sehingga bisa diakses di sini juga.
+
+
             TimeListenedScreen(
                 profileViewModel = profileViewModel,
                 onBack = { navController.popBackStack() }
@@ -282,7 +282,7 @@ fun AppNavigation(
             arguments = listOf(navArgument("yearMonth") { type = NavType.StringType })
         ) { backStackEntry ->
             val yearMonthString = backStackEntry.arguments?.getString("yearMonth") ?: YearMonth.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"))
-            // Validasi sesi jika diperlukan
+
             val sessionUserId = sessionManager.getUserId()
             if (sessionUserId <= 0 && tokenManager.isLoggedIn()) {
                 LaunchedEffect(Unit) {
@@ -295,7 +295,7 @@ fun AppNavigation(
                 }
             } else {
                 UserTopSongsScreen(
-                    profileViewModel = profileViewModel, // Gunakan instance ProfileViewModel yang sama
+                    profileViewModel = profileViewModel,
                     songViewModel = songViewModel,
                     playerViewModel = playerViewModel,
                     audioOutputViewModel = audioOutputViewModel,
@@ -313,14 +313,14 @@ fun AppNavigation(
             arguments = listOf(navArgument("yearMonth") { type = NavType.StringType })
         ) { backStackEntry ->
             val yearMonthString = backStackEntry.arguments?.getString("yearMonth") ?: YearMonth.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"))
-            // Validasi sesi jika diperlukan
+
             val sessionUserId = sessionManager.getUserId()
-            if (sessionUserId <= 0 && tokenManager.isLoggedIn()) { // Jika login tapi sesi aneh
+            if (sessionUserId <= 0 && tokenManager.isLoggedIn()) {
                 LaunchedEffect(Unit) {
                     tokenManager.clearTokens(); sessionManager.clearSession()
                     navController.navigate(Screen.Login.route) { popUpTo(navController.graph.startDestinationId) { inclusive = true }; launchSingleTop = true }
                 }
-            } else if (!tokenManager.isLoggedIn()){ // Jika tidak login sama sekali
+            } else if (!tokenManager.isLoggedIn()){
                 LaunchedEffect(Unit) {
                     navController.navigate(Screen.Login.route) { popUpTo(navController.graph.startDestinationId) { inclusive = true }; launchSingleTop = true }
                 }

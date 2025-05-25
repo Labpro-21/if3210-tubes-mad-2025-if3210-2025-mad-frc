@@ -17,7 +17,7 @@ object QrCodeGenerator {
         return try {
             val hints = mutableMapOf<EncodeHintType, Any>()
             hints[EncodeHintType.CHARACTER_SET] = "UTF-8"
-            hints[EncodeHintType.ERROR_CORRECTION] = ErrorCorrectionLevel.H // Level koreksi error, H = High
+            hints[EncodeHintType.ERROR_CORRECTION] = ErrorCorrectionLevel.H
 
             val bitMatrix = writer.encode(content, BarcodeFormat.QR_CODE, width, height, hints)
             val bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)

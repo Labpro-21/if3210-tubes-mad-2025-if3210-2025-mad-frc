@@ -52,12 +52,12 @@ class TokenManager(context: Context) {
         encryptedPrefs.edit().clear().apply()
     }
 
-    // Fungsi refresh token yang diperbarui dengan memanggil RetrofitClient.create(this)
+
     suspend fun refreshToken(): Boolean {
         return try {
             val refreshToken = getRefreshToken() ?: return false
             val request = RefreshTokenRequest(refreshToken)
-            val apiService = RetrofitClient.create(this)  // Memperoleh instance ApiService
+            val apiService = RetrofitClient.create(this)
             val response = apiService.refreshToken(request)
             if (response.isSuccessful) {
                 val loginResponse = response.body() ?: return false

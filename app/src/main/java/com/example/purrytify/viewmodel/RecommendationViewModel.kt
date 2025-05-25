@@ -16,9 +16,9 @@ import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 class RecommendationViewModel(
-    private val application: Application, // Ditambahkan untuk SessionManager jika diperlukan
+    private val application: Application,
     private val recommendationRepository: RecommendationRepository,
-    private val onlineSongViewModel: OnlineSongViewModel, // Untuk mendapatkan lagu server
+    private val onlineSongViewModel: OnlineSongViewModel,
     private val sessionManager: SessionManager
 ) : ViewModel() {
 
@@ -46,39 +46,39 @@ class RecommendationViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                // 1. Ambil kandidat lagu lokal
-                val localAddedSongs = recommendationRepository.getRandomExplicitlyAddedSongs(userId, 10) // Ambil lebih banyak untuk pool
-                val localLikedSongs = recommendationRepository.getRandomLikedSongs(userId, 10)  // Ambil lebih banyak untuk pool
 
-                // 2. Ambil lagu server
+                val localAddedSongs = recommendationRepository.getRandomExplicitlyAddedSongs(userId, 10)
+                val localLikedSongs = recommendationRepository.getRandomLikedSongs(userId, 10)
+
+
                 if (onlineSongViewModel.onlineSongs.value.isEmpty()) {
                     Log.d("RecommendationVM", "Online songs empty, fetching global top songs.")
-                    onlineSongViewModel.loadTopSongs(null) // Muat jika kosong
-                    // Mungkin perlu delay atau mekanisme untuk menunggu onlineSongViewModel selesai memuat
-                    // Untuk sekarang, kita asumsikan pemanggilan berikutnya akan memiliki data.
+                    onlineSongViewModel.loadTopSongs(null)
+
+
                 }
                 val serverSongsPool = onlineSongViewModel.onlineSongs.value.shuffled()
                 Log.d("RecommendationVM", "Server songs pool size: ${serverSongsPool.size}")
 
 
-                // 3. Gabungkan dan filter
+
                 val candidateSongs = mutableListOf<Song>()
                 candidateSongs.addAll(localAddedSongs)
                 candidateSongs.addAll(localLikedSongs)
 
-                // Tambahkan lagu server yang belum ada di lokal (cek berdasarkan audioPath)
+
                 val localAudioPaths = (localAddedSongs + localLikedSongs).map { it.audioPath }.toSet()
                 serverSongsPool.forEach { serverSong ->
                     if (serverSong.audioPath !in localAudioPaths) {
-                        // Periksa juga ke DB untuk memastikan tidak ada duplikat yang tidak terambil oleh query random awal
+
                         if (!recommendationRepository.doesSongExistByAudioPath(userId, serverSong.audioPath)) {
                             candidateSongs.add(serverSong)
                         }
                     }
                 }
 
-                // Pastikan tidak ada duplikat berdasarkan audioPath dan acak hasilnya
-                val finalMix = candidateSongs.distinctBy { it.audioPath }.shuffled().take(Random.nextInt(5, 16)) // Ambil 5-15 lagu
+
+                val finalMix = candidateSongs.distinctBy { it.audioPath }.shuffled().take(Random.nextInt(5, 16))
 
                 _dailyMix.value = finalMix
                 Log.d("RecommendationVM", "Daily Mix generated with ${finalMix.size} songs.")

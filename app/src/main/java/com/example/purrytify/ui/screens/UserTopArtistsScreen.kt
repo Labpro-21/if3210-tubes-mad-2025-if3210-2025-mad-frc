@@ -42,13 +42,13 @@ fun UserTopArtistsScreen(
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
     audioOutputViewModel: AudioOutputViewModel,
-    yearMonthString: String, // "YYYY-MM"
+    yearMonthString: String,
     onBack: () -> Unit,
     onNavigateToHome: () -> Unit,
     onNavigateToLibrary: () -> Unit,
     onNavigateToProfile: () -> Unit,
-    // Tambahkan onArtistClick jika ingin ada aksi saat artis di-klik
-    // onArtistClick: (ArtistRankInfo) -> Unit 
+
+
 ) {
     val topPlayedArtists by profileViewModel.userTopPlayedArtists.collectAsState()
     val totalDistinctArtists by profileViewModel.totalDistinctArtists.collectAsState()
@@ -105,7 +105,7 @@ fun UserTopArtistsScreen(
                     )
                 }
                 BottomNavBar(
-                    currentRoute = "profile_top_artists", // Rute unik
+                    currentRoute = "profile_top_artists",
                     onItemSelected = { route ->
                         when (route) {
                             "home" -> onNavigateToHome()
@@ -126,7 +126,7 @@ fun UserTopArtistsScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 24.dp), // Tambah padding bawah
+                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 24.dp),
             ) {
                 Text(
                     text = monthDisplay,
@@ -153,7 +153,7 @@ fun UserTopArtistsScreen(
             } else {
                 LazyColumn(
                     contentPadding = PaddingValues(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp) // Jarak antar item
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     itemsIndexed(topPlayedArtists) { index, artistInfo ->
                         TopArtistListItem(
@@ -175,18 +175,18 @@ fun TopArtistListItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp)) // Opsional: jika ingin background item berbeda
-            // .background(Color.DarkGray.copy(alpha = 0.2f)) // Contoh background
-            .padding(vertical = 8.dp), // Padding vertikal untuk setiap item
+            .clip(RoundedCornerShape(8.dp))
+
+            .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = "%02d".format(rank),
             style = MaterialTheme.typography.titleMedium.copy(
-                color = Color.White, // Atau MaterialTheme.colorScheme.primary jika ingin menonjol
-                fontWeight = FontWeight.Medium // Sedikit lebih tipis dari bold
+                color = Color.White,
+                fontWeight = FontWeight.Medium
             ),
-            modifier = Modifier.width(32.dp) // Lebar tetap untuk rank
+            modifier = Modifier.width(32.dp)
         )
 
         Spacer(modifier = Modifier.width(16.dp))
@@ -195,23 +195,23 @@ fun TopArtistListItem(
             model = artistInfo.artworkPath?.toUri(),
             contentDescription = "Artwork for ${artistInfo.artistName}",
             modifier = Modifier
-                .size(56.dp) // Ukuran gambar artis
-                .clip(CircleShape), // Bentuk lingkaran untuk gambar artis
+                .size(56.dp)
+                .clip(CircleShape),
             contentScale = ContentScale.Crop,
-            error = rememberAsyncImagePainter(model = R.drawable.profile_placeholder) // Placeholder jika gambar gagal dimuat atau null
+            error = rememberAsyncImagePainter(model = R.drawable.profile_placeholder)
         )
 
         Spacer(modifier = Modifier.width(16.dp))
 
         Text(
             text = artistInfo.artistName,
-            style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp), // Ukuran font disesuaikan
+            style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp),
             color = Color.White,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
         )
-        // Jika ingin menambahkan ikon panah atau aksi lain di ujung kanan
-        // Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, ...)
+
+
     }
 }

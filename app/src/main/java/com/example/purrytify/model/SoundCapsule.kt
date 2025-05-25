@@ -8,29 +8,29 @@ import java.util.Locale
 data class SoundCapsule(
     val month: YearMonth? = null,
     val timeListenedMillis: Long? = null,
-    val topArtist: String? = null,        // Tetap ada
-    val topSong: String? = null,          // Tetap ada
-    val topArtistImageUrl: String? = null, // Dari ProfileViewModel, mungkin perlu disesuaikan
-    val topSongImageUrl: String? = null,   // Dari ProfileViewModel, mungkin perlu disesuaikan
+    val topArtist: String? = null,
+    val topSong: String? = null,
+    val topArtistImageUrl: String? = null,
+    val topSongImageUrl: String? = null,
 
-    // Informasi Streak Baru
-    val longestDayStreak: Int? = 0, // Akan diisi dengan overallLongestStreak
+
+    val longestDayStreak: Int? = 0,
     val streakSongTitle: String? = null,
     val streakSongArtist: String? = null,
-    val streakSongArtworkPath: String? = null, // Path ke artwork lagu streak
+    val streakSongArtworkPath: String? = null,
     val streakStartDate: LocalDate? = null,
     val streakEndDate: LocalDate? = null
 
-    // Field lama yang mungkin bisa diganti atau dihapus jika tidak lagi relevan
-    // val dayStreak: Int? = null, // Ini adalah yang lama, bisa diganti dengan longestDayStreak
-    // val streakCoverUrl: String?      = null, // Bisa diganti dengan streakSongArtworkPath
-    // val streakDescription: String?   = null, // Akan dibuat secara dinamis di UI
-    // val streakPeriod: String? = null // Akan dibuat secara dinamis di UI
+
+
+
+
+
 ) {
     /** "April 2025" */
     val monthYear: String
         get() = month
-            ?.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())) // yyyy untuk tahun
+            ?.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault()))
             ?.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
         ?: ""
 
@@ -44,7 +44,7 @@ data class SoundCapsule(
         } else {
             String.format(Locale.getDefault(), "%d menit %02d detik", minutes, seconds)
         }
-    } ?: "0 menit 0 detik" // Default jika null
+    } ?: "0 menit 0 detik"
 
     val streakDescriptionText: String
         get() = if (longestDayStreak != null && longestDayStreak > 1 && streakSongTitle != null && streakSongArtist != null) {

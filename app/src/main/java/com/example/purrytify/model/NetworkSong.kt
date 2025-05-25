@@ -6,7 +6,7 @@ data class NetworkSong(
     val artist: String,
     val artwork: String,
     val url: String,
-    val duration: String,    // format "mm:ss"
+    val duration: String,
     val country: String,
     val rank: Int
 )
