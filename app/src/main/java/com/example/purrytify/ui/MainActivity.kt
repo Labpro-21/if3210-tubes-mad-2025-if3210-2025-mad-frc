@@ -303,16 +303,8 @@ class MainActivity : ComponentActivity() {
                                 songToPlay.audioPath.let { audioPathString ->
                                     try {
                                         val audioUri = audioPathString.toUri()
-                                        if (songToPlay.isExplicitlyAdded == false){
-                                            onlineSongViewModel.sendSongsToMusicService()
-                                            playerViewModel.prepareAndPlay(onlineSongViewModel.getSongIndex(songToPlay))
-
-                                        }else{
-                                            songViewModel.sendSongsToMusicService()
-                                            playerViewModel.prepareAndPlay(songViewModel.getSongIndex(songToPlay))
-
-                                        }
-
+                                        playerViewModel.playSingleSong(songToPlay)
+                                        // TODO: Secara otomatis tampilkan UI player
                                     } catch (e: Exception) {
                                         Log.e("MainActivity_DeepLink", "Invalid audio path URI: $audioPathString", e)
                                         Toast.makeText(this@MainActivity, "Error playing song: Invalid audio path", Toast.LENGTH_SHORT).show()
