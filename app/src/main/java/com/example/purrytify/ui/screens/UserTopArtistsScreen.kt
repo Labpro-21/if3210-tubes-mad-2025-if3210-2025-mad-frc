@@ -50,7 +50,7 @@ fun UserTopArtistsScreen(
 ) {
     val topPlayedArtists by profileViewModel.userTopPlayedArtists.collectAsState()
     val totalDistinctArtists by profileViewModel.totalDistinctArtists.collectAsState()
-    val currentGlobalSong by songViewModel.current_song.collectAsState()
+    val currentGlobalSong by songViewModel.currentSong.collectAsState()
     val isGlobalPlaying by playerViewModel.isPlaying.collectAsState()
     var showPlayerSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
