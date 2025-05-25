@@ -82,4 +82,8 @@ class OnlineSongViewModel(
         }
         return fetchedSong
     }
+
+    fun getSongIndex(song : Song):Int{
+        return onlineSongs.value.indexOf(song)
+    }
 }

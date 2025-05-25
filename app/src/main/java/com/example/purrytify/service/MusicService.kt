@@ -1,38 +1,26 @@
 package com.example.purrytify.service
 
 import android.app.Notification
-import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
-import android.graphics.BitmapFactory
-import android.graphics.drawable.BitmapDrawable
-import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
-import android.support.v4.media.session.MediaSessionCompat
-import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
-import android.widget.RemoteViews
 import androidx.annotation.OptIn
-import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.NotificationCompat
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import com.example.purrytify.MyApp
 import com.example.purrytify.R
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.core.net.toUri
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import coil.imageLoader
-import coil.request.ImageRequest
 import com.example.purrytify.model.Song
 import com.example.purrytify.utils.MusicServiceManager
-import com.example.purrytify.utils.FormatingManager
 import androidx.media3.session.MediaSession
-import androidx.media3.session.MediaSessionService
-import androidx.media3.session.MediaNotification
 import com.example.purrytify.utils.BitmapUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -61,7 +49,14 @@ class MusicService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        exoPlayer = ExoPlayer.Builder(this).build()
+        Log.d("MusicService", "Service onCreate dipanggil")
+        exoPlayer = ExoPlayer.Builder(this).build().apply {
+            val audioAttributes = AudioAttributes.Builder()
+                .setUsage(C.USAGE_MEDIA)
+                .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+                .build()
+            setAudioAttributes(audioAttributes, true)
+        }
         mediaSession = MediaSession.Builder(this, exoPlayer)
             .setId("purrytify_session")
             .build()

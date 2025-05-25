@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -33,6 +34,7 @@ import com.example.purrytify.ui.components.SongSettingsModal
 import com.example.purrytify.ui.navBar.BottomNavBar
 import com.example.purrytify.utils.SessionManager
 import com.example.purrytify.utils.downloadSong
+import com.example.purrytify.viewmodel.AudioOutputViewModel
 import com.example.purrytify.viewmodel.OnlineSongViewModel
 import com.example.purrytify.viewmodel.PlayerViewModel
 import com.example.purrytify.viewmodel.SongViewModel
@@ -44,6 +46,7 @@ fun TopScreen(
     onlineViewModel: OnlineSongViewModel,
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
+    audioOutputViewModel: AudioOutputViewModel,
     onBack: () -> Unit,
     onNavigateToHome: () -> Unit,
     onNavigateToLibrary: () -> Unit,
@@ -54,7 +57,7 @@ fun TopScreen(
 
     val onlineSongs by onlineViewModel.onlineSongs.collectAsState()
     val isPlaying by playerViewModel.isPlaying.collectAsState()
-    val currentSong by songViewModel.current_song.collectAsState()
+    val currentSong by songViewModel.currentSong.collectAsState()
     var showPlayerSheet by remember { mutableStateOf(false) }
     var currentPlaylistIndex by remember { mutableStateOf(-1) }
 
@@ -118,9 +121,9 @@ fun TopScreen(
             currentPlaylistIndex = nextIndex
             songViewModel.setCurrentSong(nextSong)
 
-            playerViewModel.prepareAndPlay(nextSong.audioPath.toUri()) {
-                playNextInSequence()
-            }
+//            playerViewModel.prepareAndPlay(nextSong.audioPath.toUri()) {
+//                playNextInSequence()
+//            }
         }
     }
 
@@ -138,10 +141,10 @@ fun TopScreen(
             val prevSong = onlineSongs[prevIndex]
             currentPlaylistIndex = prevIndex
             songViewModel.setCurrentSong(prevSong)
-
-            playerViewModel.prepareAndPlay(prevSong.audioPath.toUri()) {
-                playNextInSequence()
-            }
+//
+//            playerViewModel.prepareAndPlay(prevSong.audioPath.toUri()) {
+//                playNextInSequence()
+//            }
         }
     }
 
@@ -174,7 +177,8 @@ fun TopScreen(
                     }
                 },
                 playerViewModel = playerViewModel,
-                sheetState = sheetState
+                sheetState = sheetState,
+                audioOutputViewModel = audioOutputViewModel
             )
         }
     }
@@ -317,10 +321,12 @@ fun TopScreen(
                                 val firstSong = onlineSongs.first()
                                 currentPlaylistIndex = 0
                                 songViewModel.setCurrentSong(firstSong)
-
-                                playerViewModel.prepareAndPlay(firstSong.audioPath.toUri()) {
-                                    playNextInSequence()
-                                }
+                                onlineViewModel.sendSongsToMusicService()
+                                playerViewModel.prepareAndPlay(0)
+//
+//                                playerViewModel.prepareAndPlay(firstSong.audioPath.toUri()) {
+//                                    playNextInSequence()
+//                                }
                             }
                         },
                         modifier = Modifier.size(50.dp),
@@ -367,9 +373,11 @@ fun TopScreen(
                             onClick = {
                                 currentPlaylistIndex = index
                                 songViewModel.setCurrentSong(song)
-                                playerViewModel.prepareAndPlay(song.audioPath.toUri()) {
-                                    playNextInSequence()
-                                }
+                                onlineViewModel.sendSongsToMusicService()
+                                playerViewModel.prepareAndPlay(index)
+//                                playerViewModel.prepareAndPlay(song.audioPath.toUri()) {
+//                                    playNextInSequence()
+//                                }
                             }
                         )
                     }

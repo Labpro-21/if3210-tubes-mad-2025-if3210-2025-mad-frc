@@ -89,11 +89,11 @@ fun PlayerScreen(
 ) {
     val context = LocalContext.current
 
-    val currentSong by songViewModel.current_song.collectAsState()
+    val currentSong by songViewModel.currentSong.collectAsState()
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     val isLooping by playerViewModel.isLooping.collectAsState()
-    val currentPositionSeconds by playerViewModel.currentPositionSeconds.collectAsState(initial = 0f)
     val activeAudioDevice by playerViewModel.activeAudioDevice.collectAsState()
+    val progress by playerViewModel.progress.collectAsState()
 
     LaunchedEffect(currentSong) {
         currentSong?.let { Log.d("PlayerScreen", "Current song changed to: ${it.title}") }
@@ -105,8 +105,6 @@ fun PlayerScreen(
     val coroutineScope = rememberCoroutineScope()
 
     val activeDeviceState by playerViewModel.activeAudioDevice.collectAsState()
-
-    }
 
     if (showAudioOutputSelector) {
         AudioOutputSelectorBottomSheet(

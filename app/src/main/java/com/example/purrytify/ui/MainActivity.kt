@@ -1,7 +1,6 @@
 package com.example.purrytify
 
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
@@ -13,7 +12,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.viewModels // Import untuk by viewModels
+import androidx.activity.viewModels
 import androidx.core.net.toUri
 import com.example.purrytify.data.AppDatabase
 import com.example.purrytify.repository.SongRepository
@@ -41,21 +40,21 @@ import android.content.IntentFilter
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.os.Build
+import androidx.core.content.ContextCompat
+import androidx.activity.result.contract.ActivityResultContracts
+import android.Manifest
 
 class MainActivity : ComponentActivity() {
 
     // Gunakan by viewModels untuk cara yang lebih bersih dan direkomendasikan
     private val songViewModel: SongViewModel by viewModels {
         val sm = SessionManager(applicationContext)
-        // Penting: userId harus valid saat ViewModel dibuat atau bisa menyebabkan masalah FK
-        // Kita akan mengandalkan AppNavigation untuk menangani logika jika user belum login.
-        // Untuk instance di Activity, kita bisa gunakan userId saat ini,
-        // AppNavigation akan membuat ulang VM dengan key baru jika userId berubah.
         val userIdForFactory = sm.getUserId().let { if (it <= 0) 0 else it } // Default ke 0 jika tidak valid
         Log.d("MainActivity_VM", "MainActivity creating SongViewModel with factory for userId: $userIdForFactory")
         SongViewModelFactory(
             SongRepository(AppDatabase.getDatabase(applicationContext).songDao(), AppDatabase.getDatabase(applicationContext).userDao()),
-            userIdForFactory
+            userIdForFactory,
+            application,
         )
     }
     private val playerViewModel: PlayerViewModel by viewModels {
@@ -64,7 +63,7 @@ class MainActivity : ComponentActivity() {
     private val onlineSongViewModel: OnlineSongViewModel by viewModels {
         val tm = TokenManager(applicationContext)
         val sm = SessionManager(applicationContext)
-        OnlineSongViewModelFactory(RetrofitClient.create(tm), sm)
+        OnlineSongViewModelFactory(RetrofitClient.create(tm), sm,application)
     }
 
     private val audioOutputViewModel: AudioOutputViewModel by viewModels {
@@ -201,8 +200,8 @@ class MainActivity : ComponentActivity() {
             // Pastikan ada lagu yang sedang diputar di SongViewModel
             // dan userId valid sebelum mencatat tick.
             // SongViewModel.recordPlayTick() sendiri sudah punya pengecekan internal.
-            if (songViewModel.current_song.value != null && songViewModel.current_song.value!!.id != 0) {
-                Log.d("MainActivity_Ticker", "Playback tick received from PlayerViewModel. Calling SongViewModel.recordPlayTick(). Current song: ${songViewModel.current_song.value?.title}")
+            if (songViewModel.currentSong.value != null && songViewModel.currentSong.value!!.id != 0) {
+                Log.d("MainActivity_Ticker", "Playback tick received from PlayerViewModel. Calling SongViewModel.recordPlayTick(). Current song: ${songViewModel.currentSong.value?.title}")
                 songViewModel.recordPlayTick()
             } else {
                 Log.w("MainActivity_Ticker", "Playback tick received, but SongViewModel.current_song is null or invalid. Skipping recordPlayTick.")
@@ -254,7 +253,7 @@ class MainActivity : ComponentActivity() {
     private fun handleScannedQrCode(scannedData: String) {
         Log.d("MainActivity_DeepLink", "Scanned QR Data: $scannedData")
         try {
-            val scannedUri = Uri.parse(scannedData)
+            val scannedUri = scannedData.toUri()
             if (scannedUri.scheme == "purrytify" && scannedUri.host == "song") {
                 val intent = Intent(Intent.ACTION_VIEW, scannedUri)
                 handleIntent(intent) // Panggil handleIntent yang sudah ada
@@ -295,7 +294,15 @@ class MainActivity : ComponentActivity() {
                                 songToPlay.audioPath.let { audioPathString ->
                                     try {
                                         val audioUri = audioPathString.toUri()
-                                        playerViewModel.prepareAndPlay(audioUri) {} // Gunakan instance dari Activity
+                                        if (songToPlay.isExplicitlyAdded == false){
+                                            onlineSongViewModel.sendSongsToMusicService()
+                                            playerViewModel.prepareAndPlay(onlineSongViewModel.getSongIndex(songToPlay))
+
+                                        }else{
+                                            songViewModel.sendSongsToMusicService()
+                                            playerViewModel.prepareAndPlay(songViewModel.getSongIndex(songToPlay))
+
+                                        }
                                         // TODO: Secara otomatis tampilkan UI player
                                     } catch (e: Exception) {
                                         Log.e("MainActivity_DeepLink", "Invalid audio path URI: $audioPathString", e)

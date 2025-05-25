@@ -56,10 +56,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.ui.graphics.Brush
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.purrytify.network.ApiService
+import com.example.purrytify.network.RetrofitClient
 import java.util.Date
 import com.example.purrytify.ui.components.SongSettingsModal
+import com.example.purrytify.utils.SessionManager
+import com.example.purrytify.utils.TokenManager
 import com.example.purrytify.utils.shareServerSong
 import com.example.purrytify.viewmodel.AudioOutputViewModel
+import com.example.purrytify.viewmodel.OnlineSongViewModelFactory
 
 @Composable
 fun HomeScreenContent(
@@ -444,7 +450,7 @@ fun HomeScreenWithBottomNav(
         PlayerModalBottomSheet(
             showSheet = showPlayerSheet,
             onDismiss = { showPlayerSheet = false },
-            song = songViewModel.current_song.collectAsState(initial = null).value ?: return,
+            song = songViewModel.currentSong.collectAsState(initial = null).value ?: return,
             songViewModel = songViewModel,
             onSongChange = { },
             playerViewModel = playerViewModel,
@@ -503,16 +509,15 @@ fun HomeScreenResponsive(
     val configuration = LocalConfiguration.current
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR)
     val context = LocalContext.current
-
     val newSongsFromDb by songViewModel.newSongs.collectAsState()
     val recentlyPlayedFromDb by songViewModel.recentlyPlayed.collectAsState()
-
+    val appContext = context.applicationContext as? Application
     val api = remember<ApiService> {
         RetrofitClient.create(tokenManager = TokenManager(context))
     }
     val session = remember<SessionManager> { SessionManager(context) }
 
-    val factory = remember<OnlineSongViewModelFactory> { OnlineSongViewModelFactory(api, session,appContext!!) }
+    val factory = remember<OnlineSongViewModelFactory> { OnlineSongViewModelFactory(api, session, appContext!!) }
     val onlineViewModel: OnlineSongViewModel =
         viewModel(factory = factory)
 
@@ -565,7 +570,7 @@ fun HomeScreenResponsive(
             recentlyPlayedFromDb = recentlyPlayedFromDb,
             onlineSongViewModel = onlineSongViewModel,
             songVm = songViewModel,
-            onNavigateToTop50 = onNavigateToTop50,
+            onNavigateToTopSong = onNavigateToTopSong,
             audioOutputViewModel = audioOutputViewModel
         )
     }

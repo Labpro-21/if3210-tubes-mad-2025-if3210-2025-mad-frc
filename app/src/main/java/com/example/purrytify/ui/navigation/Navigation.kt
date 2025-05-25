@@ -71,7 +71,7 @@ fun AppNavigation(
     val userId = sessionManager.getUserId() ?: 0
     val songViewModel: SongViewModel = viewModel(
         key = "songViewModel_${userId}",
-        factory = SongViewModelFactory(repository, userId, (context as ComponentActivity).application)
+        factory = SongViewModelFactory(songRepository, userId, (context as ComponentActivity).application)
     )
 
     // NetworkViewModel masih bisa dibuat di sini jika hanya digunakan oleh AppNavigation/UI
@@ -111,7 +111,6 @@ fun AppNavigation(
     }
     Log.d("AppNavigation", "Determined startDestination: $startDestination")
 
-    val api = remember { RetrofitClient.create(tokenManager) } // RetrofitClient mungkin perlu context untuk TokenManager
 
     LaunchedEffect(currentSessionUserId, tokenManager.isLoggedIn()) {
         Log.d("AppNavigation_Recompose", "Recomposing. SessionUserId: $currentSessionUserId, IsLoggedIn: ${tokenManager.isLoggedIn()}")
@@ -253,6 +252,7 @@ fun AppNavigation(
                 onlineViewModel = onlineSongViewModel,
                 songViewModel = songViewModel,
                 playerViewModel = playerViewModel,
+                audioOutputViewModel = audioOutputViewModel,
                 onBack = { navController.popBackStack() },
                 onNavigateToHome = {
                     navController.navigate(Screen.Home.route) {

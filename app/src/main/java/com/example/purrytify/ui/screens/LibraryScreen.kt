@@ -62,7 +62,7 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
     val context = LocalContext.current
 
 
-    val currentSong by songViewModel.current_song.collectAsState()
+    val currentSong by songViewModel.currentSong.collectAsState()
     val allSongs by songViewModel.songs.collectAsState()
     val likedSongs by songViewModel.likedSongs.collectAsState()
     var currentSongId by remember { mutableStateOf(0) }
@@ -256,7 +256,7 @@ fun LibraryScreenWithBottomNav(
         PlayerModalBottomSheet(
             showSheet = showPlayerSheet,
             onDismiss = { showPlayerSheet = false },
-            song = songViewModel.current_song.collectAsState(initial = null).value ?: return,
+            song = songViewModel.currentSong.collectAsState(initial = null).value ?: return,
             songViewModel = songViewModel,
             onSongChange = { newId ->
 

@@ -68,7 +68,7 @@ fun BottomPlayerSectionFromDB(
         return
     }
 
-    val currentSong by songViewModel.current_song.collectAsState()
+    val currentSong by songViewModel.currentSong.collectAsState()
 
     if (currentSong == null) {
         return

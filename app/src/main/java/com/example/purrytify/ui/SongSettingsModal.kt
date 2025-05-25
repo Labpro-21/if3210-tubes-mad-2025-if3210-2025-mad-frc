@@ -59,11 +59,11 @@ fun SongSettingsModal(
                     .padding(16.dp)
             ) {
                 if (!isOnlineSong) {
-                    val currentSong by songViewModel.current_song.collectAsState()
+                    val currentSong by songViewModel.currentSong.collectAsState()
                     InsertSongPopUp(songViewModel,currentSong)
                     ConfirmDelete(songViewModel, playerViewModel)
                 } else {
-                    val currentSong by songViewModel.current_song.collectAsState()
+                    val currentSong by songViewModel.currentSong.collectAsState()
                     DownloadSongOption(context, songViewModel,session, currentSong)
                     ShareSongOption(context, currentSong)
                 }
@@ -161,7 +161,7 @@ private fun ConfirmDelete(
     playerViewModel: PlayerViewModel
 ) {
     var showDialog by remember { mutableStateOf(false) }
-    val currentSong by songViewModel.current_song.collectAsState()
+    val currentSong by songViewModel.currentSong.collectAsState()
 
     Row(
         modifier = Modifier
