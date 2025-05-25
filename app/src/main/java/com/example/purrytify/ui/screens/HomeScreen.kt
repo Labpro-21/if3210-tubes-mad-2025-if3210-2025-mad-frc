@@ -545,8 +545,8 @@ fun HomeScreenResponsive(
             recentlyPlayedFromDb = recentlyPlayedFromDb,
             onlineSongViewModel = onlineSongViewModel,
             songVm = songViewModel,
-            onNavigateToTop50 = onNavigateToTop50,
-            audioOutputViewModel = audioOutputViewModel
+            audioOutputViewModel = audioOutputViewModel,
+            onNavigateToTopSong = onNavigateToTopSong
         )
     }
 }

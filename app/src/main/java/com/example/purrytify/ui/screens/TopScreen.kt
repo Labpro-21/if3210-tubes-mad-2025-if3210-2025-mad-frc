@@ -33,6 +33,7 @@ import com.example.purrytify.ui.components.SongSettingsModal
 import com.example.purrytify.ui.navBar.BottomNavBar
 import com.example.purrytify.utils.SessionManager
 import com.example.purrytify.utils.downloadSong
+import com.example.purrytify.viewmodel.AudioOutputViewModel
 import com.example.purrytify.viewmodel.OnlineSongViewModel
 import com.example.purrytify.viewmodel.PlayerViewModel
 import com.example.purrytify.viewmodel.SongViewModel
@@ -47,7 +48,8 @@ fun TopScreen(
     onBack: () -> Unit,
     onNavigateToHome: () -> Unit,
     onNavigateToLibrary: () -> Unit,
-    onNavigateToProfile: () -> Unit
+    onNavigateToProfile: () -> Unit,
+    audioOutputViewModel: AudioOutputViewModel
 ) {
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
@@ -145,7 +147,7 @@ fun TopScreen(
         }
     }
 
-    fun downloadAll() {
+    fun downloadAll(audioOutputViewModel: AudioOutputViewModel) {
         if (onlineSongs.isEmpty()) return
         isDownloadingAll = true
         downloadedCount = 0
@@ -174,7 +176,8 @@ fun TopScreen(
                     }
                 },
                 playerViewModel = playerViewModel,
-                sheetState = sheetState
+                sheetState = sheetState,
+                audioOutputViewModel = audioOutputViewModel
             )
         }
     }
@@ -292,7 +295,7 @@ fun TopScreen(
                 ) {
                     // Download button
                     OutlinedButton(
-                        onClick = { if (!isDownloadingAll) downloadAll() },
+                        onClick = { if (!isDownloadingAll) downloadAll(audioOutputViewModel = audioOutputViewModel) },
                         modifier = Modifier.size(50.dp),
                         shape = CircleShape,
                         colors = ButtonDefaults.outlinedButtonColors(
