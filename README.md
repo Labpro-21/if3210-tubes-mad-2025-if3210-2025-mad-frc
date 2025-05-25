@@ -32,6 +32,7 @@ Smile for the camera! here's some shots we've prepared so you can see what we've
 | ------------------------------------------------------- | --------------------------------------------------------------------- |
 | [Pradipta Rafa Mahesa](https://github.com/Rapa285)      | - Notifications                                                       |
 |                                                         | - Responsiveness                                                      |
+|                                                         | - Merging and Conflict Repairman                                      |
 | [Axel Santadi Warih](https://github.com/AxelSantadi)    | - Sound Capsule                                                       |
 |                                                         | - Share song with QR & URL                                            |
 |                                                         | - Audio Routing                                                       |
