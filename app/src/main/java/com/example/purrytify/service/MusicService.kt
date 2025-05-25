@@ -29,6 +29,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
+import androidx.compose.runtime.collectAsState
+import kotlinx.coroutines.delay
 
 
 class MusicService : Service() {
@@ -170,11 +172,14 @@ class MusicService : Service() {
                     MusicServiceManager.updateSongProgress(progress/1000)
                     updateNotification()
                 }
+
                 progressHandler?.postDelayed(this, 1000) // 1 detik sekali
             }
         }
         progressHandler?.post(progressRunnable!!)
     }
+
+
 
     private fun toggleLoop(){
         exoPlayer.repeatMode = if (!isLooping) {

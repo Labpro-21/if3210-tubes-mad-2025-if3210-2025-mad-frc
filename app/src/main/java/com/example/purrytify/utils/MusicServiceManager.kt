@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import com.example.purrytify.model.Song  // sesuaikan path model Song-mu
+import com.example.purrytify.viewmodel.SongViewModel
 
 object MusicServiceManager {
     private val _currentSong = MutableStateFlow<Song?>(null)
@@ -18,6 +19,10 @@ object MusicServiceManager {
 
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying = _isPlaying.asStateFlow()
+
+    private val _songViewModel = MutableStateFlow<SongViewModel?>(null)
+    val songViewModel = _songViewModel.asStateFlow()
+
 
     fun updateCurrentSong(song: Song?) {
         _currentSong.value = song
@@ -37,5 +42,9 @@ object MusicServiceManager {
     fun updateIsPlaying(isPlaying: Boolean) {
         _isPlaying.value = isPlaying
         Log.d("MusicServiceManager", "Current song is looping : $isPlaying")
+    }
+
+    fun updateSongViewModel(songViewModel: SongViewModel){
+        _songViewModel.value = songViewModel
     }
 }

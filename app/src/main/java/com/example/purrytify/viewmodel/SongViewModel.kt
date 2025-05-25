@@ -8,6 +8,7 @@ import com.example.purrytify.model.PlayHistory
 import com.example.purrytify.model.Song
 import com.example.purrytify.repository.SongRepository
 import com.example.purrytify.utils.MusicServiceManager
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Date
@@ -28,12 +29,13 @@ class SongViewModel(
     val likedSongs: StateFlow<List<Song>> = _liked_songs.asStateFlow()
     val newSongs: StateFlow<List<Song>> = _new_songs.asStateFlow()
     val recentlyPlayed: StateFlow<List<Song>> = _recently_played.asStateFlow()
-
+    val isPlaying = MusicServiceManager.isPlaying
     var currentSong: StateFlow<Song?> = MusicServiceManager.currentSong
 
 
     init {
         loadSongs(this.userId)
+        observeIsPlaying()
     }
 
     fun addSong(song: Song) {
@@ -250,6 +252,19 @@ class SongViewModel(
                 }
             } ?: run {
                 Log.w("SongViewModel_recordPlayTick", "Skipped recording play tick because currentSong is null.")
+            }
+        }
+    }
+
+    private fun observeIsPlaying(){
+        viewModelScope.launch {
+            isPlaying.collect { playing ->
+                if (playing) {
+                    while (isPlaying.value) {
+                        recordPlayTick()
+                        delay(1000L) // delay 1 detik antar tick
+                    }
+                }
             }
         }
     }
