@@ -52,12 +52,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.purrytify.network.ApiService
-import com.example.purrytify.network.RetrofitClient
-import com.example.purrytify.utils.TokenManager
-import com.example.purrytify.utils.SessionManager
-import com.example.purrytify.viewmodel.OnlineSongViewModelFactory
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.ui.graphics.Brush
@@ -65,6 +59,7 @@ import java.util.Date
 import com.example.purrytify.ui.components.SongSettingsModal
 import com.example.purrytify.ui.components.TopModalBottomSheet
 import com.example.purrytify.utils.shareServerSong
+import com.example.purrytify.viewmodel.AudioOutputViewModel
 
 @Composable
 fun HomeScreenContent(
@@ -441,7 +436,8 @@ fun HomeScreenWithBottomNav(
     recentlyPlayedFromDb: List<Song>,
     onlineViewModel: OnlineSongViewModel,
     songVm: SongViewModel,
-    onNavigateToTop50: (String) -> Unit
+    onNavigateToTop50: (String) -> Unit,
+    audioOutputViewModel: AudioOutputViewModel
 ) {
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     var showPlayerSheet by remember { mutableStateOf(false) }
@@ -458,7 +454,8 @@ fun HomeScreenWithBottomNav(
             songViewModel = songViewModel,
             onSongChange = { },
             playerViewModel = playerViewModel,
-            sheetState = sheetState
+            sheetState = sheetState,
+            audioOutputViewModel = audioOutputViewModel
         )
     }
 
@@ -505,7 +502,8 @@ fun HomeScreenResponsive(
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
     onNavigateToTop50: (String) -> Unit = {},
-    onlineViewModel: OnlineSongViewModel
+    onlineViewModel: OnlineSongViewModel,
+    audioOutputViewModel: AudioOutputViewModel
 ) {
     val configuration = LocalConfiguration.current
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR)
@@ -549,7 +547,8 @@ fun HomeScreenResponsive(
                 recentlyPlayedFromDb = recentlyPlayedFromDb,
                 onlineViewModel = onlineViewModel,
                 songVm = songViewModel,
-                onNavigateToTop50 = onNavigateToTop50
+                onNavigateToTop50 = onNavigateToTop50,
+                audioOutputViewModel = audioOutputViewModel
             )
         }
     } else {
@@ -562,7 +561,8 @@ fun HomeScreenResponsive(
             recentlyPlayedFromDb = recentlyPlayedFromDb,
             onlineViewModel = onlineViewModel,
             songVm = songViewModel,
-            onNavigateToTop50 = onNavigateToTop50
+            onNavigateToTop50 = onNavigateToTop50,
+            audioOutputViewModel = audioOutputViewModel
         )
     }
 }

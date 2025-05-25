@@ -23,6 +23,7 @@ import com.example.purrytify.repository.UserRepository
 import com.example.purrytify.ui.screens.HomeScreenResponsive
 import com.example.purrytify.ui.screens.TimeListenedScreen
 import com.example.purrytify.utils.SessionManager
+import com.example.purrytify.viewmodel.AudioOutputViewModel
 import com.example.purrytify.viewmodel.PlayerViewModel // Import classnya
 import com.example.purrytify.viewmodel.OnlineSongViewModel // Import classnya
 import com.example.purrytify.viewmodel.ProfileViewModel
@@ -44,7 +45,8 @@ fun AppNavigation(
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
     onlineSongViewModel: OnlineSongViewModel,
-    onScanQrClicked: () -> Unit
+    onScanQrClicked: () -> Unit,
+    audioOutputViewModel: AudioOutputViewModel
 ) {
     val context = LocalContext.current
     val activity = LocalContext.current as ComponentActivity
@@ -123,7 +125,8 @@ fun AppNavigation(
                     onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                     songViewModel = songViewModel, // Gunakan instance yang diteruskan
                     playerViewModel = playerViewModel, // Gunakan instance yang diteruskan
-                    onlineViewModel = onlineSongViewModel // Gunakan instance yang diteruskan
+                    onlineViewModel = onlineSongViewModel, // Gunakan instance yang diteruskan,
+                    audioOutputViewModel = audioOutputViewModel // Gunakan instance yang diteruskan
                 )
             }
         }
@@ -143,11 +146,12 @@ fun AppNavigation(
              else {
                 Log.d("AppNavigation_Library", "Displaying Library for user $librarySessionUserId. SongVM hash: ${System.identityHashCode(songViewModel)}")
                 LibraryScreenWithBottomNav(
-                    onBack = { navController.popBackStack() },
-                    songViewModel = songViewModel, // Gunakan instance yang diteruskan
                     onNavigateToHome = { navController.navigate(Screen.Home.route) },
-                    onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                    playerViewModel = playerViewModel, // Gunakan instance yang diteruskan
+                    onNavigateToProfile = { navController.navigate(Screen.Profile.route) }, // Gunakan instance yang diteruskan
+                    onBack = { navController.popBackStack() },
+                    songViewModel = songViewModel,
+                    playerViewModel = playerViewModel, // Gunakan instance yang diteruskan,
+                    audioOutputViewModel = audioOutputViewModel, // Gunakan instance yang diteruskan
                 )
             }
         }
