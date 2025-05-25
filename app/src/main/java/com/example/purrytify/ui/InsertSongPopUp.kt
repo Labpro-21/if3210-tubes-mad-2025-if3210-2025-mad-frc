@@ -79,7 +79,7 @@ fun InsertSongPopUp(
                     }
                 }
 
-                // Autofill the selected URIs if song is provided
+
                 LaunchedEffect(song) {
                     song?.let {
                         selectedAudioUri = Uri.parse(it.audioPath)
@@ -155,7 +155,7 @@ fun InsertSongPopUp(
                             artist = artist,
                             duration = duration,
                             songViewModel = songViewModel,
-                            song = song, // Passing the song object to handle edit or add
+                            song = song,
                             onComplete = { showSheet = false }
                         )
                     }, modifier = Modifier.width(150.dp)) {
@@ -178,9 +178,9 @@ fun InsertSongPopUp(
             }
         }
     }else{
-//        IconButton(onClick = { showSheet = true }) {
-//            Icon(Icons.Default.Edit, contentDescription = "Edit")
-//        }
+
+
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -195,41 +195,41 @@ fun InsertSongPopUp(
     }
 }
 
-//fun handleSaveSong(
-//    context: Context,
-//    selectedAudioUri: Uri?,
-//    selectedPhotoUri: Uri?,
-//    title: String,
-//    artist: String,
-//    duration: Long,
-//    songViewModel: SongViewModel,
-//    song: Song? = null, // Parameter song untuk edit
-//    onComplete: () -> Unit
-//) {
-//    if (selectedAudioUri != null) {
-//        val sessionManager = SessionManager(context)
-//        val currentUserId = sessionManager.getUserId()
-//        val songToSave = Song(
-//            id = song?.id ?: 0, // Gunakan ID dari song yang ada atau 0 untuk lagu baru
-//            title = title,
-//            artist = artist,
-//            duration = duration,
-//            artworkPath = selectedPhotoUri.toString(),
-//            audioPath = selectedAudioUri.toString(),
-//            lastPlayed = Date(),
-//            userId = currentUserId,
-//
-//        )
-//
-//        if (song != null) {
-//            songViewModel.updateSong(songToSave) // Jika song ada, update
-//        } else {
-//            songViewModel.addSong(songToSave) // Jika song null, tambahkan baru
-//        }
-//    }
-//
-//    onComplete() // misalnya untuk menutup sheet atau update UI
-//}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 @Composable
@@ -305,7 +305,7 @@ fun UploadBoxWithButton(
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         UploadBoxDisplay(fileUri = selectedUri, text = text, mimeType = mimeType)
         Spacer(modifier = Modifier.height(4.dp))
-        Button(onClick = { launcher.launch(arrayOf(mimeType)) }) { // array karena OpenDocument
+        Button(onClick = { launcher.launch(arrayOf(mimeType)) }) {
             Text("Choose File")
         }
     }
@@ -331,18 +331,18 @@ fun handleSaveSong(
             title = if (title.isBlank()) "Unnamed Song" else title,
             artist = if (artist.isBlank()) "Unnamed Artist" else artist,
             duration = duration,
-            artworkPath = selectedPhotoUri?.toString() ?: song?.artworkPath, // Gunakan URI baru jika ada, atau yang lama jika edit
-            audioPath = selectedAudioUri.toString(), // Untuk audioPath, selalu gunakan yang baru jika ada (atau yang lama jika tidak dipilih ulang saat edit)
-            addedDate = song?.addedDate ?: Date(), // Jika baru, set tanggal sekarang. Jika edit, pertahankan tanggal lama.
-            lastPlayed = song?.lastPlayed, // Pertahankan lastPlayed jika edit
-            liked = song?.liked ?: false, // Pertahankan status liked jika edit
+            artworkPath = selectedPhotoUri?.toString() ?: song?.artworkPath,
+            audioPath = selectedAudioUri.toString(),
+            addedDate = song?.addedDate ?: Date(),
+            lastPlayed = song?.lastPlayed,
+            liked = song?.liked ?: false,
             userId = currentUserId,
-            isExplicitlyAdded = true // Selalu true karena dari UI penambahan/edit manual
+            isExplicitlyAdded = true
         )
 
-        if (song != null) { // Mode Edit
+        if (song != null) {
             songViewModel.updateSong(songToSave)
-        } else { // Mode Tambah Baru
+        } else {
             songViewModel.addSong(songToSave)
         }
     }

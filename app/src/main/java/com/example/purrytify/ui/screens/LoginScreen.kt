@@ -71,14 +71,14 @@ fun LoginScreen(
     val focusManager = LocalFocusManager.current
 
 
-    // State untuk error message di tiap field
+
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
 
-    // Untuk toggle tampilan password
+
     var passwordVisible by remember { mutableStateOf(false) }
 
-    // Jika login sukses, simpan token dan panggil callback
+
     LaunchedEffect(loginResult) {
         loginResult?.let { result ->
             if (result.isSuccess) {
@@ -88,7 +88,7 @@ fun LoginScreen(
                         loginResponse.refreshToken
                     )
                     if (!userRepository.isEmailRegistered(uiState.email)) {
-                        // Jika belum, buat user baru; sesuaikan field sesuai model User
+
                         val newUser = User(
                             email = uiState.email,
                             songs = 0,
@@ -102,12 +102,12 @@ fun LoginScreen(
                     sessionManager.saveSession(userId)
                     onLoginSuccess(loginResponse.accessToken)
                     viewModel.clearLoginResult()
-                    // Bersihkan error jika ada
+
                     emailError = null
                     passwordError = null
                 }
             } else {
-                // Jika login gagal, periksa pesan error
+
                 val errorText = result.exceptionOrNull()?.message ?: "Unknown error"
                 when {
                     errorText.contains("400", ignoreCase = true) ->
@@ -125,7 +125,7 @@ fun LoginScreen(
                 .fillMaxSize()
                 .background(Color(0xFF121212))
                 .padding(paddingValues)
-                // Agar konten menyesuaikan dengan keyboard:
+
                 .imePadding()
                 .verticalScroll(rememberScrollState())
         ) {
@@ -147,7 +147,7 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Slogan/Jargon
+
                 Text(
                     text = "Millions of Songs. Only on Purritify.",
                     style = TextStyle(
@@ -161,12 +161,12 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Input Email
+
                 OutlinedTextField(
                     value = uiState.email,
                     onValueChange = {
                         viewModel.updateEmail(it)
-                        emailError = null  // reset error saat berubah
+                        emailError = null
                     },
                     label = { Text("Email", color = Color.White) },
                     placeholder = { Text("Email", color = Color(0xFFB3B3B3)) },
@@ -186,7 +186,7 @@ fun LoginScreen(
                         focusManager.moveFocus(FocusDirection.Down)
                     })
                 )
-                // Tampilkan error untuk email jika ada
+
                 emailError?.let { errorMsg ->
                     Text(
                         text = errorMsg,
@@ -200,7 +200,7 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Input Password dengan toggle icon
+
                 OutlinedTextField(
                     value = uiState.password,
                     onValueChange = {
@@ -235,7 +235,7 @@ fun LoginScreen(
                         viewModel.login()
                     })
                 )
-                // Tampilkan error untuk password jika ada
+
                 passwordError?.let { errorMsg ->
                     Text(
                         text = errorMsg,
@@ -249,7 +249,7 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Tombol Login
+
                 Button(
                     onClick = { viewModel.login() },
                     modifier = Modifier.fillMaxWidth(),

@@ -18,8 +18,8 @@ import java.util.Date
     ]
 )
 data class Song(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0, // ID Lokal
-    @ColumnInfo(name = "server_id", index = true) val serverId: Int? = null, // ID Asli dari Server (nullable)
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    @ColumnInfo(name = "server_id", index = true) val serverId: Int? = null,
     @ColumnInfo(name="title") val title: String="Unnamed Song",
     @ColumnInfo(name="artist") val artist: String="Unnamed Artist",
     @ColumnInfo(name="duration") val duration: Long,

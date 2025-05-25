@@ -18,10 +18,10 @@ class ProfileRepository(private val tokenManager: TokenManager) {
 
     private val api: ApiService = RetrofitClient.create(tokenManager)
 
-    // Fungsi fetchUserProfile menggunakan RetrofitClient yang sudah diciptakan dengan TokenAuthenticator, sehingga header Authorization ditambahkan otomatis
+
     suspend fun fetchUserProfile(): Result<UserProfile> {
         return try {
-            // Catatan: interface ApiService harus diupdate agar getUserProfile() tidak lagi membutuhkan parameter header
+
             val response = RetrofitClient.create(tokenManager).getUserProfile()
             if (response.isSuccessful) {
                 response.body()?.let { userProfile ->
@@ -42,10 +42,10 @@ class ProfileRepository(private val tokenManager: TokenManager) {
     photoUri: Uri?,
     context: Context
     ): Result<UserProfile> {
-        // prepare location part
+
         val locPart = location?.toRequestBody("text/plain".toMediaType())
 
-        // prepare photo part
+
         val photoPart = photoUri?.let { uri ->
             val stream = context.contentResolver.openInputStream(uri)!!
             val temp = File.createTempFile("profile", ".jpg", context.cacheDir)

@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
-// Membuat DataStore instance
+
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "player_prefs")
 
 @Singleton
@@ -26,40 +26,40 @@ class PlayerPreferencesRepository @Inject constructor(
     private val isLoopingKey = booleanPreferencesKey("is_looping")
     private val isShufflingKey = booleanPreferencesKey("is_shuffling")
 
-    // Save current song (URI or song ID)
+
     suspend fun saveCurrentSong(songUri: String) {
         dataStore.edit { preferences ->
             preferences[currentSongKey] = songUri
         }
     }
 
-    // Get current song (URI or song ID)
+
     val currentSong: Flow<String?> = dataStore.data
         .map { preferences ->
             preferences[currentSongKey]
         }
 
-    // Save looping status
+
     suspend fun saveLooping(isLooping: Boolean) {
         dataStore.edit { preferences ->
             preferences[isLoopingKey] = isLooping
         }
     }
 
-    // Get looping status
+
     val isLooping: Flow<Boolean> = dataStore.data
         .map { preferences ->
             preferences[isLoopingKey] ?: false
         }
 
-    // Save shuffling status
+
     suspend fun saveShuffling(isShuffling: Boolean) {
         dataStore.edit { preferences ->
             preferences[isShufflingKey] = isShuffling
         }
     }
 
-    // Get shuffling status
+
     val isShuffling: Flow<Boolean> = dataStore.data
         .map { preferences ->
             preferences[isShufflingKey] ?: false

@@ -33,14 +33,14 @@ fun MapPicker(
         factory = {
             MapView(ctx).apply {
                 setTileSource(TileSourceFactory.MAPNIK)
-                setMultiTouchControls(true)                // enable pinch & tap
+                setMultiTouchControls(true)
                 controller.setZoom(3.0)
                 controller.setCenter(GeoPoint(0.0, 0.0))
 
-                // overlay utk menangani tap
+
                 overlays.add(object : MapEventsOverlay(object : MapEventsReceiver {
                     override fun singleTapConfirmedHelper(p: GeoPoint): Boolean {
-                        // clear & add marker
+
                         overlays.filterIsInstance<Marker>().forEach { overlays.remove(it) }
                         overlays.add(Marker(this@apply).apply {
                             position = p
@@ -48,7 +48,7 @@ fun MapPicker(
                         })
                         invalidate()
 
-                        // reverse-geocode utk countryCode
+
                         val countryCode = Geocoder(ctx, Locale.getDefault())
                            .getFromLocation(p.latitude, p.longitude, 1)
                            ?.firstOrNull()

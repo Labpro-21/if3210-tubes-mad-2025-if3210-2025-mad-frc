@@ -33,7 +33,7 @@ fun AudioOutputSelectorBottomSheet(
     onDismiss: () -> Unit
 ) {
     val availableDevices by audioOutputViewModel.availableOutputDevices.collectAsState()
-    val activeDevice by playerViewModel.activeAudioDevice.collectAsState() // Dari PlayerViewModel
+    val activeDevice by playerViewModel.activeAudioDevice.collectAsState()
 
     LaunchedEffect(Unit) {
         audioOutputViewModel.loadAvailableOutputDevices()
@@ -41,7 +41,7 @@ fun AudioOutputSelectorBottomSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true) // Bisa disesuaikan
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ) {
         Column(
             modifier = Modifier
@@ -66,7 +66,7 @@ fun AudioOutputSelectorBottomSheet(
                             isSelected = device.id == activeDevice?.id,
                             onDeviceSelected = {
                                 playerViewModel.setPreferredAudioOutput(it)
-                                onDismiss() // Tutup sheet setelah memilih
+                                onDismiss()
                             }
                         )
                     }
@@ -120,7 +120,7 @@ fun getDeviceIcon(deviceType: Int): ImageVector {
     return when (deviceType) {
         AudioDeviceInfo.TYPE_BLUETOOTH_A2DP, AudioDeviceInfo.TYPE_BLUETOOTH_SCO -> Icons.Filled.Bluetooth
         AudioDeviceInfo.TYPE_WIRED_HEADPHONES, AudioDeviceInfo.TYPE_WIRED_HEADSET -> Icons.Filled.Headset
-        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, AudioDeviceInfo.TYPE_BUILTIN_EARPIECE -> Icons.Filled.Speaker // Atau ikon yang lebih spesifik
-        else -> Icons.Filled.Speaker // Default
+        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, AudioDeviceInfo.TYPE_BUILTIN_EARPIECE -> Icons.Filled.Speaker
+        else -> Icons.Filled.Speaker
     }
 }

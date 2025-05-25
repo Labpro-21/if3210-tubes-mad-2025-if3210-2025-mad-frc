@@ -34,7 +34,7 @@ interface UserDao {
     @Query("SELECT EXISTS(SELECT 1 FROM user WHERE email = :email)")
     suspend fun isEmailRegistered(email: String): Boolean
 
-//    get liked songs
+
     @Query("SELECT likedSongs FROM user WHERE id = :userId")
     suspend fun getLikedSongs(userId: Int): Int?
 
