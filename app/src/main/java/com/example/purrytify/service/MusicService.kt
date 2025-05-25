@@ -33,6 +33,11 @@ import com.example.purrytify.utils.FormatingManager
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.MediaNotification
+import com.example.purrytify.utils.BitmapUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 
 class MusicService : Service() {
@@ -52,6 +57,7 @@ class MusicService : Service() {
         get() = exoPlayer.currentMediaItemIndex
     private lateinit var mediaSession: MediaSession
     private var mediaList: List<MediaItem> = emptyList()
+    private val serviceScope = CoroutineScope(Dispatchers.Main + Job())
 
     override fun onCreate() {
         super.onCreate()
@@ -77,7 +83,10 @@ class MusicService : Service() {
                 }
             }
         })
-        startForeground(1, createNotification())
+        serviceScope.launch {
+            val notification = createNotification()
+            startForeground(1, notification)
+        }
         startProgressUpdates()
     }
 
@@ -170,7 +179,7 @@ class MusicService : Service() {
     }
 
     @OptIn(UnstableApi::class)
-    private fun createNotification(): Notification {
+    private suspend fun createNotification(): Notification {
 //        Log.d("MusicService", "CreatingNotification")
 
 
@@ -195,6 +204,7 @@ class MusicService : Service() {
 
         return NotificationCompat.Builder(this, MyApp.CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
+            .setLargeIcon(BitmapUtils.getBitmapFromString(this,song.artworkPath!!))
             .setContentTitle(song.title)
             .setContentText(song.artist)
             .setStyle(
@@ -209,9 +219,11 @@ class MusicService : Service() {
 
 
     private fun updateNotification() {
-        val notification = createNotification()
-        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager
-        notificationManager.notify(1, notification)
+        serviceScope.launch {
+            val notification = createNotification()
+            val notificationManager = getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager
+            notificationManager.notify(1, notification)
+        }
     }
 
     private fun skipNext() {
