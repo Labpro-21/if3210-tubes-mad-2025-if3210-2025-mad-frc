@@ -1,8 +1,8 @@
 package com.example.purrytify.viewmodel
 
 import android.app.Application
+import android.media.AudioDeviceInfo // Pastikan import ini benar
 import android.net.Uri
-import androidx.annotation.OptIn
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.AudioAttributes
@@ -10,8 +10,6 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import androidx.media3.common.util.Log
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.purrytify.data.AppDatabase
 import com.example.purrytify.model.PlayHistory
@@ -24,15 +22,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.util.Date
-import javax.inject.Inject
+import android.util.Log
+import androidx.annotation.OptIn
+import androidx.media3.common.util.UnstableApi
 
-@HiltViewModel
-class PlayerViewModel @Inject constructor(
-    private val context: Application
-) : AndroidViewModel(context) {
-    private val _exoPlayer: ExoPlayer
-    // val exoPlayer: ExoPlayer get() = _exoPlayer // Jika ingin diekspos
+class PlayerViewModel(application: Application) : AndroidViewModel(application) {
+    private val _exoPlayer = ExoPlayer.Builder(application).build()
 
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
@@ -45,10 +40,15 @@ class PlayerViewModel @Inject constructor(
     private var currentPlayerListener: Player.Listener? = null // Untuk me-manage listener    private var progressUpdateJob: Job? = null
     private var onSongCompleteCallback: (() -> Unit)? = null
 
-    var onPlaybackSecondTick: (() -> Unit)? = null // Callback untuk SongViewModel
+    var onPlaybackSecondTick: (() -> Unit)? = null
 
     private val _shouldClosePlayerSheet = MutableStateFlow(false)
-    val shouldClosePlayerSheet: StateFlow<Boolean> = _shouldClosePlayerSheet.asStateFlow() // Pastikan expose sebagai StateFlow
+    val shouldClosePlayerSheet: StateFlow<Boolean> = _shouldClosePlayerSheet.asStateFlow()
+
+    // State ini sekarang akan lebih mencerminkan perangkat yang *diminta*
+    // atau perangkat default setelah event sistem (seperti headset dicabut).
+    private val _activeAudioDevice = MutableStateFlow<AudioDeviceInfo?>(null)
+    val activeAudioDevice: StateFlow<AudioDeviceInfo?> = _activeAudioDevice.asStateFlow()
 
     val currentPositionSeconds: StateFlow<Float> = _progress.asStateFlow()
 
@@ -67,6 +67,7 @@ class PlayerViewModel @Inject constructor(
                 .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
                 .build()
             setAudioAttributes(audioAttributes, true)
+
         }
 
         viewModelScope.launch {
@@ -183,7 +184,7 @@ class PlayerViewModel @Inject constructor(
             if (_exoPlayer.playbackState == Player.STATE_IDLE && _exoPlayer.currentMediaItem != null) {
                 _exoPlayer.prepare()
             }
-            if (_exoPlayer.playbackState == Player.STATE_ENDED) { // Jika lagu sudah selesai dan ingin play lagi
+            if (_exoPlayer.playbackState == Player.STATE_ENDED) {
                 _exoPlayer.seekTo(0)
             }
             _exoPlayer.play()
@@ -243,5 +244,54 @@ class PlayerViewModel @Inject constructor(
             _exoPlayer.repeatMode = Player.REPEAT_MODE_OFF
             Log.d("PlayerVM", "Looping disabled: REPEAT_MODE_OFF")
         }
+    }
+
+    @OptIn(UnstableApi::class)
+    fun setPreferredAudioOutput(deviceInfo: AudioDeviceInfo?) {
+        try {
+            _exoPlayer.setPreferredAudioDevice(deviceInfo)
+            // Karena kita tidak bisa mendapatkan konfirmasi dari ExoPlayer melalui listener API lama,
+            // kita perbarui _activeAudioDevice secara optimistis.
+            _activeAudioDevice.value = deviceInfo
+            Log.d("PlayerViewModel", "Set preferred audio output to: ${deviceInfo?.productName ?: "System Default"}. Active device state updated to this.")
+        } catch (e: Exception) {
+            Log.e("PlayerViewModel", "Error setting preferred audio device", e)
+            // Jika gagal, mungkin _activeAudioDevice harus di-reset ke state sebelumnya atau null.
+            // Untuk sekarang, kita biarkan _activeAudioDevice seperti yang di-set (optimis).
+        }
+    }
+
+    // Fungsi ini bisa dipanggil dari MainActivity (BroadcastReceiver)
+    // saat headset dicabut, misalnya.
+    @OptIn(UnstableApi::class)
+    fun revertToDefaultAudioOutput() {
+        _exoPlayer.setPreferredAudioDevice(null) // Minta ExoPlayer kembali ke default
+        _activeAudioDevice.value = null // Set state kita ke null (mewakili speaker internal/default)
+        Log.d("PlayerViewModel", "Reverted to default audio output. Active device state set to null.")
+    }
+
+    // Fungsi untuk memilih perangkat output audio
+    @OptIn(UnstableApi::class)
+    fun setPreferredAudioOutput(deviceInfo: AudioDeviceInfo?) {
+        try {
+            _exoPlayer.setPreferredAudioDevice(deviceInfo)
+            // Karena kita tidak bisa mendapatkan konfirmasi dari ExoPlayer melalui listener API lama,
+            // kita perbarui _activeAudioDevice secara optimistis.
+            _activeAudioDevice.value = deviceInfo
+            Log.d("PlayerViewModel", "Set preferred audio output to: ${deviceInfo?.productName ?: "System Default"}. Active device state updated to this.")
+        } catch (e: Exception) {
+            Log.e("PlayerViewModel", "Error setting preferred audio device", e)
+            // Jika gagal, mungkin _activeAudioDevice harus di-reset ke state sebelumnya atau null.
+            // Untuk sekarang, kita biarkan _activeAudioDevice seperti yang di-set (optimis).
+        }
+    }
+
+    // Fungsi ini bisa dipanggil dari MainActivity (BroadcastReceiver)
+    // saat headset dicabut, misalnya.
+    @OptIn(UnstableApi::class)
+    fun revertToDefaultAudioOutput() {
+        _exoPlayer.setPreferredAudioDevice(null) // Minta ExoPlayer kembali ke default
+        _activeAudioDevice.value = null // Set state kita ke null (mewakili speaker internal/default)
+        Log.d("PlayerViewModel", "Reverted to default audio output. Active device state set to null.")
     }
 }

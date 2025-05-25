@@ -35,6 +35,7 @@ import com.example.purrytify.ui.screens.HomeScreenResponsive
 import com.example.purrytify.ui.screens.NoInternetDialog
 import com.example.purrytify.ui.screens.TimeListenedScreen
 import com.example.purrytify.utils.SessionManager
+import com.example.purrytify.viewmodel.AudioOutputViewModel
 import com.example.purrytify.viewmodel.PlayerViewModel // Import classnya
 import com.example.purrytify.viewmodel.OnlineSongViewModel // Import classnya
 import com.example.purrytify.ui.screens.TopScreen
@@ -60,7 +61,8 @@ fun AppNavigation(
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
     onlineSongViewModel: OnlineSongViewModel,
-    onScanQrClicked: () -> Unit
+    onScanQrClicked: () -> Unit,
+    audioOutputViewModel: AudioOutputViewModel
 ) {
     val context = LocalContext.current
     val activity = LocalContext.current as ComponentActivity
@@ -177,7 +179,8 @@ fun AppNavigation(
                         onlineSongViewModel = onlineSongViewModel,
                         onNavigateToTopSong = { chartType ->
                             navController.navigate("top/$chartType")
-                        }
+                        },
+                        audioOutputViewModel = audioOutputViewModel
                     )
                 }
             }

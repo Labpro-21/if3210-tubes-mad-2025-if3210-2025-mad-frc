@@ -52,12 +52,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.purrytify.network.ApiService
-import com.example.purrytify.network.RetrofitClient
-import com.example.purrytify.utils.TokenManager
-import com.example.purrytify.utils.SessionManager
-import com.example.purrytify.viewmodel.OnlineSongViewModelFactory
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.setValue
@@ -65,6 +59,7 @@ import androidx.compose.ui.graphics.Brush
 import java.util.Date
 import com.example.purrytify.ui.components.SongSettingsModal
 import com.example.purrytify.utils.shareServerSong
+import com.example.purrytify.viewmodel.AudioOutputViewModel
 
 @Composable
 fun HomeScreenContent(
@@ -442,6 +437,7 @@ fun HomeScreenWithBottomNav(
     songVm: SongViewModel,
     onNavigateToTopSong: (String) -> Unit,
     isConnected: Boolean,
+    audioOutputViewModel: AudioOutputViewModel
 ) {
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     var showPlayerSheet by remember { mutableStateOf(false) }
@@ -459,7 +455,8 @@ fun HomeScreenWithBottomNav(
             onSongChange = { },
             playerViewModel = playerViewModel,
             sheetState = sheetState,
-            isOnline = isConnected
+            isOnline = isConnected,
+            audioOutputViewModel = audioOutputViewModel
         )
     }
 
@@ -510,6 +507,7 @@ fun HomeScreenResponsive(
     onlineSongViewModel: OnlineSongViewModel,
     onNavigateToTopSong: (String) -> Unit = {},
     isConnected: Boolean,
+    audioOutputViewModel: AudioOutputViewModel
 ) {
     val configuration = LocalConfiguration.current
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR)
@@ -555,6 +553,7 @@ fun HomeScreenResponsive(
                 songVm = songViewModel,
                 onNavigateToTopSong = onNavigateToTopSong,
                 isConnected = isConnected,
+                audioOutputViewModel = audioOutputViewModel
             )
         }
     } else {
@@ -569,6 +568,7 @@ fun HomeScreenResponsive(
             songVm = songViewModel,
             onNavigateToTopSong = onNavigateToTopSong,
             isConnected = isConnected,
+            audioOutputViewModel = audioOutputViewModel
 
         )
     }

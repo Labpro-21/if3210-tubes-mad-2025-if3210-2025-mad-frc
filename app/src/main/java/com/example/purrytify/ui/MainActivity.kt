@@ -1,5 +1,7 @@
 package com.example.purrytify
 
+import android.annotation.SuppressLint
+import android.bluetooth.BluetoothDevice
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -10,7 +12,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.viewModels // Import untuk by viewModels
-import androidx.lifecycle.ViewModelProvider // Bisa juga pakai ini
 import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import com.example.purrytify.data.AppDatabase
@@ -29,10 +30,17 @@ import com.example.purrytify.utils.TokenManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 import javax.inject.Inject
+import com.example.purrytify.viewmodel.AudioOutputViewModel
+import com.example.purrytify.viewmodel.AudioOutputViewModelFactory
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.IntentFilter
+import android.media.AudioDeviceInfo
+import android.media.AudioManager
+import android.os.Build
 
 class MainActivity : ComponentActivity() {
     // Gunakan by viewModels untuk cara yang lebih bersih dan direkomendasikan
@@ -58,7 +66,84 @@ class MainActivity : ComponentActivity() {
         OnlineSongViewModelFactory(RetrofitClient.create(tm), sm)
     }
 
+    private val audioOutputViewModel: AudioOutputViewModel by viewModels {
+        AudioOutputViewModelFactory(application)
+    }
+
     private lateinit var qrScanLauncher: ActivityResultLauncher<ScanOptions>
+
+    private val audioDeviceChangeReceiver = object : BroadcastReceiver() {
+        @SuppressLint("MissingPermission") // Pastikan permission BLUETOOTH_CONNECT sudah dihandle
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val action = intent?.action
+            Log.d("MainActivityAudioReceiver", "Received action: $action")
+
+            when (action) {
+                AudioManager.ACTION_AUDIO_BECOMING_NOISY -> {
+                    Log.d("MainActivityAudioReceiver", "ACTION_AUDIO_BECOMING_NOISY: Headset disconnected.")
+                    Toast.makeText(context, "Output disconnected, switching to speaker.", Toast.LENGTH_SHORT).show()
+                    playerViewModel.revertToDefaultAudioOutput()
+                    audioOutputViewModel.loadAvailableOutputDevices()
+                }
+                BluetoothDevice.ACTION_ACL_CONNECTED -> {
+                    val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
+                    } else {
+                        @Suppress("DEPRECATION")
+                        intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE) as BluetoothDevice?
+                    }
+                    device?.let { connectedBluetoothDevice ->
+                        Log.d("MainActivityAudioReceiver", "ACTION_ACL_CONNECTED: ${connectedBluetoothDevice.name}")
+                        // Sistem mungkin otomatis mengganti output. Kita coba update ViewModel.
+                        // Pertama, refresh daftar perangkat yang tersedia
+                        audioOutputViewModel.loadAvailableOutputDevices()
+
+                        // Kemudian, cari AudioDeviceInfo yang sesuai dengan BluetoothDevice yang baru terhubung
+                        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                        val allOutputDevices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+                        val correspondingAudioDevice = allOutputDevices.find { audioDevInfo ->
+                            // Mencocokkan berdasarkan alamat MAC atau nama jika alamat tidak tersedia/cocok
+                            (audioDevInfo.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP || audioDevInfo.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO) &&
+                                    (audioDevInfo.address == connectedBluetoothDevice.address || audioDevInfo.productName?.toString()?.equals(connectedBluetoothDevice.name, ignoreCase = true) == true)
+                        }
+
+                        if (correspondingAudioDevice != null) {
+                            Log.d("MainActivityAudioReceiver", "Found AudioDeviceInfo for connected BT: ${correspondingAudioDevice.productName}. Setting as preferred.")
+                            // Update PlayerViewModel dengan perangkat yang baru terhubung ini
+                            playerViewModel.setPreferredAudioOutput(correspondingAudioDevice)
+                            // Tidak perlu Toast di sini karena UI akan update
+                        } else {
+                            Log.w("MainActivityAudioReceiver", "Could not find matching AudioDeviceInfo for newly connected BT device: ${connectedBluetoothDevice.name}")
+                            // Jika tidak ketemu, mungkin biarkan sistem yang menangani atau coba revertToDefault jika ingin lebih eksplisit
+                            // playerViewModel.revertToDefaultAudioOutput() // Atau biarkan saja untuk melihat apakah sistem merutekannya dengan benar
+                        }
+                    }
+                }
+                BluetoothDevice.ACTION_ACL_DISCONNECTED -> {
+                    val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
+                    } else {
+                        @Suppress("DEPRECATION")
+                        intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE) as BluetoothDevice?
+                    }
+                    device?.let { disconnectedBluetoothDevice ->
+                        Log.d("MainActivityAudioReceiver", "ACTION_ACL_DISCONNECTED: ${disconnectedBluetoothDevice.name}")
+                        val currentActiveDevice = playerViewModel.activeAudioDevice.value
+                        // Cek apakah perangkat yang disconnect adalah yang sedang aktif
+                        if (currentActiveDevice != null &&
+                            (currentActiveDevice.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP || currentActiveDevice.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO) &&
+                            (currentActiveDevice.address == disconnectedBluetoothDevice.address || currentActiveDevice.productName?.toString()?.equals(disconnectedBluetoothDevice.name, ignoreCase = true) == true)
+                        ) {
+                            Log.d("MainActivityAudioReceiver", "Active Bluetooth device disconnected. Reverting to default.")
+                            Toast.makeText(context, "Bluetooth disconnected, switching to speaker.", Toast.LENGTH_SHORT).show()
+                            playerViewModel.revertToDefaultAudioOutput()
+                        }
+                        audioOutputViewModel.loadAvailableOutputDevices()
+                    }
+                }
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,12 +163,24 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        val filter = IntentFilter().apply {
+            addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
+            addAction(BluetoothDevice.ACTION_ACL_CONNECTED)
+            addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED)
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(audioDeviceChangeReceiver, filter, RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(audioDeviceChangeReceiver, filter)
+        }
+
         playerViewModel.onPlaybackSecondTick = {
             // Pastikan ada lagu yang sedang diputar di SongViewModel
             // dan userId valid sebelum mencatat tick.
             // SongViewModel.recordPlayTick() sendiri sudah punya pengecekan internal.
             if (songViewModel.current_song.value != null && songViewModel.current_song.value!!.id != 0) {
-                 Log.d("MainActivity_Ticker", "Playback tick received from PlayerViewModel. Calling SongViewModel.recordPlayTick(). Current song: ${songViewModel.current_song.value?.title}")
+                Log.d("MainActivity_Ticker", "Playback tick received from PlayerViewModel. Calling SongViewModel.recordPlayTick(). Current song: ${songViewModel.current_song.value?.title}")
                 songViewModel.recordPlayTick()
             } else {
                 Log.w("MainActivity_Ticker", "Playback tick received, but SongViewModel.current_song is null or invalid. Skipping recordPlayTick.")
@@ -96,11 +193,17 @@ class MainActivity : ComponentActivity() {
                     songViewModel = this.songViewModel,
                     playerViewModel = this.playerViewModel,
                     onlineSongViewModel = this.onlineSongViewModel,
-                    onScanQrClicked = { launchQrScanner() }
+                    onScanQrClicked = { launchQrScanner() },
+                    audioOutputViewModel = this.audioOutputViewModel
                 )
             }
         }
         handleIntent(intent)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(audioDeviceChangeReceiver)
     }
 
     override fun onNewIntent(intent: Intent?) {
