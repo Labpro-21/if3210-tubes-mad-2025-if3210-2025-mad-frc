@@ -38,11 +38,14 @@ class MusicService : Service() {
     private var progressHandler: Handler? = null
     private var progressRunnable: Runnable? = null
     private var playlist: List<Song> = emptyList()
-    private var currentSongId:Int? = 0;
+    private var currentSongId:Int? = null;
+    private lateinit var mediaSession: MediaSessionCompat
+
 
     override fun onCreate() {
         super.onCreate()
         exoPlayer = ExoPlayer.Builder(this).build()
+        mediaSession = MediaSessionCompat(this, "Purrytify")
         exoPlayer.addListener(object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) {
                 if (state == Player.STATE_ENDED) {
@@ -51,6 +54,8 @@ class MusicService : Service() {
                 }
             }
         })
+        startForeground(1, createNotification())
+        startProgressUpdates()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -108,7 +113,6 @@ class MusicService : Service() {
 
         }
 
-        startProgressUpdates()
         return START_STICKY
     }
 
@@ -117,12 +121,12 @@ class MusicService : Service() {
         progressRunnable = object : Runnable {
             override fun run() {
                 if (exoPlayer.isPlaying) {
-                    val intent = Intent("ACTION_UPDATE_PROGRESS")
-                    intent.putExtra("PROGRESS", exoPlayer.currentPosition)
-//                    Log.d("MusicService", "current position:${exoPlayer.currentPosition}")
-                    sendBroadcast(intent)
+                    // Tambahkan ini untuk update progress
+                    progress = exoPlayer.currentPosition.toFloat()
+                    MusicServiceManager.updateSongProgress(progress/1000)
+                    updateNotification()
                 }
-                progressHandler?.postDelayed(this, 500)
+                progressHandler?.postDelayed(this, 1000) // 1 detik sekali
             }
         }
         progressHandler?.post(progressRunnable!!)
@@ -134,9 +138,8 @@ class MusicService : Service() {
         } else {
             Player.REPEAT_MODE_OFF
         }
-        sendBroadcast(Intent("ACTION_LOOP_TOGGLED").apply {
-            putExtra("IS_LOOPING", isLooping)
-        })
+        MusicServiceManager.updateLooping(isLooping)
+
     }
 
     private fun playSong(){
@@ -156,7 +159,6 @@ class MusicService : Service() {
         progress = 0f
         exoPlayer.setMediaItem(mediaItem)
         exoPlayer.prepare()
-        startForeground(1, createNotification())
 
         exoPlayer.play()
         isPlaying = true
@@ -165,14 +167,6 @@ class MusicService : Service() {
 
     private fun createNotification(): Notification {
         Log.d("MusicService","CreatingNotification")
-        val song = playlist[currentSongId!!]
-//        val customView = RemoteViews(packageName, R.layout.notification_player)
-//        // Set teks dan gambar
-//        customView.setTextViewText(R.id.notification_title, song.title)
-//        customView.setTextViewText(R.id.notification_artist, song.artist)
-//        customView.setImageViewResource(R.id.notification_play_pause, if (exoPlayer.isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
-
-
 
         val playPauseIcon = if (exoPlayer.isPlaying) R.drawable.ic_pause else R.drawable.ic_play
 
@@ -197,22 +191,43 @@ class MusicService : Service() {
             this, 2, prevIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val mediaSession = MediaSessionCompat(this, "Purrytify")
         val mediaStyle = androidx.media.app.NotificationCompat.MediaStyle()
             .setMediaSession(mediaSession.sessionToken)
             .setShowActionsInCompactView(0, 1, 2)
 
+        // Jika currentSongId null atau playlist kosong, tampilkan default notification
+        if (currentSongId == null || playlist.isEmpty()) {
+            return NotificationCompat.Builder(this, MyApp.CHANNEL_ID)
+                .setContentTitle("Tidak ada lagu diputar")
+                .setContentText("")
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .addAction(R.drawable.ic_previous, null, prevPendingIntent)
+                .addAction(playPauseIcon, null, playPausePendingIntent)
+                .addAction(R.drawable.ic_next, null , nextPendingIntent)
+                .setOnlyAlertOnce(true)
+                .setStyle(mediaStyle)
+                .build()
+        }
+
+        // Jika ada lagu yang diputar
+        val song = playlist[currentSongId!!]
+
+        val durationInSec = (song.duration / 1000).toInt()
+        val currentPosInSec = (exoPlayer.currentPosition / 1000).toInt()
+
+        Log.d("MusicService","exo player position : ${currentPosInSec}")
+        Log.d("MusicService","exo player duration : ${durationInSec}, ${exoPlayer.duration}")
 
         return NotificationCompat.Builder(this, MyApp.CHANNEL_ID)
             .setContentTitle(song.title)
             .setContentText(song.artist)
             .setSmallIcon(R.mipmap.ic_launcher)
-//            .setCustomContentView(customView)
             .addAction(R.drawable.ic_previous, "Previous", prevPendingIntent)
             .addAction(playPauseIcon, "Play/Pause", playPausePendingIntent)
             .addAction(R.drawable.ic_next, "Next", nextPendingIntent)
             .setOnlyAlertOnce(true)
-            .setStyle(mediaStyle)
+//            .setStyle(mediaStyle)
+            .setProgress(durationInSec, currentPosInSec, false)
             .build()
     }
 
@@ -254,27 +269,21 @@ class MusicService : Service() {
         playSong()
     }
 
-    private fun notifyPlayingStateChanged(isPlaying: Boolean) {
-        val intent = Intent("ACTION_PLAYING_STATE_CHANGED").apply {
-            putExtra("IS_PLAYING", isPlaying)
-            putExtra("CURRENT_POSITION", exoPlayer.currentPosition)
-        }
-        sendBroadcast(intent)
-    }
-
     private fun play() {
         exoPlayer.play()
-        notifyPlayingStateChanged(true)
+        MusicServiceManager.updateIsPlaying(true)
     }
 
     private fun pause() {
         exoPlayer.pause()
-        notifyPlayingStateChanged(false)
+        MusicServiceManager.updateIsPlaying(false)
+
     }
 
     private fun seekTo(positionMs: Long) {
         exoPlayer.seekTo(positionMs)
-        notifyPlayingStateChanged(exoPlayer.isPlaying)
+        MusicServiceManager.updateIsPlaying(true)
+
     }
 
     private fun notifyCurrentSongChanged(){
@@ -296,6 +305,7 @@ class MusicService : Service() {
         super.onDestroy()
         progressHandler?.removeCallbacks(progressRunnable!!)
         exoPlayer.release()
+        mediaSession.release()
     }
 
 }

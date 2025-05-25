@@ -81,9 +81,6 @@ fun PlayerScreen(
     val isLooping by playerViewModel.isLooping.collectAsState()
     val progress by playerViewModel.progress.collectAsState()
 
-    val songUri = currentSong?.audioPath?.toUri()
-    val artworkUri = currentSong?.artworkPath?.toUri()
-
     LaunchedEffect(currentSong) {
         currentSong?.let { Log.d("PlayerScreen", "Current song changed to: ${it.title}") }
 
@@ -169,7 +166,7 @@ fun PlayerScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Slider(
-            value = progress,
+            value = progress ?: 0f,
             onValueChange = { playerViewModel.seekTo(it) },
             valueRange = 0f..((currentSong?.duration ?: 1000) / 1000f),
             modifier = Modifier.fillMaxWidth(),
@@ -184,7 +181,7 @@ fun PlayerScreen(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                formatDuration(progress.toLong() * 1000),
+                formatDuration((progress ?: 0f).toLong() * 1000),
                 style = MaterialTheme.typography.labelSmall
             )
             Text(

@@ -161,7 +161,9 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import com.example.purrytify.MyApp
+import com.example.purrytify.model.Song
 import com.example.purrytify.service.MusicService
+import com.example.purrytify.utils.MusicServiceManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -175,71 +177,13 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     val shouldClosePlayerSheet: StateFlow<Boolean> = _shouldClosePlayerSheet
 
 
-    private val _isPlaying = MutableStateFlow(false)
-    val isPlaying = _isPlaying.asStateFlow()
+    val isPlaying : StateFlow<Boolean> = MusicServiceManager.isPlaying
 
-    private val _progress = MutableStateFlow(1f)
-    val progress = _progress.asStateFlow()
-
-    val isLooping = MutableStateFlow(false)
-
-    private var currentUri: Uri? = null
-    private var onSongCompleteCallback: (() -> Unit)? = null
-
-    private val songCompleteReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == "ACTION_SONG_COMPLETE") {
-                _isPlaying.value = false
-                onSongCompleteCallback?.invoke()
-            }
-        }
-    }
-
-    private val isLoopingReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == "ACTION_LOOP_TOGGLED") {
-                val loopingStatus = intent.getBooleanExtra("IS_LOOPING", false)
-                isLooping.value = loopingStatus
-            }
-        }
-    }
+    val progress: StateFlow<Float?> = MusicServiceManager.songProgress
 
 
-    private val progressReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == "ACTION_UPDATE_PROGRESS") {
-                val newProgress = intent.getLongExtra("PROGRESS",0L)
-                Log.d("PlayerViewModel", "newProgress:${newProgress}")
-                _progress.value = newProgress.toFloat()
-            }
-        }
-    }
+    val isLooping: StateFlow<Boolean> = MusicServiceManager.isLooping
 
-
-
-    init {
-        val filter = IntentFilter("ACTION_SONG_COMPLETE")
-        ContextCompat.registerReceiver(
-            appContext,
-            songCompleteReceiver,
-            filter,
-            ContextCompat.RECEIVER_NOT_EXPORTED
-        )
-        val filter2 = IntentFilter("ACTION_LOOP_TOGGLED")
-        ContextCompat.registerReceiver(
-            appContext,
-            isLoopingReceiver,
-            filter2,
-            ContextCompat.RECEIVER_NOT_EXPORTED
-        )
-        val filter3 = IntentFilter("ACTION_UPDATE_PROGRESS")
-        ContextCompat.registerReceiver(
-            appContext,
-            progressReceiver,
-            filter3,
-            ContextCompat.RECEIVER_NOT_EXPORTED
-        )
-    }
 
     fun playPause() {
         val intent = Intent(appContext, MusicService::class.java)
@@ -272,18 +216,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         _shouldClosePlayerSheet.value = false
     }
 
-    fun prepareAndPlay(uri: Uri, onSongComplete: () -> Unit = {}) {
-        currentUri = uri
-        onSongCompleteCallback = onSongComplete
-
-        // Kirim intent ke MusicService untuk memainkan lagu
-        val intent = Intent(appContext, MusicService::class.java).apply {
-            action = MyApp.ACTION_PLAY
-            putExtra("SONG_URI", uri.toString())
-        }
-        appContext.startService(intent)
-
-    }
 
     fun prepareAndPlay(id: Int) {
 
@@ -300,11 +232,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     override fun onCleared() {
         super.onCleared()
-        appContext.unregisterReceiver(songCompleteReceiver)
-        appContext.unregisterReceiver(isLoopingReceiver)
-        appContext.unregisterReceiver(progressReceiver)
-
-
     }
 
     fun seekTo(seconds: Float) {
@@ -316,6 +243,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun toggleLoop() {
+
         val intent = Intent(appContext, MusicService::class.java).apply {
             action = MyApp.ACTION_TOGGLE_LOOP
         }
