@@ -2,9 +2,12 @@ package com.example.purrytify.repository
 
 import android.content.Context
 import android.util.Log
+import com.example.purrytify.data.ArtistRankInfo
 import com.example.purrytify.data.SongDao
 import com.example.purrytify.data.SongPlayDate // Pastikan ini diimpor
+import com.example.purrytify.model.Song
 import com.example.purrytify.model.SoundCapsule
+import kotlinx.coroutines.flow.Flow
 import java.io.File
 import java.time.LocalDate
 import java.time.YearMonth
@@ -135,24 +138,76 @@ class AnalyticsRepository(
     }
 
     // Fungsi exportToCsv tetap sama, tapi akan menggunakan field baru dari SoundCapsule
-    fun exportToCsv(soundCapsule: SoundCapsule): File {
-        val csv = buildString {
-            appendLine("Month,Time listened,Top artist,Top song,Longest Day Streak,Streak Song,Streak Artist,Streak Period")
-            appendLine(
-                listOf(
-                    soundCapsule.monthYear,
-                    soundCapsule.formattedTimeListened(),
-                    soundCapsule.topArtist ?: "-",
-                    soundCapsule.topSong ?: "-",
-                    soundCapsule.longestDayStreak?.toString() ?: "0",
-                    soundCapsule.streakSongTitle ?: "-",
-                    soundCapsule.streakSongArtist ?: "-",
-                    soundCapsule.streakPeriodText.replace(",", ";") // Ganti koma di periode agar tidak merusak CSV
-                ).joinToString(separator = ",")
-            )
+    fun exportToCsv(
+        soundCapsule: SoundCapsule,
+        topArtists: List<ArtistRankInfo>,
+        topSongs: List<Song>
+    ): File? {
+        if (soundCapsule.month == null) {
+            Log.w("AnalyticsRepository", "Cannot export CSV, SoundCapsule month is null.")
+            return null
         }
-        val file = File(context.filesDir, "analytics_${soundCapsule.month?.format(DateTimeFormatter.ofPattern("yyyy-MM"))}.csv")
-        file.writeText(csv)
-        return file
+
+        val monthYearStr = soundCapsule.month.format(DateTimeFormatter.ofPattern("yyyy-MM"))
+        val fileName = "Purrytify_Analytics_${monthYearStr}_${System.currentTimeMillis()}.csv"
+
+        val csvHeader = "Category,Item,Details\n"
+        val csvContent = buildString {
+            append(csvHeader)
+
+            // General Info
+            appendLine("Summary,Month,\"${soundCapsule.monthYear}\"")
+            appendLine("Summary,Time Listened,\"${soundCapsule.formattedTimeListened()}\"")
+            appendLine("Summary,Top Artist Overall,\"${soundCapsule.topArtist ?: "-"}\"")
+            appendLine("Summary,Top Song Overall,\"${soundCapsule.topSong ?: "-"}\"")
+            appendLine("Summary,Longest Day Streak,\"${soundCapsule.longestDayStreak?.toString() ?: "0"} days\"")
+            if (soundCapsule.longestDayStreak != null && soundCapsule.longestDayStreak > 0) {
+                appendLine("Summary,Streak Song Title,\"${soundCapsule.streakSongTitle ?: "-"}\"")
+                appendLine("Summary,Streak Song Artist,\"${soundCapsule.streakSongArtist ?: "-"}\"")
+                appendLine("Summary,Streak Period,\"${soundCapsule.streakPeriodText.replace(",", ";")}\"")
+            }
+            appendLine() // Baris kosong sebagai pemisah
+
+            // Top Artists List
+            appendLine("Top Artists for ${soundCapsule.monthYear}")
+            appendLine("Rank,Artist Name")
+            topArtists.forEachIndexed { index, artistInfo ->
+                appendLine("${index + 1},\"${artistInfo.artistName.replace("\"", "\"\"")}\"")
+            }
+            appendLine()
+
+            // Top Songs List
+            appendLine("Top Songs for ${soundCapsule.monthYear}")
+            appendLine("Rank,Song Title,Artist")
+            topSongs.forEachIndexed { index, song ->
+                appendLine("${index + 1},\"${song.title.replace("\"", "\"\"")}\",\"${song.artist.replace("\"", "\"\"")}\"")
+            }
+        }
+
+        return try {
+            // Menggunakan direktori cache internal aplikasi
+            val cacheDir = context.cacheDir
+            val file = File(cacheDir, fileName)
+            file.writeText(csvContent)
+            Log.i("AnalyticsRepository", "CSV exported successfully to: ${file.absolutePath}")
+            file
+        } catch (e: Exception) {
+            Log.e("AnalyticsRepository", "Error exporting CSV: ${e.message}", e)
+            null
+        }
+    }
+
+    fun getTopPlayedSongsForMonth(userId: Int, yearMonth: String): Flow<List<Song>> {
+        Log.d("AnalyticsRepository", "Fetching top played songs for user $userId, month $yearMonth")
+        return dao.getTopPlayedSongsForMonth(userId, yearMonth)
+    }
+
+    fun getTopPlayedArtistsForMonth(userId: Int, yearMonth: String): Flow<List<ArtistRankInfo>> {
+        Log.d("AnalyticsRepository", "Fetching top played artists for user $userId, month $yearMonth")
+        return dao.getTopPlayedArtistsForMonth(userId, yearMonth)
+    }
+
+    suspend fun getTotalDistinctArtistsForMonth(userId: Int, yearMonth: String): Int {
+        return dao.getTotalDistinctArtistsForMonth(userId, yearMonth)
     }
 }

@@ -1,6 +1,5 @@
 package com.example.purrytify.ui.navigation
 
-import android.R.attr.type
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
@@ -19,7 +18,6 @@ import com.example.purrytify.ui.screens.EditProfileScreen
 import com.example.purrytify.viewmodel.SongViewModel // Import classnya
 import com.example.purrytify.viewmodel.NetworkViewModel
 import com.example.purrytify.utils.TokenManager
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.livedata.observeAsState
 import com.example.purrytify.data.AppDatabase
 import com.example.purrytify.repository.UserRepository
@@ -34,11 +32,10 @@ import com.example.purrytify.viewmodel.AudioOutputViewModel
 import com.example.purrytify.viewmodel.PlayerViewModel // Import classnya
 import com.example.purrytify.viewmodel.OnlineSongViewModel // Import classnya
 import com.example.purrytify.ui.screens.TopScreen
-import com.example.purrytify.viewmodel.OnlineSongViewModelFactory
-import com.example.purrytify.viewmodel.PlayerViewModelFactory
+import com.example.purrytify.ui.screens.UserTopArtistsScreen
+import com.example.purrytify.ui.screens.UserTopSongsScreen
 import com.example.purrytify.viewmodel.ProfileViewModel
 import com.example.purrytify.viewmodel.ProfileViewModelFactory
-import com.example.purrytify.viewmodel.SongViewModelFactory
 import java.time.YearMonth
 
 sealed class Screen(val route: String) {
@@ -48,6 +45,12 @@ sealed class Screen(val route: String) {
     object Profile : Screen("profile")
     object EditProfile : Screen("edit_profile")
     object TimeListenedDetail : Screen("time_listened_detail")
+    object UserTopPlayedSongs : Screen("user_top_played_songs/{yearMonth}") { // Terima argumen yearMonth
+        fun createRoute(yearMonth: YearMonth) = "user_top_played_songs/${yearMonth.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"))}"
+    }
+    object UserTopArtists : Screen("user_top_artists/{yearMonth}") {
+        fun createRoute(yearMonth: YearMonth) = "user_top_artists/${yearMonth.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"))}"
+    }
 }
 
 @Composable
@@ -215,7 +218,13 @@ fun AppNavigation(
                         profileViewModel.loadDailyListenDetailsForMonth(YearMonth.now()) // Default ke bulan ini
                         navController.navigate(Screen.TimeListenedDetail.route)
                     },
-                    onEditProfile = {navController.navigate(Screen.EditProfile.route)}
+                    onEditProfile = {navController.navigate(Screen.EditProfile.route)},
+                    onNavigateToUserTopSongs = { yearMonth -> // Tambahkan parameter ini ke ProfileScreenWithBottomNav
+                        navController.navigate(Screen.UserTopPlayedSongs.createRoute(yearMonth))
+                    },
+                    onNavigateToUserTopArtists = { yearMonth -> // Tambahkan parameter ini
+                        navController.navigate(Screen.UserTopArtists.createRoute(yearMonth))
+                    },
                 )
             }
         }
@@ -263,6 +272,69 @@ fun AppNavigation(
                 profileViewModel = profileVm,
                 onBack           = { navController.popBackStack() }
             )
+        }
+
+        composable(
+            route = Screen.UserTopPlayedSongs.route,
+            arguments = listOf(navArgument("yearMonth") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val yearMonthString = backStackEntry.arguments?.getString("yearMonth") ?: YearMonth.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"))
+            // Validasi sesi jika diperlukan
+            val sessionUserId = sessionManager.getUserId()
+            if (sessionUserId <= 0 && tokenManager.isLoggedIn()) {
+                LaunchedEffect(Unit) {
+                    tokenManager.clearTokens(); sessionManager.clearSession()
+                    navController.navigate(Screen.Login.route) { popUpTo(navController.graph.startDestinationId) { inclusive = true }; launchSingleTop = true }
+                }
+            } else if (!tokenManager.isLoggedIn()){
+                LaunchedEffect(Unit) {
+                    navController.navigate(Screen.Login.route) { popUpTo(navController.graph.startDestinationId) { inclusive = true }; launchSingleTop = true }
+                }
+            } else {
+                UserTopSongsScreen(
+                    profileViewModel = profileViewModel, // Gunakan instance ProfileViewModel yang sama
+                    songViewModel = songViewModel,
+                    playerViewModel = playerViewModel,
+                    audioOutputViewModel = audioOutputViewModel,
+                    yearMonthString = yearMonthString,
+                    onBack = { navController.popBackStack() },
+                    onNavigateToHome = { navController.navigate(Screen.Home.route) { popUpTo(Screen.Home.route) { inclusive = true } } },
+                    onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
+                    onNavigateToProfile = { navController.navigate(Screen.Profile.route) { popUpTo(Screen.Profile.route) { inclusive = true } } }
+                )
+            }
+        }
+
+        composable(
+            route = Screen.UserTopArtists.route,
+            arguments = listOf(navArgument("yearMonth") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val yearMonthString = backStackEntry.arguments?.getString("yearMonth") ?: YearMonth.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"))
+            // Validasi sesi jika diperlukan
+            val sessionUserId = sessionManager.getUserId()
+            if (sessionUserId <= 0 && tokenManager.isLoggedIn()) { // Jika login tapi sesi aneh
+                LaunchedEffect(Unit) {
+                    tokenManager.clearTokens(); sessionManager.clearSession()
+                    navController.navigate(Screen.Login.route) { popUpTo(navController.graph.startDestinationId) { inclusive = true }; launchSingleTop = true }
+                }
+            } else if (!tokenManager.isLoggedIn()){ // Jika tidak login sama sekali
+                LaunchedEffect(Unit) {
+                    navController.navigate(Screen.Login.route) { popUpTo(navController.graph.startDestinationId) { inclusive = true }; launchSingleTop = true }
+                }
+            }
+            else {
+                UserTopArtistsScreen(
+                    profileViewModel = profileViewModel,
+                    songViewModel = songViewModel,
+                    playerViewModel = playerViewModel,
+                    audioOutputViewModel = audioOutputViewModel,
+                    yearMonthString = yearMonthString,
+                    onBack = { navController.popBackStack() },
+                    onNavigateToHome = { navController.navigate(Screen.Home.route) { popUpTo(Screen.Home.route) { inclusive = true } } },
+                    onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
+                    onNavigateToProfile = { navController.navigate(Screen.Profile.route) { popUpTo(Screen.Profile.route) { inclusive = true } } }
+                )
+            }
         }
     }
 }

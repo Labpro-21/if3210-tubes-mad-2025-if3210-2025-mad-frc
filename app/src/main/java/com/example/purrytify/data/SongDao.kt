@@ -26,6 +26,12 @@ data class DailyListenDuration(
     @ColumnInfo(name = "totalDurationMillis") val totalDurationMillis: Long
 )
 
+data class ArtistRankInfo(
+    @ColumnInfo(name = "artistName") val artistName: String,
+    @ColumnInfo(name = "artworkPath") val artworkPath: String?,
+    @ColumnInfo(name = "totalPlays") val totalPlays: Int
+)
+
 @Dao
 interface SongDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
@@ -109,4 +115,53 @@ interface SongDao {
         ORDER BY playDate ASC
     """)
     suspend fun getDailyListenDurationsForMonth(userId: Int, startOfMonthMillis: Long, startOfNextMonthMillis: Long): List<DailyListenDuration>
+
+    @Query("""
+        SELECT s.*
+        FROM song s
+        INNER JOIN (
+            SELECT song_id, COUNT(song_id) as play_count
+            FROM play_history
+            WHERE user_id = :userId AND strftime('%Y-%m', played_at/1000, 'unixepoch') = :yearMonth
+            GROUP BY song_id
+        ) AS ph_counts ON s.id = ph_counts.song_id
+        WHERE s.user_id = :userId
+        ORDER BY ph_counts.play_count DESC
+        LIMIT 10;
+    """)
+    fun getTopPlayedSongsForMonth(userId: Int, yearMonth: String): Flow<List<Song>>
+
+    @Query("""
+        SELECT
+            s.artist AS artistName,
+            (SELECT s_inner.artworkPath
+             FROM song s_inner
+             INNER JOIN play_history ph_inner ON s_inner.id = ph_inner.song_id
+             WHERE s_inner.artist = s.artist AND s_inner.user_id = :userId
+                   AND strftime('%Y-%m', ph_inner.played_at/1000, 'unixepoch') = :yearMonth
+             ORDER BY ph_inner.played_at DESC LIMIT 1) AS artworkPath,
+            COUNT(ph.song_id) as totalPlays
+        FROM
+            song s
+        INNER JOIN
+            play_history ph ON s.id = ph.song_id
+        WHERE
+            s.user_id = :userId AND strftime('%Y-%m', ph.played_at/1000, 'unixepoch') = :yearMonth
+            AND s.artist IS NOT NULL AND s.artist != '' 
+        GROUP BY
+            s.artist
+        ORDER BY
+            totalPlays DESC
+        LIMIT 10
+    """)
+    fun getTopPlayedArtistsForMonth(userId: Int, yearMonth: String): Flow<List<ArtistRankInfo>>
+
+    @Query("""
+        SELECT COUNT(DISTINCT s.artist)
+        FROM song s
+        INNER JOIN play_history ph ON s.id = ph.song_id
+        WHERE s.user_id = :userId AND strftime('%Y-%m', ph.played_at/1000, 'unixepoch') = :yearMonth
+        AND s.artist IS NOT NULL AND s.artist != ''
+    """)
+    suspend fun getTotalDistinctArtistsForMonth(userId: Int, yearMonth: String): Int
 }
