@@ -208,8 +208,8 @@ class MainActivity : ComponentActivity() {
 
 
 
-            if (songViewModel.current_song.value != null && songViewModel.current_song.value!!.id != 0) {
-                Log.d("MainActivity_Ticker", "Playback tick received from PlayerViewModel. Calling SongViewModel.recordPlayTick(). Current song: ${songViewModel.current_song.value?.title}")
+            if (songViewModel.currentSong.value != null && songViewModel.currentSong.value!!.id != 0) {
+                Log.d("MainActivity_Ticker", "Playback tick received from PlayerViewModel. Calling SongViewModel.recordPlayTick(). Current song: ${songViewModel.currentSong.value?.title}")
                 songViewModel.recordPlayTick()
             } else {
                 Log.w("MainActivity_Ticker", "Playback tick received, but SongViewModel.current_song is null or invalid. Skipping recordPlayTick.")

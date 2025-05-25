@@ -63,8 +63,8 @@ class SongViewModel(
         viewModelScope.launch {
             val songIdToDelete = song.id
             repository.deleteSong(songIdToDelete)
-            if (_current_song.value?.id == songIdToDelete) {
-                _current_song.value = null
+            if (currentSong.value?.id == songIdToDelete) {
+                MusicServiceManager.updateCurrentSong(null)
 
             }
             loadSongs(song.userId)
@@ -93,6 +93,11 @@ class SongViewModel(
                     val updated = songList.find { it.id == current.id }
                     if (updated != null) {
                         MusicServiceManager.updateCurrentSong(updated)
+                    }
+                }
+            }
+        }
+        
         viewModelScope.launch {
             repository.getAllLikedSongs(userIdToLoad).collect { likedList ->
                 _liked_songs.value = likedList
@@ -101,28 +106,27 @@ class SongViewModel(
 
         viewModelScope.launch {
             repository.getAllSongsInternal(userIdToLoad).collect { allSongsList ->
-                val currentSongSnapshot = _current_song.value
+                val currentSongSnapshot = currentSong.value
                 if (currentSongSnapshot != null && currentSongSnapshot.id != 0) {
-                    val songFromDbList = allSongsList.find { it.id == currentSongSnapshot.id && it.userId == currentSongSnapshot.userId }
+                    val songFromDbList =
+                        allSongsList.find { it.id == currentSongSnapshot.id && it.userId == currentSongSnapshot.userId }
                     if (songFromDbList != null) {
-
-
-
-
-
                         if (currentSongSnapshot.liked != songFromDbList.liked ||
                             currentSongSnapshot.title != songFromDbList.title ||
                             currentSongSnapshot.artist != songFromDbList.artist ||
-                            currentSongSnapshot.artworkPath != songFromDbList.artworkPath) {
-                            Log.d("SongViewModel_loadSongs", "Updating _current_song (ID: ${currentSongSnapshot.id}) due to changes in DB (e.g., liked status).")
-                            _current_song.value = songFromDbList
+                            currentSongSnapshot.artworkPath != songFromDbList.artworkPath
+                        ) {
+                            Log.d(
+                                "SongViewModel_loadSongs",
+                                "Updating _current_song (ID: ${currentSongSnapshot.id}) due to changes in DB (e.g., liked status)."
+                            )
+                            MusicServiceManager.updateCurrentSong(songFromDbList)
                         }
                     } else {
-
-
-
-
-                        Log.d("SongViewModel_loadSongs", "Current song (ID: ${currentSongSnapshot.id}) not found in allSongsList. setCurrentSong should handle if it was deleted.")
+                        Log.d(
+                            "SongViewModel_loadSongs",
+                            "Current song (ID: ${currentSongSnapshot.id}) not found in allSongsList. setCurrentSong should handle if it was deleted."
+                        )
                     }
                 }
 
@@ -288,7 +292,7 @@ class SongViewModel(
         }
     }
 
-    private fun observeIsPlaying(){
+    fun observeIsPlaying(){
         viewModelScope.launch {
             isPlaying.collect { playing ->
                 if (playing) {
@@ -302,3 +306,4 @@ class SongViewModel(
     }
     suspend fun isDownloadedByServerId(serverId: Int?): Boolean = repository.isDownloadedByServerId(serverId)
 }
+

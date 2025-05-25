@@ -98,7 +98,7 @@ fun HomeScreenContent(
 
     val dailyMixSongs by recommendationViewModel.dailyMix.collectAsState()
     val isLoadingRecommendations by recommendationViewModel.isLoading.collectAsState()
-    val currentPlayingSong by songViewModel.current_song.collectAsState()
+    val currentPlayingSong by songViewModel.currentSong.collectAsState()
 
     if (appContext == null) {
         Box(
@@ -277,15 +277,17 @@ fun HomeScreenContent(
                             song = song,
                             onClick = {
                                 songViewModel.setCurrentSong(song)
-                                playerViewModel.prepareAndPlay(song.audioPath.toUri()) {
-
-                                    val currentIndex = dailyMixSongs.indexOf(song)
-                                    if (currentIndex != -1 && currentIndex < dailyMixSongs.size - 1) {
-                                        val nextSong = dailyMixSongs[currentIndex + 1]
-                                        songViewModel.setCurrentSong(nextSong)
-                                        playerViewModel.prepareAndPlay(nextSong.audioPath.toUri()) {/* rekursif atau handle akhir playlist */}
-                                    }
-                                }
+                                recommendationViewModel.sendSongsToMusicService()
+                                playerViewModel.prepareAndPlay(dailyMixSongs.indexOf(song))
+//                                playerViewModel.prepareAndPlay(song.audioPath.toUri()) {
+//
+//                                    val currentIndex = dailyMixSongs.indexOf(song)
+//                                    if (currentIndex != -1 && currentIndex < dailyMixSongs.size - 1) {
+//                                        val nextSong = dailyMixSongs[currentIndex + 1]
+//                                        songViewModel.setCurrentSong(nextSong)
+//                                        playerViewModel.prepareAndPlay(nextSong.audioPath.toUri()) {/* rekursif atau handle akhir playlist */}
+//                                    }
+//                                }
                             },
                             onMoreClick = {
                                 Toast.makeText(context, "More options for ${song.title}", Toast.LENGTH_SHORT).show()

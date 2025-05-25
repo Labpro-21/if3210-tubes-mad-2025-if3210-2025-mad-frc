@@ -304,7 +304,7 @@ fun AppNavigation(
                     },
                     onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
                     onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                    audioOutputViewModel = audioOutputViewModel
+                    audioOutputViewModel = audioOutputViewModel,
                 )
             }
 

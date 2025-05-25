@@ -46,7 +46,7 @@ fun UserTopSongsScreen(
     onNavigateToProfile: () -> Unit,
 ) {
     val topPlayedSongs by profileViewModel.userTopPlayedSongs.collectAsState()
-    val currentGlobalSong by songViewModel.current_song.collectAsState()
+    val currentGlobalSong by songViewModel.currentSong.collectAsState()
     val isGlobalPlaying by playerViewModel.isPlaying.collectAsState()
     var showPlayerSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
@@ -69,24 +69,24 @@ fun UserTopSongsScreen(
             }
         }
     }
-
-    fun playNextInTopSongs() {
-        if (topPlayedSongs.isNotEmpty()) {
-            currentPlaylistIndex = (currentPlaylistIndex + 1) % topPlayedSongs.size
-            val nextSong = topPlayedSongs[currentPlaylistIndex]
-            songViewModel.setCurrentSong(nextSong)
-            playerViewModel.prepareAndPlay(nextSong.audioPath.toUri()) { playNextInTopSongs() }
-        }
-    }
-
-    fun playPreviousInTopSongs() {
-        if (topPlayedSongs.isNotEmpty()) {
-            currentPlaylistIndex = if (currentPlaylistIndex - 1 < 0) topPlayedSongs.size - 1 else currentPlaylistIndex - 1
-            val prevSong = topPlayedSongs[currentPlaylistIndex]
-            songViewModel.setCurrentSong(prevSong)
-            playerViewModel.prepareAndPlay(prevSong.audioPath.toUri()) { playNextInTopSongs() }
-        }
-    }
+//
+//    fun playNextInTopSongs() {
+//        if (topPlayedSongs.isNotEmpty()) {
+//            currentPlaylistIndex = (currentPlaylistIndex + 1) % topPlayedSongs.size
+//            val nextSong = topPlayedSongs[currentPlaylistIndex]
+//            songViewModel.setCurrentSong(nextSong)
+//            playerViewModel.prepareAndPlay(nextSong.audioPath.toUri()) { playNextInTopSongs() }
+//        }
+//    }
+//
+//    fun playPreviousInTopSongs() {
+//        if (topPlayedSongs.isNotEmpty()) {
+//            currentPlaylistIndex = if (currentPlaylistIndex - 1 < 0) topPlayedSongs.size - 1 else currentPlaylistIndex - 1
+//            val prevSong = topPlayedSongs[currentPlaylistIndex]
+//            songViewModel.setCurrentSong(prevSong)
+//            playerViewModel.prepareAndPlay(prevSong.audioPath.toUri()) { playNextInTopSongs() }
+//        }
+//    }
 
     Scaffold(
         topBar = {
@@ -169,9 +169,11 @@ fun UserTopSongsScreen(
                             onSongClick = {
                                 currentPlaylistIndex = index
                                 songViewModel.setCurrentSong(song)
-                                playerViewModel.prepareAndPlay(song.audioPath.toUri()) {
-                                    playNextInTopSongs()
-                                }
+                                profileViewModel.sendSongsToMusicService()
+                                playerViewModel.prepareAndPlay(index)
+//                                playerViewModel.prepareAndPlay(song.audioPath.toUri()) {
+//                                    playNextInTopSongs()
+//                                }
                                 showPlayerSheet = true
                             }
                         )

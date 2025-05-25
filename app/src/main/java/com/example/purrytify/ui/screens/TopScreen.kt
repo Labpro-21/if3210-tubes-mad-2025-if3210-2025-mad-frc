@@ -46,7 +46,6 @@ fun TopScreen(
     onlineViewModel: OnlineSongViewModel,
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
-    audioOutputViewModel: AudioOutputViewModel,
     onBack: () -> Unit,
     onNavigateToHome: () -> Unit,
     onNavigateToLibrary: () -> Unit,
