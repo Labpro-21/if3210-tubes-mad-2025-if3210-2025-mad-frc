@@ -49,8 +49,20 @@ fun TopScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToLibrary: () -> Unit,
     onNavigateToProfile: () -> Unit,
-    audioOutputViewModel: AudioOutputViewModel
+    audioOutputViewModel: AudioOutputViewModel,
+    isConnected: Boolean
 ) {
+    // Kalau tidak connected pop back
+    var showNoInternetDialog by remember { mutableStateOf(!isConnected) }
+
+    if (showNoInternetDialog) {
+        NoInternetDialog(onDismiss = { showNoInternetDialog = false})
+    }
+
+    if (!isConnected){
+        NoInternetDialog(onDismiss = { showNoInternetDialog = false; onBack()  })
+    }
+
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
 
@@ -177,7 +189,8 @@ fun TopScreen(
                 },
                 playerViewModel = playerViewModel,
                 sheetState = sheetState,
-                audioOutputViewModel = audioOutputViewModel
+                audioOutputViewModel = audioOutputViewModel,
+                isOnline = isConnected
             )
         }
     }
@@ -295,7 +308,13 @@ fun TopScreen(
                 ) {
 
                     OutlinedButton(
-                        onClick = { if (!isDownloadingAll) downloadAll(audioOutputViewModel = audioOutputViewModel) },
+                        onClick = {
+                            if (isConnected){
+                                if (!isDownloadingAll) downloadAll(audioOutputViewModel = audioOutputViewModel)
+                            }else{
+                                showNoInternetDialog = true
+                            }
+                          },
                         modifier = Modifier.size(50.dp),
                         shape = CircleShape,
                         colors = ButtonDefaults.outlinedButtonColors(
@@ -316,14 +335,18 @@ fun TopScreen(
 
                     Button(
                         onClick = {
-                            if (onlineSongs.isNotEmpty()) {
-                                val firstSong = onlineSongs.first()
-                                currentPlaylistIndex = 0
-                                songViewModel.setCurrentSong(firstSong)
+                            if (isConnected){
+                                if (onlineSongs.isNotEmpty()) {
+                                    val firstSong = onlineSongs.first()
+                                    currentPlaylistIndex = 0
+                                    songViewModel.setCurrentSong(firstSong)
 
-                                playerViewModel.prepareAndPlay(firstSong.audioPath.toUri()) {
-                                    playNextInSequence()
+                                    playerViewModel.prepareAndPlay(firstSong.audioPath.toUri()) {
+                                        playNextInSequence()
+                                    }
                                 }
+                            }else{
+                                showNoInternetDialog = true
                             }
                         },
                         modifier = Modifier.size(50.dp),

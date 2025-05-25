@@ -13,6 +13,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.viewModels
 import androidx.core.net.toUri
+import androidx.lifecycle.lifecycleScope
 import com.example.purrytify.data.AppDatabase
 import com.example.purrytify.repository.SongRepository
 import com.example.purrytify.ui.navigation.AppNavigation
@@ -41,6 +42,7 @@ import android.media.AudioManager
 import android.os.Build
 import com.example.purrytify.viewmodel.RecommendationViewModel
 import com.example.purrytify.viewmodel.RecommendationViewModelFactory
+import javax.inject.Inject
 
 class MainActivity : ComponentActivity() {
 
@@ -157,7 +159,6 @@ class MainActivity : ComponentActivity() {
         Log.d("ViewModelInstance", "MainActivity - SongViewModel hash: ${System.identityHashCode(songViewModel)}")
         Log.d("ViewModelInstance", "MainActivity - PlayerViewModel hash: ${System.identityHashCode(playerViewModel)}")
         Log.d("ViewModelInstance", "MainActivity - OnlineSongViewModel hash: ${System.identityHashCode(onlineSongViewModel)}")
-
 
         qrScanLauncher = registerForActivityResult(ScanContract()) { result ->
             if (result.contents == null) {

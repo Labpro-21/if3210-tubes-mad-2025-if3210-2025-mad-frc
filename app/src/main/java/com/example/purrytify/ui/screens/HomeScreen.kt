@@ -57,6 +57,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Brush
 import java.util.Date
 import com.example.purrytify.ui.components.SongSettingsModal
@@ -76,6 +77,7 @@ fun HomeScreenContent(
     songVm: SongViewModel,
     onNavigateToTopSong: (String) -> Unit,
     recommendationViewModel: RecommendationViewModel
+    isConnected : Boolean
 ) {
     val context = LocalContext.current
     val appContext = if (!LocalInspectionMode.current)
@@ -108,6 +110,12 @@ fun HomeScreenContent(
 
     val onlineSongs by onlineSongViewModel.onlineSongs.collectAsState()
 
+    var showNoInternetDialog by remember { mutableStateOf(!isConnected) }
+
+    if (showNoInternetDialog) {
+        NoInternetDialog(onDismiss = { showNoInternetDialog = false })
+    }
+
     LaunchedEffect(Unit) {
         onlineSongViewModel.loadTopSongs(null)
     }
@@ -137,8 +145,12 @@ fun HomeScreenContent(
                     title = "Top 50",
                     subtitle = "GLOBAL",
                     colors = listOf(Color(0xFF0B4870), Color(0xFF16BFFD)),
-                    onClick = { 
-                        onNavigateToTopSong("global")
+                    onClick = {
+                        if (isConnected) {
+                            onNavigateToTopSong("global")
+                        } else {
+                            showNoInternetDialog = true
+                        }
                     }
                 )
                 
@@ -147,8 +159,12 @@ fun HomeScreenContent(
                     title = "Top 10",
                     subtitle = "INDONESIA",
                     colors = listOf(Color(0xFFE34981), Color(0xFFFFB25E)),
-                    onClick = { 
-                        onNavigateToTopSong("id")
+                    onClick = {
+                        if (isConnected){
+                            onNavigateToTopSong("id")
+                        }else{
+                            showNoInternetDialog = true
+                        }
                     }
                 )
             }
@@ -514,6 +530,7 @@ fun HomeScreenWithBottomNav(
     onlineSongViewModel: OnlineSongViewModel,
     songVm: SongViewModel,
     onNavigateToTopSong: (String) -> Unit,
+    isConnected: Boolean,,
     audioOutputViewModel: AudioOutputViewModel,
     recommendationViewModel: RecommendationViewModel
 ) {
@@ -533,7 +550,8 @@ fun HomeScreenWithBottomNav(
             onSongChange = { },
             playerViewModel = playerViewModel,
             sheetState = sheetState,
-            audioOutputViewModel = audioOutputViewModel
+            audioOutputViewModel = audioOutputViewModel,
+            isOnline = isConnected
         )
     }
 
@@ -569,7 +587,8 @@ fun HomeScreenWithBottomNav(
                 onlineSongViewModel = onlineSongViewModel,
                 songVm = songViewModel,
                 onNavigateToTopSong = onNavigateToTopSong,
-                recommendationViewModel = recommendationViewModel
+                recommendationViewModel = recommendationViewModel,
+                isConnected = isConnected,
             )
         }
     }
@@ -584,7 +603,8 @@ fun HomeScreenResponsive(
     onlineSongViewModel: OnlineSongViewModel,
     audioOutputViewModel: AudioOutputViewModel,
     onNavigateToTopSong: (String) -> Unit = {},
-    recommendationViewModel: RecommendationViewModel,
+    recommendationViewModel: RecommendationViewModel,,
+    isConnected: Boolean,
 ) {
     val configuration = LocalConfiguration.current
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR)
@@ -629,6 +649,7 @@ fun HomeScreenResponsive(
                 onlineSongViewModel = onlineSongViewModel,
                 songVm = songViewModel,
                 onNavigateToTopSong = onNavigateToTopSong,
+                isConnected = isConnected,,
                 audioOutputViewModel = audioOutputViewModel,
                 recommendationViewModel = recommendationViewModel
             )
@@ -645,11 +666,11 @@ fun HomeScreenResponsive(
             songVm = songViewModel,
             audioOutputViewModel = audioOutputViewModel,
             onNavigateToTopSong = onNavigateToTopSong,
-            recommendationViewModel = recommendationViewModel
+            recommendationViewModel = recommendationViewModel,
+            isConnected = isConnected
         )
     }
 }
-
 
 private fun downloadSong(
     context: Context,

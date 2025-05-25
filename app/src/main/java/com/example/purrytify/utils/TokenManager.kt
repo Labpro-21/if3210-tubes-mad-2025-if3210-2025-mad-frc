@@ -14,6 +14,8 @@ class TokenManager(context: Context) {
         private const val REFRESH_TOKEN_KEY = "refresh_token"
         private const val TOKEN_EXPIRY_KEY = "token_expiry"
         private const val TOKEN_VALIDITY_MILLIS = 5 * 60 * 1000L
+
+        private const val PROACTIVE_THRESHOLD   = 60 * 1000L
     }
 
     private val masterKey = MasterKey.Builder(context)
@@ -39,6 +41,8 @@ class TokenManager(context: Context) {
     }
 
     fun getAccessToken(): String? = encryptedPrefs.getString(ACCESS_TOKEN_KEY, null)
+
+    fun hasAccessToken(): Boolean = getAccessToken()?.isNotBlank() ?: false
 
     fun getRefreshToken(): String? = encryptedPrefs.getString(REFRESH_TOKEN_KEY, null)
 

@@ -199,30 +199,35 @@ fun ProfileContent(
                 modifier = Modifier.padding(top = 4.dp),
                 textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
+// Tombol Edit Profile (Outlined dengan Border dan Teks yang Lebih Jelas)
             OutlinedButton(
                 onClick = onEditProfile,
                 modifier = Modifier
-                    .fillMaxWidth(0.6f)
-                    .height(36.dp),
-                shape = RoundedCornerShape(18.dp),
-                border = BorderStroke(1.dp, Color.White),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                    .fillMaxWidth(0.7f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(24.dp),
+                border = BorderStroke(1.5.dp, Color.White), // Border lebih tebal
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = Color.White, // Teks dan ikon putih
+                    backgroundColor = Color.Transparent // Pastikan background transparan
+                )
             ) {
                 Icon(
                     imageVector = Icons.Default.Edit,
                     contentDescription = "Edit Profile",
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(ButtonDefaults.IconSize)
                 )
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Edit Profile",
-                    style = MaterialTheme.typography.subtitle2
+                    fontWeight = FontWeight.SemiBold
                 )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+
             Button(
                 onClick = {
                     onLogout()
@@ -231,11 +236,17 @@ fun ProfileContent(
                 modifier = Modifier.fillMaxWidth(0.5f),
                 shape = RoundedCornerShape(24.dp),
                 colors = androidx.compose.material.ButtonDefaults.buttonColors(
-                    backgroundColor = Color(0xFF3E3F3F)
+                    backgroundColor = Color.DarkGray.copy(alpha = 0.5f), // Background sedikit berbeda dari layar
+                    contentColor = MaterialTheme.colors.error // Menggunakan warna error dari tema Material (merah)
                 )
             ) {
-                Text(text = "Log Out", color = Color.White)
+                Text(
+                    text = "Log Out",
+                    fontWeight = FontWeight.Medium,
+                    color = Color.White
+                )
             }
+
             Spacer(modifier = Modifier.height(32.dp))
 
             Row(

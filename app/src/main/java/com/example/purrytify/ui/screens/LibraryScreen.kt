@@ -58,7 +58,7 @@ import com.example.purrytify.viewmodel.PlayerViewModel
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewModel: SongViewModel, playerViewModel: PlayerViewModel, audioOutputViewModel: AudioOutputViewModel) {
+fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewModel: SongViewModel, playerViewModel: PlayerViewModel, audioOutputViewModel: AudioOutputViewModel, isOnline : Boolean) {
     val context = LocalContext.current
 
 
@@ -158,7 +158,8 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
                 setSelectedSong(allSongs[currentSongId])
             },
             playerViewModel = playerViewModel,
-            audioOutputViewModel = audioOutputViewModel
+            audioOutputViewModel = audioOutputViewModel,
+            isOnline
         )
         songViewModel.setCurrentSong(song)
 
@@ -240,7 +241,8 @@ fun LibraryScreenWithBottomNav(
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
     modifier: Modifier = Modifier,
-    audioOutputViewModel: AudioOutputViewModel
+    audioOutputViewModel: AudioOutputViewModel,
+    isOnline: Boolean
 ) {
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
     val isPlaying by playerViewModel.isPlaying.collectAsState()
@@ -264,7 +266,8 @@ fun LibraryScreenWithBottomNav(
                            },
             playerViewModel = playerViewModel,
             sheetState = sheetState,
-            audioOutputViewModel = audioOutputViewModel
+            audioOutputViewModel = audioOutputViewModel,
+            isOnline =isOnline
         )
     }
 
@@ -297,7 +300,8 @@ fun LibraryScreenWithBottomNav(
                 onBack = onBack,
                 songViewModel = songViewModel,
                 playerViewModel = playerViewModel,
-                audioOutputViewModel = audioOutputViewModel,
+                audioOutputViewModel = audioOutputViewModel,,
+                isOnline = isOnline
             )
         }
     }
