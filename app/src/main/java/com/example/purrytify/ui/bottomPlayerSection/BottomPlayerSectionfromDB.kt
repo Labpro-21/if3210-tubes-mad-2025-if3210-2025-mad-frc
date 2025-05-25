@@ -1,6 +1,7 @@
 package com.example.purrytify.ui.screens
 
 import android.app.Activity
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,8 +32,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.layout.ContentScale
 
 
 @Composable
@@ -64,75 +68,94 @@ fun BottomPlayerSectionFromDB(
         return
     }
 
-    val currentSong by songViewModel.current_song.collectAsState()
+    val currentSong by songViewModel.currentSong.collectAsState()
 
     if (currentSong == null) {
+        return
+    }
+
+    LaunchedEffect(currentSong) {
+        if (currentSong != null) {
+            Log.d("BottomPlayer_Update", "Observed currentSong update: ${currentSong}")
+        } else {
+            Log.d("BottomPlayer_Update", "Observed currentSong update: null")
+        }
+    }
+
+    currentSong?.let { song ->
+        Log.d("BottomPlayer", "Recomposing for song: ${song.title} (ID: ${song.id})")
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color.DarkGray)
-                .padding(16.dp),
-            contentAlignment = Alignment.Center
+                .clickable { onSectionClick() }
+                .padding(8.dp)
         ) {
-            Text(text = "No song playing", color = Color.White)
-        }
-        return
-    }
-
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.DarkGray)
-            .clickable { onSectionClick() }
-            .padding(16.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (!currentSong!!.artworkPath.isNullOrEmpty())
-                Image(
-                    painter = rememberAsyncImagePainter(currentSong!!.artworkPath!!.toUri()),
-                    contentDescription = currentSong!!.title,
-                    modifier = Modifier
-                        .size(imageSize)
-                        .clip(RoundedCornerShape(8.dp))
-                )
-            else
-                Icon(
-                    imageVector = Icons.Default.MusicNote,
-                    contentDescription = "No artwork",
-                    tint = Color.White.copy(alpha = 0.7f),
-                    modifier = Modifier.size(imageSize)
-                )
-
-            Spacer(modifier = Modifier.width(8.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = currentSong!!.title,
-                    color = Color.White,
-                    fontSize = 14.sp
-                )
-                Text(
-                    text = currentSong!!.artist,
-                    color = Color.Gray,
-                    fontSize = 12.sp
-                )
-            }
-            IconButton(
-                onClick = { onPlayPause() },
-                modifier = Modifier
-                    .size(iconButtonSize)
-                    .background(MaterialTheme.colorScheme.primary, shape = CircleShape)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(
-                    imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    contentDescription = "Play/Pause",
-                    tint = Color.White,
-                    modifier = Modifier.size(iconSize)
-                )
+
+                if (!song.artworkPath.isNullOrEmpty()) {
+                    Image(
+                        painter = rememberAsyncImagePainter(
+                            model = if (song.artworkPath!!.startsWith("http")) {
+                                song.artworkPath
+                            } else {
+                                song.artworkPath!!.toUri()
+                            }
+                        ),
+                        contentDescription = song.title,
+                        modifier = Modifier
+                            .size(48.dp) 
+                            .clip(RoundedCornerShape(4.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.MusicNote,
+                        contentDescription = "No artwork",
+                        tint = Color.White.copy(alpha = 0.7f),
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = song.title,
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = song.artist,
+                        color = Color.Gray,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                IconButton(
+                    onClick = { onPlayPause() },
+                    modifier = Modifier
+                        .size(48.dp) 
+                        .background(MaterialTheme.colorScheme.primary, shape = CircleShape)
+                ) {
+                    Icon(
+                        imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        contentDescription = "Play/Pause",
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
             }
         }
+    } ?: run {
+        Log.d("BottomPlayer", "No current song, BottomPlayerSection is empty.")
     }
 }

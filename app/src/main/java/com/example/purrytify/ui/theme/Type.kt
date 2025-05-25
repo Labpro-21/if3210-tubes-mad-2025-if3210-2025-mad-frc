@@ -8,14 +8,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.purrytify.R
 
-// Definisikan FontFamily Poppins dengan file yang sudah ditambahkan ke res/font
+
 val Poppins = FontFamily(
     Font(R.font.poppins_regular, FontWeight.Normal),
     Font(R.font.poppins_medium, FontWeight.Medium),
     Font(R.font.poppins_bold, FontWeight.Bold)
 )
 
-// Override Typography default dengan Poppins sebagai defaultFontFamily
+
 val Typography = Typography(
     bodyLarge = TextStyle(
         fontFamily = Poppins,
@@ -29,5 +29,5 @@ val Typography = Typography(
         fontSize = 22.sp,
         lineHeight = 28.sp
     )
-    // Tambahkan style lainnya sesuai kebutuhan
+
 )

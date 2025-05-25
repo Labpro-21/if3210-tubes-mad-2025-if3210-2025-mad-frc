@@ -22,16 +22,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.purrytify.model.Song
 import com.example.purrytify.viewmodel.SongViewModel
-import com.example.purrytify.data.UserDao
-import com.example.purrytify.repository.UserRepository
 import java.util.Date
-
 import com.example.purrytify.utils.SessionManager
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,7 +79,7 @@ fun InsertSongPopUp(
                     }
                 }
 
-                // Autofill the selected URIs if song is provided
+
                 LaunchedEffect(song) {
                     song?.let {
                         selectedAudioUri = Uri.parse(it.audioPath)
@@ -159,7 +155,7 @@ fun InsertSongPopUp(
                             artist = artist,
                             duration = duration,
                             songViewModel = songViewModel,
-                            song = song, // Passing the song object to handle edit or add
+                            song = song,
                             onComplete = { showSheet = false }
                         )
                     }, modifier = Modifier.width(150.dp)) {
@@ -182,9 +178,9 @@ fun InsertSongPopUp(
             }
         }
     }else{
-//        IconButton(onClick = { showSheet = true }) {
-//            Icon(Icons.Default.Edit, contentDescription = "Edit")
-//        }
+
+
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -199,41 +195,41 @@ fun InsertSongPopUp(
     }
 }
 
-//fun handleSaveSong(
-//    context: Context,
-//    selectedAudioUri: Uri?,
-//    selectedPhotoUri: Uri?,
-//    title: String,
-//    artist: String,
-//    duration: Long,
-//    songViewModel: SongViewModel,
-//    song: Song? = null, // Parameter song untuk edit
-//    onComplete: () -> Unit
-//) {
-//    if (selectedAudioUri != null) {
-//        val sessionManager = SessionManager(context)
-//        val currentUserId = sessionManager.getUserId()
-//        val songToSave = Song(
-//            id = song?.id ?: 0, // Gunakan ID dari song yang ada atau 0 untuk lagu baru
-//            title = title,
-//            artist = artist,
-//            duration = duration,
-//            artworkPath = selectedPhotoUri.toString(),
-//            audioPath = selectedAudioUri.toString(),
-//            lastPlayed = Date(),
-//            userId = currentUserId,
-//
-//        )
-//
-//        if (song != null) {
-//            songViewModel.updateSong(songToSave) // Jika song ada, update
-//        } else {
-//            songViewModel.addSong(songToSave) // Jika song null, tambahkan baru
-//        }
-//    }
-//
-//    onComplete() // misalnya untuk menutup sheet atau update UI
-//}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 @Composable
@@ -309,7 +305,7 @@ fun UploadBoxWithButton(
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         UploadBoxDisplay(fileUri = selectedUri, text = text, mimeType = mimeType)
         Spacer(modifier = Modifier.height(4.dp))
-        Button(onClick = { launcher.launch(arrayOf(mimeType)) }) { // array karena OpenDocument
+        Button(onClick = { launcher.launch(arrayOf(mimeType)) }) {
             Text("Choose File")
         }
     }
@@ -325,32 +321,32 @@ fun handleSaveSong(
     duration: Long,
     songViewModel: SongViewModel,
     onComplete: () -> Unit,
-    song: Song? = null, // Parameter song untuk edit
-
+    song: Song? = null,
 ) {
     if (selectedAudioUri != null) {
         val sessionManager = SessionManager(context)
         val currentUserId = sessionManager.getUserId()
         val songToSave = Song(
-            id = song?.id ?: 0, // Gunakan ID dari song yang ada atau 0 untuk lagu baru
+            id = song?.id ?: 0,
             title = if (title.isBlank()) "Unnamed Song" else title,
             artist = if (artist.isBlank()) "Unnamed Artist" else artist,
             duration = duration,
-            artworkPath = selectedPhotoUri.toString(),
+            artworkPath = selectedPhotoUri?.toString() ?: song?.artworkPath,
             audioPath = selectedAudioUri.toString(),
-            addedDate = Date(),
-            lastPlayed = null,
+            addedDate = song?.addedDate ?: Date(),
+            lastPlayed = song?.lastPlayed,
+            liked = song?.liked ?: false,
             userId = currentUserId,
+            isExplicitlyAdded = true
         )
 
         if (song != null) {
-            songViewModel.updateSong(songToSave) // Jika song ada, update
+            songViewModel.updateSong(songToSave)
         } else {
-            songViewModel.addSong(songToSave) // Jika song null, tambahkan baru
+            songViewModel.addSong(songToSave)
         }
     }
-
-    onComplete() // misalnya untuk menutup sheet atau update UI
+    onComplete()
 }
 
 fun getFileNameFromUri(context: Context, uri: Uri): String {

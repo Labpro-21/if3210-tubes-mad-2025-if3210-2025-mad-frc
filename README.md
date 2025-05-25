@@ -15,33 +15,32 @@ Well... it's not a short list tho, so you can see it here if you want [Libraries
 
 Smile for the camera! here's some shots we've prepared so you can see what we've build with our blood and sweat (it's an overreaction i know)
 * [HomeScreen](markdown/screenshots/HomeScreen.jpg)
-* [HomeScreen (playing song)](markdown/screenshots/HomeScreen(playing).jpg)
 * [LibraryScreen (all songs)](markdown/screenshots/LibraryScreen(All).jpg)
 * [LibarryScreen (liked songs)](markdown/screenshots/LibraryScreen(Liked).jpg)
-* [LibraryScreen (playing songs)](markdown/screenshots/LibraryScreen(playing).jpg)
 * [Profile](markdown/screenshots/Profile.jpg)
+* [Sound Capsule](markdown/screenshots/SoundCapsule.jpg)
+* [Time Listened](markdown/screenshots/TimeListened.jpg)
+* [Top Songs](markdown/screenshots/TopSongs.jpg)
+* [Top Artists](markdown/screenshots/TopArtists.jpg)
 * [Login](markdown/screenshots/Login.jpg)
 * [Player](markdown/screenshots/Player.jpg)
-* [ResponsiveHome](markdown/screenshots/HomeScreen(Responsive).jpg)
 
 <h2 align="center">Workloads</h2>
 "A lone knight may hold the line, but it is the strength of the brotherhood that wins the war." Yup, we three can't did all of this without a teamwork so here's what we've taken part of:
 
-| **Name**                                                |       **Works**      |
-| ------------------------------------------------------- | -------------------- |
-| [Pradipta Rafa Mahesa](https://github.com/Rapa285)      | - Database           |
-|                                                         | - PlayerScreen       |
-|                                                         | - LibraryScreen      |
-|                                                         | - Songs              |
-| [Axel Santadi Warih](https://github.com/AxelSantadi)    | - Help Database      |
-|                                                         | - HomeScreen         |
-|                                                         | - Help LibraryScreen |
-|                                                         | - Navigation bar     |
-| [Muhammad Dzaki Arta](https://github.com/TuanOnta)      | - Help Database      |
-|                                                         | - ProfileScreen      |
-|                                                         | - LoginScreen        |
-|                                                         | - API Service        |
-|                                                         | - App Navigation     |
+| **Name**                                                |                                 **Works**                             |
+| ------------------------------------------------------- | --------------------------------------------------------------------- |
+| [Pradipta Rafa Mahesa](https://github.com/Rapa285)      | - Notifications                                                       |
+|                                                         | - Responsiveness                                                      |
+|                                                         | - Merging and Conflict Repairman                                      |
+| [Axel Santadi Warih](https://github.com/AxelSantadi)    | - Sound Capsule                                                       |
+|                                                         | - Share song with QR & URL                                            |
+|                                                         | - Audio Routing                                                       |
+|                                                         | - Rekomendasi                                                         |
+|                                                         | - *Add Server Songs to Recently Played/Liked dan Sound Capsule (Bonus)|
+| [Muhammad Dzaki Arta](https://github.com/TuanOnta)      | - Online Song                                                         |
+|                                                         | - Download Online Song                                                |
+|                                                         | - Edit Profile                                                        |
 
 <h2 align="center">Preparation time and Work time</h2>
 
@@ -50,6 +49,10 @@ Our preparation for this project takes an estimated 24 hours to fully understand
 As for Work time, here's the estimated time for each of us:
 | **Name**                                                |       **Works**      |
 | ------------------------------------------------------- | -------------------- |
-| Pradipta Rafa Mahesa      |  estimated 69 hours          |
-| Axel Santadi Warih    |  estimated 62 hours     |
-| Muhammad Dzaki Arta      |  estimated 60 hours    |
+| Pradipta Rafa Mahesa                                    |  estimated 69 hours  |
+| Axel Santadi Warih                                      |  estimated 62 hours  |
+| Muhammad Dzaki Arta                                     |  estimated 60 hours  |
+
+
+<h2>Footnote</h2>
+*ISTG kak, saya minus literasi waktu baca soundcapsule, saya kira WAJIB server sama local makanya bonus ini basically ga sengaja dikerjain 😭😭😭

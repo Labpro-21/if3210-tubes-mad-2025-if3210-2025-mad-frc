@@ -43,13 +43,13 @@ class SongRecyclerViewAdapter(
                 if (song.liked) R.drawable.baseline_favorite_24 else R.drawable.baseline_favorite_border_24
             )
 
-            // Load artwork image from URI using Glide
+
             val artworkUri = song.artworkPath?.toUri()
             if (artworkUri != null) {
                 Glide.with(itemView.context)
                     .load(artworkUri)
-                    .placeholder(R.drawable.placeholder_music) // default placeholder
-                    .error(R.drawable.placeholder_music)       // error fallback
+                    .placeholder(R.drawable.placeholder_music)
+                    .error(R.drawable.placeholder_music)
                     .into(artwork)
             } else {
                 artwork.setImageResource(R.drawable.placeholder_music)

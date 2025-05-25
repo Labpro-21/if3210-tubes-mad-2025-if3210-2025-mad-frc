@@ -8,7 +8,7 @@ import java.io.IOException
 
 class LoginRepository {
 
-    // Fungsi login menggunakan RetrofitClient.loginApiService
+
     suspend fun login(email: String, password: String): Result<LoginResponse> {
         return try {
             val request = LoginRequest(email, password)

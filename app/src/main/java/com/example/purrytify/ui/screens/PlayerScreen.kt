@@ -4,7 +4,6 @@ import android.app.Application
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -64,6 +63,21 @@ import com.example.purrytify.viewmodel.PlayerViewModelFactory
 import com.example.purrytify.viewmodel.SongViewModel
 import com.example.purrytify.ui.LockScreenOrientation
 import android.content.pm.ActivityInfo
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.runtime.mutableStateOf
+import com.example.purrytify.utils.shareServerSong
+import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.style.TextOverflow
+import com.example.purrytify.ui.components.AudioOutputSelectorBottomSheet
+import com.example.purrytify.viewmodel.AudioOutputViewModel
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.*
 
 
 @Composable
@@ -72,22 +86,35 @@ fun PlayerScreen(
     onNext: () -> Unit,
     onPrevious: () -> Unit,
     songViewModel: SongViewModel,
-    playerViewModel: PlayerViewModel
+    playerViewModel: PlayerViewModel,
+    audioOutputViewModel: AudioOutputViewModel,
 ) {
+
     val context = LocalContext.current
 
-    val currentSong by songViewModel.current_song.collectAsState()
+    val currentSong by songViewModel.currentSong.collectAsState()
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     val isLooping by playerViewModel.isLooping.collectAsState()
+    val activeAudioDevice by playerViewModel.activeAudioDevice.collectAsState()
     val progress by playerViewModel.progress.collectAsState()
 
+    LaunchedEffect(currentSong) {
+        currentSong?.let { Log.d("PlayerScreen", "Current song changed to: ${it.title}") }
+    }
+    
     val songUri = currentSong?.audioPath?.toUri()
-    val artworkUri = currentSong?.artworkPath?.toUri()
 
-    LaunchedEffect(songUri) {
-        songUri?.let {
-            playerViewModel.prepareAndPlay(it, onSongComplete = onNext)
-        }
+    var showAudioOutputSelector by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+
+    val activeDeviceState by playerViewModel.activeAudioDevice.collectAsState()
+
+    if (showAudioOutputSelector) {
+        AudioOutputSelectorBottomSheet(
+            playerViewModel = playerViewModel,
+            onDismiss = { showAudioOutputSelector = false },
+            audioOutputViewModel = audioOutputViewModel
+        )
     }
 
     Column(
@@ -100,14 +127,31 @@ fun PlayerScreen(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = {}) {
-                Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Minimize Player")
-            }
+            activeAudioDevice?.let { device ->
+                Text(
+                    text = "Playing on: ${activeDeviceState?.let { audioOutputViewModel.getDeviceName(it) } ?: "Device Speaker"}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray,
+                    modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            } ?: Text(
+                text = "Playing on: Device Speaker",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray,
+                modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
+            )
 
-            SongSettingsModal(songViewModel,playerViewModel)
+            Row {
+                IconButton(onClick = { showAudioOutputSelector = true }) {
+                    Icon(Icons.Default.VolumeUp, contentDescription = "Select Output Device")
+                }
+                SongSettingsModal(songViewModel, playerViewModel, isOnlineSong = currentSong?.audioPath?.startsWith("http") == true)
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -156,6 +200,14 @@ fun PlayerScreen(
                 )
             }
 
+            currentSong?.let { song ->
+                if (song.audioPath.startsWith("http") && !song.isExplicitlyAdded && song.serverId != null) {
+                    IconButton(onClick = { shareServerSong(context, song) }) {
+                        Icon(Icons.Default.Share, contentDescription = "Share Song")
+                    }
+                }
+            }
+
             IconButton(onClick = { currentSong?.let { songViewModel.toggleLikeSong(it) } }) {
                 Icon(
                     imageVector = if (currentSong?.liked == true)
@@ -170,7 +222,7 @@ fun PlayerScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Slider(
-            value = progress,
+            value = progress ?: 0f,
             onValueChange = { playerViewModel.seekTo(it) },
             valueRange = 0f..((currentSong?.duration ?: 1000) / 1000f),
             modifier = Modifier.fillMaxWidth(),
@@ -185,7 +237,7 @@ fun PlayerScreen(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                formatDuration(progress.toLong() * 1000),
+                formatDuration((progress ?: 0f).toLong() * 1000),
                 style = MaterialTheme.typography.labelSmall
             )
             Text(
@@ -201,7 +253,7 @@ fun PlayerScreen(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { }) {
+            IconButton(onClick = {}) {
                 Icon(Icons.Default.Shuffle, contentDescription = "Shuffle")
             }
             IconButton(onClick = { onPrevious() }) {
@@ -245,7 +297,9 @@ fun PlayerModalBottomSheet(
     song: Song,
     songViewModel: SongViewModel,
     onSongChange: (Int) -> Unit,
-    playerViewModel: PlayerViewModel
+    playerViewModel: PlayerViewModel,
+    audioOutputViewModel: AudioOutputViewModel,
+    isOnline: Boolean
 ) {
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
     val shouldClose by playerViewModel.shouldClosePlayerSheet.collectAsState()
@@ -259,15 +313,16 @@ fun PlayerModalBottomSheet(
         }
         ModalBottomSheet(
             onDismissRequest = onDismiss,
-            sheetState = sheetState, // Control sheet expand/collapse
+            sheetState = sheetState,
             containerColor = MaterialTheme.colorScheme.background,
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
         ) {
             PlayerScreen(
-                onNext = { onSongChange(song.id+1) },
-                onPrevious = { onSongChange(song.id - 1) },
+                onNext = { playerViewModel.skipNext() },
+                onPrevious = { playerViewModel.skipPrevious() },
                 songViewModel = songViewModel,
-                playerViewModel = playerViewModel
+                playerViewModel = playerViewModel,
+                audioOutputViewModel = audioOutputViewModel,
             )
         }
     }

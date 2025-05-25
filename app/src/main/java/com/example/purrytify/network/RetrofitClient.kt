@@ -10,7 +10,6 @@ import okhttp3.logging.HttpLoggingInterceptor
 object RetrofitClient {
     private const val BASE_URL = "http://34.101.226.132:3000/"
 
-    // Instance Retrofit khusus untuk login (tanpa authenticator)
     private val loginRetrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
@@ -18,12 +17,10 @@ object RetrofitClient {
             .build()
     }
 
-    // Properti ini digunakan untuk endpoint login yang tidak memerlukan token.
     val loginApiService: ApiService by lazy {
         loginRetrofit.create(ApiService::class.java)
     }
 
-    // Instance Retrofit untuk endpoint yang memerlukan token.
     fun create(tokenManager: TokenManager): ApiService {
 
         val client = OkHttpClient.Builder()
@@ -50,7 +47,6 @@ object RetrofitClient {
             .create(ApiService::class.java)
     }
 
-    // Fungsi baru untuk keperluan verifikasi token (tanpa authenticator atau TokenManager)
     fun verifyApiService(token: String): ApiService {
         val client = OkHttpClient.Builder()
             .addInterceptor { chain ->
