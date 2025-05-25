@@ -30,15 +30,8 @@ class SongViewModel(
 
     val current_song: StateFlow<Song?> = MusicServiceManager.currentSong
 
-    private val _currentSongLiveData = MutableLiveData<Song?>()
-    val currentSongLiveData: LiveData<Song?> = _currentSongLiveData
 
     init {
-        viewModelScope.launch {
-            MusicServiceManager.currentSong.collect { song ->
-                _currentSongLiveData.postValue(song)
-            }
-        }
 
         loadSongs(userId)
 
@@ -58,6 +51,7 @@ class SongViewModel(
             repository.insertSong(song)
             loadSongs(song.userId)
         }
+        sendSongsToMusicService()
     }
 
     fun reset() {
@@ -75,7 +69,7 @@ class SongViewModel(
         }
     }
 
-    private fun sendSongsToMusicService() {
+    fun sendSongsToMusicService() {
         val songList = _songs.value
         Log.d("SongViewModel", "Sending Playlist of ${songList.size} length")
         val intent = Intent(context, com.example.purrytify.service.MusicService::class.java).apply {
@@ -100,7 +94,6 @@ class SongViewModel(
                     }
                 }
 
-                sendSongsToMusicService()
             }
         }
     }
@@ -125,6 +118,7 @@ class SongViewModel(
         val newArtwork = song.artworkPath
         viewModelScope.launch {
             repository.updateSong(id, newArtist, newTitle, newArtwork)
+            sendSongsToMusicService()
             loadSongs(song.userId)
         }
     }
@@ -142,14 +136,11 @@ class SongViewModel(
                     }
                     repository.updateLastPlayed(song.id, Date())
                     loadSongs(song.userId)
-                    MusicServiceManager.updateCurrentSong(dbSong)
                 } else {
-                    MusicServiceManager.updateCurrentSong(song)
                     Log.d("SongViewModel", "Setting online song as current: ${song.title}")
                 }
             } catch (e: Exception) {
                 Log.e("SongViewModel", "Error setting current song", e)
-                MusicServiceManager.updateCurrentSong(song)
             }
         }
     }

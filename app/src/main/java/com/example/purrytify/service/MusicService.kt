@@ -12,8 +12,10 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.support.v4.media.session.MediaSessionCompat
+import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
 import android.widget.RemoteViews
+import androidx.annotation.OptIn
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.NotificationCompat
 import androidx.media3.common.MediaItem
@@ -22,10 +24,16 @@ import com.example.purrytify.R
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.core.net.toUri
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import coil.imageLoader
 import coil.request.ImageRequest
 import com.example.purrytify.model.Song
 import com.example.purrytify.utils.MusicServiceManager
+import com.example.purrytify.utils.FormatingManager
+import androidx.media3.session.MediaSession
+import androidx.media3.session.MediaSessionService
+import androidx.media3.session.MediaNotification
+
 
 class MusicService : Service() {
 
@@ -34,23 +42,38 @@ class MusicService : Service() {
     val isLooping: Boolean
         get() = exoPlayer.repeatMode == Player.REPEAT_MODE_ONE
 
-    var progress : Float = 0f;
+    val progress : Float
+        get() = exoPlayer.currentPosition.toFloat();
+
     private var progressHandler: Handler? = null
     private var progressRunnable: Runnable? = null
     private var playlist: List<Song> = emptyList()
-    private var currentSongId:Int? = null;
-    private lateinit var mediaSession: MediaSessionCompat
-
+    private var currentSongId:Int? = null
+        get() = exoPlayer.currentMediaItemIndex
+    private lateinit var mediaSession: MediaSession
+    private var mediaList: List<MediaItem> = emptyList()
 
     override fun onCreate() {
         super.onCreate()
         exoPlayer = ExoPlayer.Builder(this).build()
-        mediaSession = MediaSessionCompat(this, "Purrytify")
+        mediaSession = MediaSession.Builder(this, exoPlayer)
+            .setId("purrytify_session")
+            .build()
+
+
         exoPlayer.addListener(object : Player.Listener {
-            override fun onPlaybackStateChanged(state: Int) {
-                if (state == Player.STATE_ENDED) {
-                    skipNext()
-                    sendBroadcast(Intent("ACTION_SONG_COMPLETE"))
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                when (reason) {
+                    Player.MEDIA_ITEM_TRANSITION_REASON_SEEK -> {
+                        // Ini terjadi saat user skip/previous manual (seekTo)
+                        onSongChanged()
+                        Log.d("PLAYER", "Transition by seek (manual skip)")
+                    }
+                    Player.MEDIA_ITEM_TRANSITION_REASON_AUTO -> {
+                        // Ini terjadi otomatis saat lagu selesai
+                        skipNext()
+                        Log.d("PLAYER", "Transition by auto (end of media)")
+                    }
                 }
             }
         })
@@ -65,8 +88,7 @@ class MusicService : Service() {
         if (hasSongId) {
             val songId = intent.getIntExtra("SONG_ID", 0)
             Log.d("MusicService", "SongId: $songId")
-
-            currentSongId = songId
+            exoPlayer.seekTo(songId,0)
             playSong()
         }
 
@@ -82,6 +104,7 @@ class MusicService : Service() {
 
                 if (songs != null) {
                     playlist = songs
+                    updateMediaList()
                 }
             }
             MyApp.ACTION_PLAY -> {
@@ -122,7 +145,6 @@ class MusicService : Service() {
             override fun run() {
                 if (exoPlayer.isPlaying) {
                     // Tambahkan ini untuk update progress
-                    progress = exoPlayer.currentPosition.toFloat()
                     MusicServiceManager.updateSongProgress(progress/1000)
                     updateNotification()
                 }
@@ -143,93 +165,48 @@ class MusicService : Service() {
     }
 
     private fun playSong(){
-        if (playlist.isEmpty()) {
-            Log.e("MusicService", "Playlist is empty, cannot play song.")
-            return
-        }
-
-        if (currentSongId == null || currentSongId !in playlist.indices) {
-            Log.e("MusicService", "Invalid currentSongId: $currentSongId")
-            return
-        }
-        Log.d("MusicService", "playing song currentSongId: $currentSongId")
-        val currentSong = playlist[currentSongId!!]
-        val songUri = currentSong.audioPath.toUri()
-        val mediaItem = MediaItem.fromUri(songUri)
-        progress = 0f
-        exoPlayer.setMediaItem(mediaItem)
-        exoPlayer.prepare()
-
-        exoPlayer.play()
-        isPlaying = true
-        onSongChanged(currentSong)
+        onSongChanged()
+        play()
     }
 
+    @OptIn(UnstableApi::class)
     private fun createNotification(): Notification {
-        Log.d("MusicService","CreatingNotification")
+//        Log.d("MusicService", "CreatingNotification")
 
-        val playPauseIcon = if (exoPlayer.isPlaying) R.drawable.ic_pause else R.drawable.ic_play
 
-        val playPauseIntent = Intent(this, MusicService::class.java).apply {
-            action = MyApp.ACTION_PLAY
-        }
-        val playPausePendingIntent = PendingIntent.getService(
-            this, 0, playPauseIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val nextIntent = Intent(this, MusicService::class.java).apply {
-            action = MyApp.ACTION_NEXT
-        }
-        val nextPendingIntent = PendingIntent.getService(
-            this, 1, nextIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val prevIntent = Intent(this, MusicService::class.java).apply {
-            action = MyApp.ACTION_PREV
-        }
-        val prevPendingIntent = PendingIntent.getService(
-            this, 2, prevIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val mediaStyle = androidx.media.app.NotificationCompat.MediaStyle()
-            .setMediaSession(mediaSession.sessionToken)
-            .setShowActionsInCompactView(0, 1, 2)
-
-        // Jika currentSongId null atau playlist kosong, tampilkan default notification
+        // Kalau lagi tidak memainkan lagu
         if (currentSongId == null || playlist.isEmpty()) {
+
+
             return NotificationCompat.Builder(this, MyApp.CHANNEL_ID)
-                .setContentTitle("Tidak ada lagu diputar")
-                .setContentText("")
                 .setSmallIcon(R.mipmap.ic_launcher)
-                .addAction(R.drawable.ic_previous, null, prevPendingIntent)
-                .addAction(playPauseIcon, null, playPausePendingIntent)
-                .addAction(R.drawable.ic_next, null , nextPendingIntent)
+                .setContentTitle("No song Currently Playing")
+                .setStyle(
+                    androidx.media3.session.MediaStyleNotificationHelper.MediaStyle(mediaSession)
+                )
                 .setOnlyAlertOnce(true)
-                .setStyle(mediaStyle)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .build()
+
         }
 
-        // Jika ada lagu yang diputar
         val song = playlist[currentSongId!!]
 
-        val durationInSec = (song.duration / 1000).toInt()
-        val currentPosInSec = (exoPlayer.currentPosition / 1000).toInt()
-
-        Log.d("MusicService","exo player position : ${currentPosInSec}")
-        Log.d("MusicService","exo player duration : ${durationInSec}, ${exoPlayer.duration}")
-
         return NotificationCompat.Builder(this, MyApp.CHANNEL_ID)
+            .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(song.title)
             .setContentText(song.artist)
-            .setSmallIcon(R.mipmap.ic_launcher)
-            .addAction(R.drawable.ic_previous, "Previous", prevPendingIntent)
-            .addAction(playPauseIcon, "Play/Pause", playPausePendingIntent)
-            .addAction(R.drawable.ic_next, "Next", nextPendingIntent)
+            .setStyle(
+                androidx.media3.session.MediaStyleNotificationHelper.MediaStyle(mediaSession)
+            )
             .setOnlyAlertOnce(true)
-//            .setStyle(mediaStyle)
-            .setProgress(durationInSec, currentPosInSec, false)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .build()
+
     }
+
 
     private fun updateNotification() {
         val notification = createNotification()
@@ -240,30 +217,15 @@ class MusicService : Service() {
     private fun skipNext() {
         // contoh: skip ke lagu berikutnya
         Log.d("ONNEXT", "currentSongId: $currentSongId")
-
-        currentSongId?.let {
-            if (it < playlist.size - 1) {
-                currentSongId = it + 1
-            }else{
-                currentSongId = 0
-            }
-        }
+        exoPlayer.seekToNext()
         Log.d("ONNEXT", "new currentSongId: $currentSongId")
-        notifyCurrentSongChanged()
         playSong()
     }
 
     private fun skipPrevious() {
         // contoh: kembali ke lagu sebelumnya
         Log.d("ONPREVIOUS", "currentSongId: $currentSongId")
-
-        currentSongId?.let {
-            if (it > 0) {
-                currentSongId = it - 1
-            }else{
-                currentSongId = playlist.size - 1
-            }
-        }
+        exoPlayer.seekToPrevious()
         Log.d("ONPREVIOUS", " new currentSongId: $currentSongId")
 
         playSong()
@@ -286,17 +248,17 @@ class MusicService : Service() {
 
     }
 
-    private fun notifyCurrentSongChanged(){
-        Log.d("ONCHANGE", " notifying change into: ${playlist[currentSongId!!].title}")
-        val intent = Intent("ACTION_CURRENT_SONG_CHANGED").apply{
-            putExtra("current_song", playlist[currentSongId!!])
-        }
-        sendBroadcast(intent)
 
+    fun onSongChanged() {
+        Log.d("MusicService","SongChanged into ${playlist[exoPlayer.currentMediaItemIndex].title}")
+        MusicServiceManager.updateCurrentSong(playlist[exoPlayer.currentMediaItemIndex])
     }
 
-    fun onSongChanged(newSong: Song) {
-        MusicServiceManager.updateCurrentSong(newSong)
+    fun updateMediaList(){
+        mediaList = playlist.map { MediaItem.fromUri(it.audioPath) }
+        exoPlayer.setMediaItems(mediaList)
+        exoPlayer.prepare()
+
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

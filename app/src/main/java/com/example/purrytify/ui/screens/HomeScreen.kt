@@ -198,6 +198,7 @@ fun HomeScreenContent(
 //                                playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
                                 val index = songViewModel.getSongIndex(song)
                                 Log.d("HomeScreen", "Picked SongId: ${index}")
+                                songViewModel.sendSongsToMusicService()
                                 playerViewModel.prepareAndPlay(index)
 
                             },
@@ -239,6 +240,7 @@ fun HomeScreenContent(
                         songViewModel.setCurrentSong(song)
 //                        playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
                         val index = songViewModel.getSongIndex(song)
+                        songViewModel.sendSongsToMusicService()
                         Log.d("HomeScreen", "Picked SongId: ${index}")
                         playerViewModel.prepareAndPlay(index)
 

@@ -26,7 +26,7 @@ object MusicServiceManager {
 
     fun updateSongProgress(position: Float) {
         _songProgress.value = position
-        Log.d("MusicServiceManager", "Current song is ${position}s in")
+//        Log.d("MusicServiceManager", "Current song is ${position}s in")
     }
 
     fun updateLooping(isLooping: Boolean) {

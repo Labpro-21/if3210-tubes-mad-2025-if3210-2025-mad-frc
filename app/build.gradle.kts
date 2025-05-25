@@ -93,6 +93,8 @@ dependencies {
     implementation ("androidx.security:security-crypto:1.1.0-alpha07")
     implementation("androidx.media3:media3-ui:1.3.1")
     implementation("androidx.media3:media3-exoplayer:1.3.1")
+    implementation ("androidx.media3:media3-session:1.3.1")
+
     implementation ("androidx.media:media:1.6.0")
 
     // Room Database
