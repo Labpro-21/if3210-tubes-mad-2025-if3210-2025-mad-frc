@@ -51,13 +51,18 @@ import com.example.purrytify.viewmodel.PlayerViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.OutlinedButton
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.QrCodeScanner
 
 @Composable
 fun ProfileScreen(
     isConnected: Boolean,
     onLogout: () -> Unit,
+    onEditProfile: () -> Unit,
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
     onScanQrClicked: () -> Unit
@@ -100,6 +105,7 @@ fun ProfileScreen(
         likedSongs = uiState.likedSongs,
         listenedSongs = uiState.listenedSongs,
         onLogout = onLogout,
+        onEditProfile = onEditProfile,
         songViewModel = songViewModel,
         analytics = analytics,
         playerViewModel = playerViewModel,
@@ -115,6 +121,7 @@ fun ProfileContent(
     songsAdded: Int,
     likedSongs: Int,
     listenedSongs: Int,
+    onEditProfile: () -> Unit,
     onLogout: () -> Unit,
     songViewModel: SongViewModel,
     analytics: SoundCapsule,
@@ -181,7 +188,30 @@ fun ProfileContent(
                 modifier = Modifier.padding(top = 4.dp),
                 textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedButton(
+                onClick = onEditProfile,
+                modifier = Modifier
+                    .fillMaxWidth(0.6f)
+                    .height(36.dp),
+                shape = RoundedCornerShape(18.dp),
+                border = BorderStroke(1.dp, Color.White),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Edit Profile",
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Edit Profile",
+                    style = MaterialTheme.typography.subtitle2  // material-1 style
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
             // Tombol Log Out dengan teks putih dan background #3E3F3F
             Button(
                 onClick = {
@@ -260,6 +290,7 @@ fun ProfileScreenWithBottomNav(
     onNavigateToLibrary: () -> Unit,
     isConnected: Boolean,
     onLogout: () -> Unit,
+    onEditProfile: () -> Unit,
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
     onScanQrClicked: () -> Unit
@@ -278,7 +309,7 @@ fun ProfileScreenWithBottomNav(
         }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
-            ProfileScreen(isConnected = isConnected, onLogout = onLogout, songViewModel = songViewModel, playerViewModel = playerViewModel, onScanQrClicked = onScanQrClicked)
+            ProfileScreen(isConnected = isConnected, onLogout = onLogout, onEditProfile = onEditProfile, songViewModel = songViewModel, playerViewModel = playerViewModel, onScanQrClicked = onScanQrClicked)
         }
     }
 }

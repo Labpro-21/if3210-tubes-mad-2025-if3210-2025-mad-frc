@@ -16,11 +16,12 @@ import com.example.purrytify.repository.SongRepository
 import com.example.purrytify.ui.screens.LibraryScreenWithBottomNav
 import com.example.purrytify.ui.screens.LoginScreen
 import com.example.purrytify.ui.screens.ProfileScreenWithBottomNav
+import com.example.purrytify.ui.screens.EditProfileScreen
 import com.example.purrytify.viewmodel.SongViewModel
 import com.example.purrytify.viewmodel.SongViewModelFactory
 import com.example.purrytify.viewmodel.NetworkViewModel
 import com.example.purrytify.utils.TokenManager
-import androidx.compose.runtime.LaunchedEffect // Untuk side-effect logging
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
@@ -29,15 +30,20 @@ import com.example.purrytify.utils.SessionManager
 import com.example.purrytify.viewmodel.PlayerViewModel
 import com.example.purrytify.viewmodel.PlayerViewModelFactory
 import com.example.purrytify.network.RetrofitClient
+import com.example.purrytify.repository.UserRepository
 import com.example.purrytify.ui.screens.TopScreen
 import com.example.purrytify.viewmodel.OnlineSongViewModel
 import com.example.purrytify.viewmodel.OnlineSongViewModelFactory
+import com.example.purrytify.viewmodel.ProfileViewModel
+import com.example.purrytify.viewmodel.ProfileViewModelFactory
 
- sealed class Screen(val route: String) {
-    object Login : Screen("login")
-    object Home : Screen("home")
-    object Library : Screen("library")
-    object Profile : Screen("profile")
+sealed class Screen(val route: String) {
+     object Login : Screen("login")
+     object Home : Screen("home")
+     object TopScreen : Screen("TopScreen")
+     object Library : Screen("library")
+     object Profile : Screen("profile")
+     object EditProfile : Screen("edit_profile")
 }
 
 @Composable
@@ -48,7 +54,9 @@ fun AppNavigation(onScanQrClicked: () -> Unit, songViewModelFromActivity: SongVi
     val sessionManager = remember { SessionManager(context) }
     val navController = rememberNavController()
     val db = AppDatabase.getDatabase(context)
-    val songRepository = remember { SongRepository(db.songDao(), db.userDao()) } // Renamed to avoid conflict
+    val songRepository = remember { SongRepository(db.songDao(), db.userDao()) }
+    val userRepo      = remember { UserRepository(db.userDao()) }
+
 
     val networkViewModel: NetworkViewModel = viewModel()
     val isConnected by networkViewModel.isConnected.observeAsState(initial = true)
@@ -88,7 +96,8 @@ fun AppNavigation(onScanQrClicked: () -> Unit, songViewModelFromActivity: SongVi
     val onlineSongViewModel: OnlineSongViewModel = viewModel(
         factory = OnlineSongViewModelFactory(api, sessionManager)
     )
-    // ----- END USER ID HANDLING -----
+
+    val ctx = LocalContext.current
 
     LaunchedEffect(currentSessionUserId, tokenManager.isLoggedIn()) {
         Log.d("AppNavigation_Recompose", "Recomposing. SessionUserId: $currentSessionUserId, IsLoggedIn: ${tokenManager.isLoggedIn()}")
@@ -176,6 +185,7 @@ fun AppNavigation(onScanQrClicked: () -> Unit, songViewModelFromActivity: SongVi
                             launchSingleTop = true
                         }
                     },
+                    onEditProfile = { navController.navigate(Screen.EditProfile.route) },
                     songViewModel = vmToUse,
                     playerViewModel = playerViewModel,
                     onScanQrClicked = onScanQrClicked // Teruskan callback ke ProfileScreen jika tombol ada di sana
@@ -202,6 +212,21 @@ fun AppNavigation(onScanQrClicked: () -> Unit, songViewModelFromActivity: SongVi
                 },
                 onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
+            )
+        }
+
+        composable(Screen.EditProfile.route) {
+            val profileVm: ProfileViewModel = viewModel(
+                factory = ProfileViewModelFactory(
+                    context        = ctx,
+                    tokenManager   = tokenManager,
+                    userRepository = userRepo,
+                    sessionManager = sessionManager
+                )
+            )
+            EditProfileScreen(
+                profileViewModel = profileVm,
+                onBack           = { navController.popBackStack() }
             )
         }
     }

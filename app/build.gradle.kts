@@ -85,11 +85,11 @@ dependencies {
 //    implementation(libs.androidx.lifecycle.livedata.ktx)
 //    implementation(libs.androidx.runtime.livedata)
     implementation(libs.androidx.activity.compose.v161)
-    implementation("com.google.dagger:hilt-android:2.49")
-    kapt("com.google.dagger:hilt-android-compiler:2.48")
-    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
-    implementation ("androidx.security:security-crypto:1.1.0-alpha07")
+    implementation(libs.hilt.android.v249)
+    kapt(libs.dagger.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose.v287)
+    implementation (libs.androidx.security.crypto.v110alpha07)
 
     // Room Database
     implementation(libs.androidx.room.runtime)
@@ -103,10 +103,19 @@ dependencies {
 
     implementation(libs.androidx.media3.exoplayer)        // Core ExoPlayer
     implementation(libs.androidx.media3.ui)               // PlayerView
-    implementation("androidx.compose.material:material-icons-extended:<version>")
-    implementation ("androidx.datastore:datastore-preferences:1.0.0")
+    implementation(libs.material.icons.extended)
+    implementation (libs.androidx.datastore.preferences)
 
-    implementation("androidx.compose.material3:material3:<latest-version>")
-    implementation("com.google.zxing:core:3.5.3")
-    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+    implementation(libs.material3)
+    implementation(libs.core)
+    implementation(libs.zxing.android.embedded)
+
+    implementation("androidx.core:core-ktx:1.10.1")
+    // Play Services Location untuk LocationServices & lastLocation
+    implementation(libs.play.services.location)
+    // Material icons
+    implementation("androidx.core:core:1.10.1")
+    implementation (libs.androidx.material.icons.extended.v143)
+    // for maps
+    implementation("org.osmdroid:osmdroid-android:6.1.12")
 }
