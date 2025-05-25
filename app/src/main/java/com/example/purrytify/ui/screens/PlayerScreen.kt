@@ -131,9 +131,6 @@ fun PlayerScreen(
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SongSettingsModal(songViewModel,playerViewModel, isOnlineSong = currentSong?.audioPath?.startsWith("http") == true)
-
-
             activeAudioDevice?.let { device ->
                 Text(
                     text = "Playing on: ${activeDeviceState?.let { audioOutputViewModel.getDeviceName(it) } ?: "Device Speaker"}",
@@ -150,13 +147,10 @@ fun PlayerScreen(
                 modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
             )
 
-
             Row {
-
                 IconButton(onClick = { showAudioOutputSelector = true }) {
                     Icon(Icons.Default.VolumeUp, contentDescription = "Select Output Device")
                 }
-
                 SongSettingsModal(songViewModel, playerViewModel)
             }
         }
