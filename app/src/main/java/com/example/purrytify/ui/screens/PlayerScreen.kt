@@ -109,7 +109,8 @@ fun PlayerScreen(
     if (showAudioOutputSelector) {
         AudioOutputSelectorBottomSheet(
             playerViewModel = playerViewModel,
-            onDismiss = { showAudioOutputSelector = false }
+            onDismiss = { showAudioOutputSelector = false },
+            audioOutputViewModel = audioOutputViewModel
         )
     }
 

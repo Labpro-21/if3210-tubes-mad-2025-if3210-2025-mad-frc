@@ -7,6 +7,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioDeviceInfo
 import android.net.Uri
+import android.os.Build
+import android.os.Parcelable
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.core.content.ContextCompat
@@ -244,19 +246,21 @@ class PlayerViewModel @Inject constructor(
 
     // Fungsi untuk memilih perangkat output audio
     @OptIn(UnstableApi::class)
+    @Suppress("DEPRECATION")
     fun setPreferredAudioOutput(deviceInfo: AudioDeviceInfo?) {
         try {
-//            _exoPlayer.setPreferredAudioDevice(deviceInfo)
-            // Karena kita tidak bisa mendapatkan konfirmasi dari ExoPlayer melalui listener API lama,
-            // kita perbarui _activeAudioDevice secara optimistis.
-//            _activeAudioDevice.value = deviceInfo
+            val intent = Intent(context, MusicService::class.java).apply {
+                action = "ACTION_SET_OUTPUT"
+                putExtra("audioDevice", deviceInfo?.id ?: -1)
+            }
+            context.startService(intent)
+
             Log.d("PlayerViewModel", "Set preferred audio output to: ${deviceInfo?.productName ?: "System Default"}. Active device state updated to this.")
         } catch (e: Exception) {
             Log.e("PlayerViewModel", "Error setting preferred audio device", e)
-            // Jika gagal, mungkin _activeAudioDevice harus di-reset ke state sebelumnya atau null.
-            // Untuk sekarang, kita biarkan _activeAudioDevice seperti yang di-set (optimis).
         }
     }
+
 
     // Fungsi ini bisa dipanggil dari MainActivity (BroadcastReceiver)
     // saat headset dicabut, misalnya.

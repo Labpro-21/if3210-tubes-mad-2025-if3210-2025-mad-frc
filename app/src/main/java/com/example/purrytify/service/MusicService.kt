@@ -2,6 +2,7 @@ package com.example.purrytify.service
 
 import android.app.Notification
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Handler
@@ -26,6 +27,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import android.media.AudioDeviceInfo
+import android.media.AudioManager
 
 
 class MusicService : Service() {
@@ -85,6 +88,7 @@ class MusicService : Service() {
         startProgressUpdates()
     }
 
+    @OptIn(UnstableApi::class)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val hasSongId = intent?.hasExtra("SONG_ID") ?: false
         Log.d("MusicService", "hasSongId: $hasSongId")
@@ -95,10 +99,9 @@ class MusicService : Service() {
             exoPlayer.seekTo(songId,0)
             playSong()
         }
-
+        @Suppress("DEPRECATION", "UNCHECKED_CAST")
         when(intent?.action) {
             "ACTION_SET_PLAYLIST" ->{
-                @Suppress("DEPRECATION")
                 val songs: ArrayList<Song>? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     intent.getParcelableArrayListExtra("playlist", Song::class.java)
                 } else {
@@ -110,6 +113,16 @@ class MusicService : Service() {
                     playlist = songs
                     updateMediaList()
                 }
+            }
+            "ACTION_SET_OUTPUT" ->{
+                val audioDeviceId: Int? = intent.getIntExtra("audioDevice", -1)
+                val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                val devices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+
+                val selectedDevice = devices.firstOrNull { it.id == audioDeviceId }
+
+
+                exoPlayer.setPreferredAudioDevice(selectedDevice)
             }
             MyApp.ACTION_PLAY -> {
                 if (exoPlayer.isPlaying) {
@@ -142,6 +155,8 @@ class MusicService : Service() {
 
         return START_STICKY
     }
+
+
 
     private fun startProgressUpdates() {
         progressHandler = Handler(Looper.getMainLooper())
