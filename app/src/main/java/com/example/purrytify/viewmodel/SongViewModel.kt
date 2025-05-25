@@ -157,8 +157,6 @@ class SongViewModel(private val repository: SongRepository, private val userId: 
 
             var fullyProcessedSong: Song? = null
 
-
-
             if (songData.audioPath.startsWith("http")) {
                 var localCopy = repository.getSongByAudioPathAndUserId(songData.audioPath, effectiveUserId)
                 if (localCopy == null) {
@@ -254,4 +252,6 @@ class SongViewModel(private val repository: SongRepository, private val userId: 
             }
         }
     }
+
+    suspend fun isDownloadedByServerId(serverId: Int?): Boolean = repository.isDownloadedByServerId(serverId)
 }

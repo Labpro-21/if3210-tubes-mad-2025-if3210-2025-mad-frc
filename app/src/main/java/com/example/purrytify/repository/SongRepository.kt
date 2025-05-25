@@ -50,4 +50,6 @@ class SongRepository(private val songDao: SongDao, private val userDao: UserDao)
     suspend fun updateLastPlayed(songId:Int, lastPlayed:Date) = songDao.updateLastPlayed(songId,lastPlayed)
     suspend fun addPlayHistory(history: PlayHistory) {songDao.insertPlayHistory(history)}
     suspend fun getSongByAudioPathAndUserId(audioPath: String, userId: Int): Song? = songDao.getSongByAudioPathAndUserId(audioPath, userId)
+
+    suspend fun isDownloadedByServerId(serverId: Int?): Boolean = songDao.existsByServerIdExplicitlyAdded(serverId)
 }
