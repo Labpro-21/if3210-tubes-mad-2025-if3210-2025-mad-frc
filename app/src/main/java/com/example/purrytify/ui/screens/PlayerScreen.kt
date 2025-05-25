@@ -64,6 +64,17 @@ import com.example.purrytify.viewmodel.PlayerViewModelFactory
 import com.example.purrytify.viewmodel.SongViewModel
 import com.example.purrytify.ui.LockScreenOrientation
 import android.content.pm.ActivityInfo
+import androidx.compose.material.icons.filled.Share
+import com.example.purrytify.utils.shareServerSong
+import androidx.compose.material.icons.filled.VolumeUp // Contoh ikon untuk output device
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue // Pastikan ini ada
+import androidx.compose.ui.text.style.TextOverflow
+import com.example.purrytify.ui.components.AudioOutputSelectorBottomSheet
+import com.example.purrytify.viewmodel.AudioOutputViewModel
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -72,18 +83,36 @@ fun PlayerScreen(
     onNext: () -> Unit,
     onPrevious: () -> Unit,
     songViewModel: SongViewModel,
-    playerViewModel: PlayerViewModel
+    playerViewModel: PlayerViewModel,
+    audioOutputViewModel: AudioOutputViewModel,
+    isOnlineSong: Boolean = false
 ) {
     val context = LocalContext.current
 
     val currentSong by songViewModel.current_song.collectAsState()
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     val isLooping by playerViewModel.isLooping.collectAsState()
-    val progress by playerViewModel.progress.collectAsState()
+    val currentPositionSeconds by playerViewModel.currentPositionSeconds.collectAsState(initial = 0f)
+    val activeAudioDevice by playerViewModel.activeAudioDevice.collectAsState()
 
     LaunchedEffect(currentSong) {
         currentSong?.let { Log.d("PlayerScreen", "Current song changed to: ${it.title}") }
+    }
+    
+    val songUri = currentSong?.audioPath?.toUri()
+//    val artworkUri = currentSong?.artworkPath?.toUri()
+    var showAudioOutputSelector by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
+    val activeDeviceState by playerViewModel.activeAudioDevice.collectAsState()
+
+    }
+
+    if (showAudioOutputSelector) {
+        AudioOutputSelectorBottomSheet(
+            playerViewModel = playerViewModel,
+            onDismiss = { showAudioOutputSelector = false }
+        )
     }
 
     Column(
@@ -103,7 +132,34 @@ fun PlayerScreen(
                 Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Minimize Player")
             }
 
-            SongSettingsModal(songViewModel,playerViewModel)
+            SongSettingsModal(songViewModel,playerViewModel, isOnlineSong = currentSong?.audioPath?.startsWith("http") == true)
+
+            // Tampilkan nama perangkat aktif jika ada
+            activeAudioDevice?.let { device ->
+                Text(
+                    text = "Playing on: ${activeDeviceState?.let { audioOutputViewModel.getDeviceName(it) } ?: "Device Speaker"}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray,
+                    modifier = Modifier.weight(1f).padding(horizontal = 8.dp), // Sesuaikan modifier jika perlu
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis // Tambahkan jika nama panjang
+                )
+            } ?: Text(
+                text = "Playing on: Device Speaker", // Default
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray,
+                modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
+            )
+
+
+            Row {
+                // Tombol untuk memilih output device
+                IconButton(onClick = { showAudioOutputSelector = true }) {
+                    Icon(Icons.Default.VolumeUp, contentDescription = "Select Output Device")
+                }
+                // Tombol Song Settings yang sudah ada
+                SongSettingsModal(songViewModel, playerViewModel) //
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -152,6 +208,14 @@ fun PlayerScreen(
                 )
             }
 
+            currentSong?.let { song ->
+                if (song.audioPath.startsWith("http") && !song.isExplicitlyAdded && song.serverId != null) { // Cek apakah lagu server (belum eksplisit jadi lokal)
+                    IconButton(onClick = { shareServerSong(context, song) }) {
+                        Icon(Icons.Default.Share, contentDescription = "Share Song")
+                    }
+                }
+            }
+
             IconButton(onClick = { currentSong?.let { songViewModel.toggleLikeSong(it) } }) {
                 Icon(
                     imageVector = if (currentSong?.liked == true)
@@ -197,7 +261,7 @@ fun PlayerScreen(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { }) {
+            IconButton(onClick = {}) {
                 Icon(Icons.Default.Shuffle, contentDescription = "Shuffle")
             }
             IconButton(onClick = { onPrevious() }) {
@@ -241,7 +305,8 @@ fun PlayerModalBottomSheet(
     song: Song,
     songViewModel: SongViewModel,
     onSongChange: (Int) -> Unit,
-    playerViewModel: PlayerViewModel
+    playerViewModel: PlayerViewModel,
+    audioOutputViewModel: AudioOutputViewModel
 ) {
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
     val shouldClose by playerViewModel.shouldClosePlayerSheet.collectAsState()
@@ -263,7 +328,8 @@ fun PlayerModalBottomSheet(
                 onNext = { playerViewModel.skipNext() },
                 onPrevious = { playerViewModel.skipPrevious() },
                 songViewModel = songViewModel,
-                playerViewModel = playerViewModel
+                playerViewModel = playerViewModel,
+                audioOutputViewModel = audioOutputViewModel
             )
         }
     }

@@ -109,8 +109,19 @@ dependencies {
 
     implementation(libs.androidx.media3.exoplayer)        // Core ExoPlayer
     implementation(libs.androidx.media3.ui)               // PlayerView
-    implementation("androidx.compose.material:material-icons-extended:<version>")
-    implementation ("androidx.datastore:datastore-preferences:1.0.0")
+    implementation(libs.material.icons.extended)
+    implementation (libs.androidx.datastore.preferences)
 
-    implementation("androidx.compose.material3:material3:<latest-version>")
+    implementation(libs.material3)
+    implementation(libs.core)
+    implementation(libs.zxing.android.embedded)
+
+    implementation("androidx.core:core-ktx:1.10.1")
+    // Play Services Location untuk LocationServices & lastLocation
+    implementation(libs.play.services.location)
+    // Material icons
+    implementation("androidx.core:core:1.10.1")
+    implementation (libs.androidx.material.icons.extended.v143)
+    // for maps
+    implementation("org.osmdroid:osmdroid-android:6.1.12")
 }
