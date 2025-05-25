@@ -73,7 +73,7 @@ fun HomeScreenContent(
     playerViewModel: PlayerViewModel,
     newSongsFromDb: List<Song>,
     recentlyPlayedFromDb: List<Song>,
-    onlineViewModel: OnlineSongViewModel,
+    onlineSongViewModel: OnlineSongViewModel,
     songVm: SongViewModel,
     onNavigateToTopSong: (String) -> Unit,
 ) {
@@ -102,10 +102,10 @@ fun HomeScreenContent(
         return
     }
 
-    val onlineSongs by onlineViewModel.onlineSongs.collectAsState()
+    val onlineSongs by onlineSongViewModel.onlineSongs.collectAsState()
 
     LaunchedEffect(Unit) {
-        onlineViewModel.loadTopSongs(null)
+        onlineSongViewModel.loadTopSongs(null)
     }
 
     LazyColumn(
@@ -422,7 +422,7 @@ fun HomeScreenWithBottomNav(
     modifier: Modifier = Modifier,
     newSongsFromDb: List<Song>,
     recentlyPlayedFromDb: List<Song>,
-    onlineViewModel: OnlineSongViewModel,
+    onlineSongViewModel: OnlineSongViewModel,
     songVm: SongViewModel,
     onNavigateToTopSong: (String) -> Unit
 ) {
@@ -474,7 +474,7 @@ fun HomeScreenWithBottomNav(
                 playerViewModel = playerViewModel,
                 newSongsFromDb = newSongsFromDb,
                 recentlyPlayedFromDb = recentlyPlayedFromDb,
-                onlineViewModel = onlineViewModel,
+                onlineSongViewModel = onlineSongViewModel,
                 songVm = songViewModel,
                 onNavigateToTopSong = onNavigateToTopSong
             )
@@ -488,6 +488,7 @@ fun HomeScreenResponsive(
     onNavigateToProfile: () -> Unit,
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
+    onlineSongViewModel: OnlineSongViewModel,
     onNavigateToTopSong: (String) -> Unit = {}
 ) {
     val configuration = LocalConfiguration.current
@@ -530,7 +531,7 @@ fun HomeScreenResponsive(
                 playerViewModel = playerViewModel,
                 newSongsFromDb = newSongsFromDb,
                 recentlyPlayedFromDb = recentlyPlayedFromDb,
-                onlineViewModel = onlineViewModel,
+                onlineSongViewModel = onlineSongViewModel,
                 songVm = songViewModel,
                 onNavigateToTopSong = onNavigateToTopSong
             )
@@ -543,7 +544,7 @@ fun HomeScreenResponsive(
             playerViewModel = playerViewModel,
             newSongsFromDb = newSongsFromDb,
             recentlyPlayedFromDb = recentlyPlayedFromDb,
-            onlineViewModel = onlineViewModel,
+            onlineSongViewModel = onlineSongViewModel,
             songVm = songViewModel,
             onNavigateToTopSong = onNavigateToTopSong
         )

@@ -30,7 +30,6 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 class ProfileViewModel(
-    // ... (dependensi yang sudah ada) ...
     @SuppressLint("StaticFieldLeak") private val context: Context, // Jika analyticsRepo membutuhkan context
     private val tokenManager: TokenManager,
     private val userRepository: UserRepository,
@@ -134,35 +133,9 @@ class ProfileViewModel(
         }
     }
 
-    /** Update profile dengan optional lokasi & foto */
-    fun updateProfile(
-        location: String?,
-        photoUri: Uri?,
-        onResult: (success: Boolean) -> Unit
-    ) {
-        viewModelScope.launch {
-            isLoading = true
-            errorMsg = null
-            profileRepository
-                .editProfile(location, photoUri, context)
-                .onSuccess {
-                    // update UI state…
-                    onResult(true)      // <-- sukses
-                }
-                .onFailure { e ->
-                    errorMsg = e.message
-                    onResult(false)     // <-- gagal
-                }
-            isLoading = false
-        }
-    }
-
-    private fun parseCountryCode(code: String): String {
-        return try {
-            Locale("", code.uppercase()).displayCountry
-        } catch (e: Exception) {
-            code
-        }
+    // Fungsi untuk membersihkan pesan error dari ViewModel
+    fun clearErrorMsg() {
+        errorMsg = null
     }
 
     /** Update profile dengan optional lokasi & foto */

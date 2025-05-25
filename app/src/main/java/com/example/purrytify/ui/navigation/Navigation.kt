@@ -25,25 +25,27 @@ import com.example.purrytify.data.AppDatabase
 import com.example.purrytify.repository.UserRepository
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import com.example.purrytify.network.RetrofitClient
+import com.example.purrytify.repository.SongRepository
 import com.example.purrytify.ui.screens.HomeScreenResponsive
 import com.example.purrytify.ui.screens.TimeListenedScreen
 import com.example.purrytify.utils.SessionManager
 import com.example.purrytify.viewmodel.PlayerViewModel // Import classnya
 import com.example.purrytify.viewmodel.OnlineSongViewModel // Import classnya
-import com.example.purrytify.repository.UserRepository
 import com.example.purrytify.ui.screens.TopScreen
+import com.example.purrytify.viewmodel.OnlineSongViewModelFactory
+import com.example.purrytify.viewmodel.PlayerViewModelFactory
 import com.example.purrytify.viewmodel.ProfileViewModel
 import com.example.purrytify.viewmodel.ProfileViewModelFactory
+import com.example.purrytify.viewmodel.SongViewModelFactory
 import java.time.YearMonth
-
-import com.example.purrytify.viewmodel.ProfileViewModel
-import com.example.purrytify.viewmodel.ProfileViewModelFactory
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
     object Home : Screen("home")
     object Library : Screen("library")
     object Profile : Screen("profile")
+    object EditProfile : Screen("edit_profile")
     object TimeListenedDetail : Screen("time_listened_detail")
 }
 
@@ -62,7 +64,7 @@ fun AppNavigation(
     val navController = rememberNavController()
     val db = AppDatabase.getDatabase(context)
     val songRepository = remember { SongRepository(db.songDao(), db.userDao()) }
-    val userRepo      = remember { UserRepository(db.userDao()) }
+    val userRepository      = remember { UserRepository(db.userDao()) }
 
 
     // NetworkViewModel masih bisa dibuat di sini jika hanya digunakan oleh AppNavigation/UI
@@ -71,6 +73,9 @@ fun AppNavigation(
 
     val currentSessionUserId = sessionManager.getUserId()
     Log.d("AppNavigation", "SessionManager userId: $currentSessionUserId. Received SongViewModel hash: ${System.identityHashCode(songViewModel)}")
+
+    val userIdForViewModel = currentSessionUserId.takeIf { it > 0 } ?: 0
+
 
     val profileViewModel: ProfileViewModel = viewModel(
         viewModelStoreOwner = activity, // activity adalah LocalContext.current as ComponentActivity
@@ -99,23 +104,7 @@ fun AppNavigation(
     }
     Log.d("AppNavigation", "Determined startDestination: $startDestination")
 
-    val songViewModel: SongViewModel = viewModel(
-        key = "songViewModel_${userIdForViewModel}", // Key akan berubah jika userIdForViewModel berubah
-        factory = SongViewModelFactory(songRepository, userIdForViewModel) // factory tetap terima userIdForViewModel
-    )
-    Log.d("AppNavigation", "SongViewModel instance created/obtained with key: songViewModel_${userIdForViewModel}. Passed userId to factory: $userIdForViewModel")
-
-
-    val playerViewModel: PlayerViewModel = viewModel<PlayerViewModel>(
-        factory = PlayerViewModelFactory((context as ComponentActivity).application)
-    )
-
     val api = remember { RetrofitClient.create(tokenManager) } // RetrofitClient mungkin perlu context untuk TokenManager
-    val onlineSongViewModel: OnlineSongViewModel = viewModel(
-        factory = OnlineSongViewModelFactory(api, sessionManager)
-    )
-
-    val ctx = LocalContext.current
 
     LaunchedEffect(currentSessionUserId, tokenManager.isLoggedIn()) {
         Log.d("AppNavigation_Recompose", "Recomposing. SessionUserId: $currentSessionUserId, IsLoggedIn: ${tokenManager.isLoggedIn()}")
@@ -154,7 +143,8 @@ fun AppNavigation(
                     onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
                     onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                     playerViewModel = playerViewModel,
-                    // onlineViewModel dilewatkan langsung
+                    songViewModel = songViewModel,
+                    onlineSongViewModel = onlineSongViewModel,
                     onNavigateToTopSong = { chartType ->
                     navController.navigate("top/$chartType")
                 }
@@ -221,6 +211,7 @@ fun AppNavigation(
                         profileViewModel.loadDailyListenDetailsForMonth(YearMonth.now()) // Default ke bulan ini
                         navController.navigate(Screen.TimeListenedDetail.route)
                     },
+                    onEditProfile = {navController.navigate(Screen.EditProfile.route)}
                 )
             }
         }
@@ -241,7 +232,7 @@ fun AppNavigation(
             TopScreen(
                 chartType = chartType,
                 onlineViewModel = onlineSongViewModel,
-                songViewModel = songViewModelFromActivity,
+                songViewModel = songViewModel,
                 playerViewModel = playerViewModel,
                 onBack = { navController.popBackStack() },
                 onNavigateToHome = {
@@ -257,9 +248,9 @@ fun AppNavigation(
         composable(Screen.EditProfile.route) {
             val profileVm: ProfileViewModel = viewModel(
                 factory = ProfileViewModelFactory(
-                    context        = ctx,
+                    context        = context,
                     tokenManager   = tokenManager,
-                    userRepository = userRepo,
+                    userRepository = userRepository,
                     sessionManager = sessionManager
                 )
             )

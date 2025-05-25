@@ -13,6 +13,11 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import com.example.purrytify.data.AppDatabase
+import com.example.purrytify.model.PlayHistory
+import com.example.purrytify.model.Song
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,14 +31,10 @@ import javax.inject.Inject
 class PlayerViewModel @Inject constructor(
     private val context: Application
 ) : AndroidViewModel(context) {
-    private val _shouldClosePlayerSheet = MutableStateFlow(false)
-    val shouldClosePlayerSheet: StateFlow<Boolean> = _shouldClosePlayerSheet
-
     private val _exoPlayer: ExoPlayer
     // val exoPlayer: ExoPlayer get() = _exoPlayer // Jika ingin diekspos
 
     private val _isPlaying = MutableStateFlow(false)
-    val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
     val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
 
     private val _progress = MutableStateFlow(0f) // Default ke 0f
@@ -48,6 +49,8 @@ class PlayerViewModel @Inject constructor(
 
     private val _shouldClosePlayerSheet = MutableStateFlow(false)
     val shouldClosePlayerSheet: StateFlow<Boolean> = _shouldClosePlayerSheet.asStateFlow() // Pastikan expose sebagai StateFlow
+
+    val currentPositionSeconds: StateFlow<Float> = _progress.asStateFlow()
 
     fun closePlayerSheet() {
         _shouldClosePlayerSheet.value = true
@@ -72,6 +75,9 @@ class PlayerViewModel @Inject constructor(
                 if (_exoPlayer.playbackState == Player.STATE_READY && _exoPlayer.isPlaying) {
                     val currentPosition = _exoPlayer.currentPosition
                     val duration = _exoPlayer.duration
+                    val currentPositionMs = _exoPlayer.currentPosition
+                    _progress.value = (currentPositionMs / 1000f)
+                    onPlaybackSecondTick?.invoke()
                     if (duration > 0) {
                         _progress.value = (currentPosition / 1000).toFloat()
                     } else {
@@ -212,14 +218,6 @@ class PlayerViewModel @Inject constructor(
 
     }
 
-    fun closePlayerSheet() {
-        _shouldClosePlayerSheet.value = true
-    }
-
-    fun resetCloseSheetFlag() {
-        _shouldClosePlayerSheet.value = false
-    }
-
     @OptIn(UnstableApi::class)
     override fun onCleared() {
         super.onCleared()
@@ -244,28 +242,6 @@ class PlayerViewModel @Inject constructor(
         } else {
             _exoPlayer.repeatMode = Player.REPEAT_MODE_OFF
             Log.d("PlayerVM", "Looping disabled: REPEAT_MODE_OFF")
-        }
-    }
-
-    // Fungsi recordPlay tetap sama, pastikan AppDatabase dan PlayHistory di-import dengan benar
-    @OptIn(UnstableApi::class)
-    fun recordPlay(song: Song, listenedMs: Long) {
-        val app: Application = getApplication()
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val dao = AppDatabase.getDatabase(app).songDao() // Atau PlayHistoryDao jika ada
-                val playHistoryEntry = PlayHistory(
-                    // id = 0, // jika autoGenerate
-                    song_id = song.id,
-                    user_id = song.userId,
-                    played_at = Date(System.currentTimeMillis()),
-                    duration_ms = listenedMs,
-                )
-                 dao.insertPlayHistory(playHistoryEntry)
-                Log.d("PlayerVM", "Play recorded for songId: ${song.id}, duration: $listenedMs ms")
-            } catch (e: Exception) {
-                Log.e("PlayerVM", "Error recording play history: ${e.message}", e)
-            }
         }
     }
 }

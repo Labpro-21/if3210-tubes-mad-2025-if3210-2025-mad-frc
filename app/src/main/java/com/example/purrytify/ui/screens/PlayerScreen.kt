@@ -82,7 +82,8 @@ fun PlayerScreen(
     val currentSong by songViewModel.current_song.collectAsState()
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     val isLooping by playerViewModel.isLooping.collectAsState()
-    val currentPositionSeconds by playerViewModel.currentPositionSeconds.collectAsState()
+    val currentPositionSeconds by playerViewModel.currentPositionSeconds
+        .collectAsState(initial = 0f)
 
     val songUri = currentSong?.audioPath?.toUri()
     val artworkUri = currentSong?.artworkPath?.toUri()
