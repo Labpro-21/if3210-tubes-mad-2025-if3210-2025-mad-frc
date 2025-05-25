@@ -212,7 +212,8 @@ fun AppNavigation(
                         onNavigateToHome = { navController.navigate(Screen.Home.route) },
                         onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                         playerViewModel = playerViewModel, // Gunakan instance yang diteruskan
-                        isOnline = isConnected
+                        isOnline = isConnected,
+                        audioOutputViewModel = audioOutputViewModel
                     )
                 }
             }
@@ -290,7 +291,8 @@ fun AppNavigation(
                         }
                     },
                     onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
-                    onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
+                    onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                    audioOutputViewModel = audioOutputViewModel
                 )
             }
 

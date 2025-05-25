@@ -131,11 +131,6 @@ fun PlayerScreen(
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = {}) {
-                Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Minimize Player")
-            }
-
-            SongSettingsModal(songViewModel,playerViewModel)
 
             // Tampilkan nama perangkat aktif jika ada
             activeAudioDevice?.let { device ->

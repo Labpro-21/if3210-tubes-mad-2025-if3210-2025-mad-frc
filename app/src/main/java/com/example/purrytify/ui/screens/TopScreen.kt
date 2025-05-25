@@ -33,6 +33,7 @@ import com.example.purrytify.ui.components.SongSettingsModal
 import com.example.purrytify.ui.navBar.BottomNavBar
 import com.example.purrytify.utils.SessionManager
 import com.example.purrytify.utils.downloadSong
+import com.example.purrytify.viewmodel.AudioOutputViewModel
 import com.example.purrytify.viewmodel.OnlineSongViewModel
 import com.example.purrytify.viewmodel.PlayerViewModel
 import com.example.purrytify.viewmodel.SongViewModel
@@ -48,6 +49,7 @@ fun TopScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToLibrary: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    audioOutputViewModel: AudioOutputViewModel,
     isConnected: Boolean
 ) {
     // Kalau tidak connected pop back
@@ -187,7 +189,8 @@ fun TopScreen(
                 },
                 playerViewModel = playerViewModel,
                 sheetState = sheetState,
-                isOnline = isConnected
+                isOnline = isConnected,
+                audioOutputViewModel =audioOutputViewModel
             )
         }
     }
