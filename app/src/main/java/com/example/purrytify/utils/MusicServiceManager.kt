@@ -26,7 +26,6 @@ object MusicServiceManager {
 
     fun updateCurrentSong(song: Song?) {
         _currentSong.value = song
-        Log.d("MusicServiceManager", "Current song in musicservicemanager changed to: ${song!!.title}")
     }
 
     fun updateSongProgress(position: Float) {

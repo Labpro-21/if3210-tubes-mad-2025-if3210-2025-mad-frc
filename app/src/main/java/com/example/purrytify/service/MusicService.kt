@@ -4,6 +4,7 @@ import android.app.Notification
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -52,6 +53,7 @@ class MusicService : Service() {
     private var mediaList: List<MediaItem> = emptyList()
     private val serviceScope = CoroutineScope(Dispatchers.Main + Job())
 
+    @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
         Log.d("MusicService", "Service onCreate dipanggil")
@@ -66,6 +68,15 @@ class MusicService : Service() {
             .setId("purrytify_session")
             .build()
 
+        val notification = NotificationCompat.Builder(this, MyApp.CHANNEL_ID)
+            .setContentTitle("Purrytify")
+            .setContentText("Preparing music...")
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setStyle(androidx.media3.session.MediaStyleNotificationHelper.MediaStyle(mediaSession))
+            .build()
+
+        startForeground(1, notification)
 
         exoPlayer.addListener(object : Player.Listener {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
@@ -84,8 +95,7 @@ class MusicService : Service() {
             }
         })
         serviceScope.launch {
-            val notification = createNotification()
-            startForeground(1, notification)
+            updateNotification()
         }
         startProgressUpdates()
     }
@@ -198,9 +208,6 @@ class MusicService : Service() {
 
     @OptIn(UnstableApi::class)
     private suspend fun createNotification(): Notification {
-//        Log.d("MusicService", "CreatingNotification")
-
-
         // Kalau lagi tidak memainkan lagu
         if (currentSongId == null || playlist.isEmpty()) {
 
@@ -219,10 +226,12 @@ class MusicService : Service() {
         }
 
         val song = playlist[currentSongId!!]
+        val bitmap = BitmapUtils.getBitmapFromString(this, song.artworkPath!!)
+            ?: BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher)
 
         return NotificationCompat.Builder(this, MyApp.CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setLargeIcon(BitmapUtils.getBitmapFromString(this,song.artworkPath!!))
+            .setLargeIcon(bitmap)
             .setContentTitle(song.title)
             .setContentText(song.artist)
             .setStyle(
