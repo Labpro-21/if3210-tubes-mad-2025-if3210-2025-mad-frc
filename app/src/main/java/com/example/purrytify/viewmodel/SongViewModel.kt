@@ -97,6 +97,16 @@ class SongViewModel(
                 _liked_songs.value = likedsongList
             }
         }
+        viewModelScope.launch {
+            repository.getRecentlyPlayed(userIdToLoad).collect { recentsongList ->
+                _recently_played.value = recentsongList
+            }
+        }
+        viewModelScope.launch {
+            repository.getNewSongs(userIdToLoad).collect { newsongList ->
+                _new_songs.value = newsongList
+            }
+        }
     }
     fun setCurrentSong(songData: Song) {
         viewModelScope.launch {

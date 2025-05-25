@@ -55,7 +55,7 @@ interface SongDao {
     @Query("UPDATE Song SET liked = NOT liked WHERE id = :songId")
     suspend fun toggleLike(songId: Int)
 
-    @Query("SELECT * FROM Song WHERE user_id = :userId ORDER BY addedDate DESC LIMIT 5")
+    @Query("SELECT * FROM Song WHERE user_id = :userId AND isExplicitlyAdded = 1 ORDER BY addedDate DESC LIMIT 5")
     fun getNewSongs(userId:Int): Flow<List<Song>>
 
     @Query("SELECT * FROM Song WHERE lastPlayed IS NOT NULL AND user_id = :userId ORDER BY lastPlayed DESC LIMIT 5")
