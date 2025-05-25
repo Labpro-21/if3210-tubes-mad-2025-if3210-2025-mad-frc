@@ -88,7 +88,7 @@ fun SongSettingsModal(
                     leadingContent = { Icon(Icons.Filled.QrCode2, contentDescription = "Share via QR Code") },
                     modifier = Modifier.clickable {
                         scope.launch {
-                            val deepLink = "purrytify:
+                            val deepLink = "purrytify://song/${song.serverId}"
                             val qrBitmap = QrCodeGenerator.generateQrBitmap(deepLink)
                             if (qrBitmap != null) {
                                 val imageUri = ImageSharer.saveBitmapToCache(context, qrBitmap, "song_${song.serverId}_qr.png")

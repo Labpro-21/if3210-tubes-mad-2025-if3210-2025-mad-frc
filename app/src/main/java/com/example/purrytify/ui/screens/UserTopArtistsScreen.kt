@@ -47,8 +47,6 @@ fun UserTopArtistsScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToLibrary: () -> Unit,
     onNavigateToProfile: () -> Unit,
-
-
 ) {
     val topPlayedArtists by profileViewModel.userTopPlayedArtists.collectAsState()
     val totalDistinctArtists by profileViewModel.totalDistinctArtists.collectAsState()
@@ -63,19 +61,6 @@ fun UserTopArtistsScreen(
 
     LaunchedEffect(yearMonth) {
         profileViewModel.loadUserTopPlayedArtists(yearMonth)
-    }
-
-    if (showPlayerSheet && currentGlobalSong != null) {
-        PlayerModalBottomSheet(
-            showSheet = showPlayerSheet,
-            onDismiss = { showPlayerSheet = false },
-            song = currentGlobalSong!!,
-            songViewModel = songViewModel,
-            onSongChange = { /* Logika play next/prev jika relevan untuk player global */ },
-            playerViewModel = playerViewModel,
-            sheetState = sheetState,
-            audioOutputViewModel = audioOutputViewModel
-        )
     }
 
     Scaffold(

@@ -86,7 +86,7 @@ fun PlayerScreen(
     onPrevious: () -> Unit,
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
-    audioOutputViewModel: AudioOutputViewMode`l`,
+    audioOutputViewModel: AudioOutputViewModel,
 ) {
 
     val context = LocalContext.current

@@ -88,22 +88,6 @@ fun UserTopSongsScreen(
         }
     }
 
-
-    if (showPlayerSheet && currentGlobalSong != null) {
-        PlayerModalBottomSheet(
-            showSheet = showPlayerSheet,
-            onDismiss = { showPlayerSheet = false },
-            song = currentGlobalSong!!,
-            songViewModel = songViewModel,
-            onSongChange = { direction ->
-                if (direction > 0) playNextInTopSongs() else playPreviousInTopSongs()
-            },
-            playerViewModel = playerViewModel,
-            sheetState = sheetState,
-            audioOutputViewModel = audioOutputViewModel
-        )
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(

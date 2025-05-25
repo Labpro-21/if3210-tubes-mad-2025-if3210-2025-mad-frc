@@ -47,8 +47,6 @@ import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import com.example.purrytify.R
 import com.example.purrytify.utils.MapPicker
-import com.example.purrytify.R
-import com.example.purrytify.utils.MapPicker
 import com.example.purrytify.viewmodel.ProfileViewModel
 import com.google.android.gms.location.LocationServices
 import java.io.File

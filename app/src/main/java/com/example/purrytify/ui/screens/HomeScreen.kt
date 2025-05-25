@@ -76,7 +76,7 @@ fun HomeScreenContent(
     onlineSongViewModel: OnlineSongViewModel,
     songVm: SongViewModel,
     onNavigateToTopSong: (String) -> Unit,
-    recommendationViewModel: RecommendationViewModel
+    recommendationViewModel: RecommendationViewModel,
     isConnected : Boolean
 ) {
     val context = LocalContext.current
@@ -530,7 +530,7 @@ fun HomeScreenWithBottomNav(
     onlineSongViewModel: OnlineSongViewModel,
     songVm: SongViewModel,
     onNavigateToTopSong: (String) -> Unit,
-    isConnected: Boolean,,
+    isConnected: Boolean,
     audioOutputViewModel: AudioOutputViewModel,
     recommendationViewModel: RecommendationViewModel
 ) {
@@ -603,7 +603,7 @@ fun HomeScreenResponsive(
     onlineSongViewModel: OnlineSongViewModel,
     audioOutputViewModel: AudioOutputViewModel,
     onNavigateToTopSong: (String) -> Unit = {},
-    recommendationViewModel: RecommendationViewModel,,
+    recommendationViewModel: RecommendationViewModel,
     isConnected: Boolean,
 ) {
     val configuration = LocalConfiguration.current
@@ -649,7 +649,7 @@ fun HomeScreenResponsive(
                 onlineSongViewModel = onlineSongViewModel,
                 songVm = songViewModel,
                 onNavigateToTopSong = onNavigateToTopSong,
-                isConnected = isConnected,,
+                isConnected = isConnected,
                 audioOutputViewModel = audioOutputViewModel,
                 recommendationViewModel = recommendationViewModel
             )

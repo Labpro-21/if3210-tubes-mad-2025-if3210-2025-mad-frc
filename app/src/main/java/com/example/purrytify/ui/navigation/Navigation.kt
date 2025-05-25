@@ -79,7 +79,6 @@ fun AppNavigation(
     val userRepository = remember { UserRepository(db.userDao()) }
 
 
-
     val networkViewModel: NetworkViewModel = viewModel()
     val isConnected by networkViewModel.isConnected.observeAsState(initial = true)
 
@@ -155,7 +154,10 @@ fun AppNavigation(
             composable(Screen.Home.route) {
                 val homeSessionUserId = sessionManager.getUserId()
                 if (homeSessionUserId <= 0 && tokenManager.isLoggedIn()) {
-                    Log.e("AppNavigation_Home", "Accessed Home with invalid session userId: $homeSessionUserId while logged in. Redirecting to Login.")
+                    Log.e(
+                        "AppNavigation_Home",
+                        "Accessed Home with invalid session userId: $homeSessionUserId while logged in. Redirecting to Login."
+                    )
                     LaunchedEffect(Unit) {
                         tokenManager.clearTokens(); sessionManager.clearSession()
                         navController.navigate(Screen.Login.route) {
@@ -180,7 +182,9 @@ fun AppNavigation(
                         onlineSongViewModel = onlineSongViewModel,
                         onNavigateToTopSong = { chartType ->
                             navController.navigate("top/$chartType")
-                        }
+                        },
+                        audioOutputViewModel = audioOutputViewModel,
+                        recommendationViewModel = recommendationViewModel
                     )
                 }
             }
@@ -260,41 +264,47 @@ fun AppNavigation(
                             profileViewModel.loadDailyListenDetailsForMonth(YearMonth.now())
                             navController.navigate(Screen.TimeListenedDetail.route)
                         },
-                        onEditProfile = { navController.navigate(Screen.EditProfile.route) }
+                        onEditProfile = { navController.navigate(Screen.EditProfile.route) },
+                        onNavigateToUserTopSongs = { yearMonth ->
+                            navController.navigate(Screen.UserTopPlayedSongs.createRoute(yearMonth))
+                        },
+                        onNavigateToUserTopArtists = { yearMonth ->
+                            navController.navigate(Screen.UserTopArtists.createRoute(yearMonth))
+                        }
                     )
                 }
             }
 
-        composable(Screen.TimeListenedDetail.route) {
+            composable(Screen.TimeListenedDetail.route) {
 
 
-            TimeListenedScreen(
-                profileViewModel = profileViewModel,
-                onBack = { navController.popBackStack() }
-            )
-        }
-        composable(
-            route = "top/{chartType}",
-            arguments = listOf(navArgument("chartType") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val chartType = backStackEntry.arguments?.getString("chartType") ?: "global"
-            TopScreen(
-                chartType = chartType,
-                onlineViewModel = onlineSongViewModel,
-                songViewModel = songViewModel,
-                playerViewModel = playerViewModel,
-                isConnected = isConnected,
-                onBack = { navController.popBackStack() },
-                onNavigateToHome = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
-                    }
-                },
-                onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                audioOutputViewModel = audioOutputViewModel
-            )
-        }
+                TimeListenedScreen(
+                    profileViewModel = profileViewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable(
+                route = "top/{chartType}",
+                arguments = listOf(navArgument("chartType") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val chartType = backStackEntry.arguments?.getString("chartType") ?: "global"
+                TopScreen(
+                    chartType = chartType,
+                    onlineViewModel = onlineSongViewModel,
+                    songViewModel = songViewModel,
+                    playerViewModel = playerViewModel,
+                    isConnected = isConnected,
+                    onBack = { navController.popBackStack() },
+                    onNavigateToHome = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
+                    onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                    audioOutputViewModel = audioOutputViewModel
+                )
+            }
 
             composable(Screen.EditProfile.route) {
                 val profileVm: ProfileViewModel = viewModel(
@@ -310,131 +320,217 @@ fun AppNavigation(
                     onBack = { navController.popBackStack() }
                 )
             }
-        }
 
-        composable(
-            route = Screen.UserTopPlayedSongs.route,
-            arguments = listOf(navArgument("yearMonth") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val yearMonthString = backStackEntry.arguments?.getString("yearMonth") ?: YearMonth.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"))
+            composable(
+                route = Screen.UserTopPlayedSongs.route,
+                arguments = listOf(navArgument("yearMonth") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val yearMonthString =
+                    backStackEntry.arguments?.getString("yearMonth") ?: YearMonth.now()
+                        .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"))
 
-            val sessionUserId = sessionManager.getUserId()
-            if (sessionUserId <= 0 && tokenManager.isLoggedIn()) {
-                LaunchedEffect(Unit) {
-                    tokenManager.clearTokens(); sessionManager.clearSession()
-                    navController.navigate(Screen.Login.route) { popUpTo(navController.graph.startDestinationId) { inclusive = true }; launchSingleTop = true }
-                }
-            } else if (!tokenManager.isLoggedIn()){
-                LaunchedEffect(Unit) {
-                    navController.navigate(Screen.Login.route) { popUpTo(navController.graph.startDestinationId) { inclusive = true }; launchSingleTop = true }
-                }
-            } else {
-                UserTopSongsScreen(
-                    profileViewModel = profileViewModel,
-                    songViewModel = songViewModel,
-                    playerViewModel = playerViewModel,
-                    audioOutputViewModel = audioOutputViewModel,
-                    yearMonthString = yearMonthString,
-                    onBack = { navController.popBackStack() },
-                    onNavigateToHome = { navController.navigate(Screen.Home.route) { popUpTo(Screen.Home.route) { inclusive = true } } },
-                    onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
-                    onNavigateToProfile = { navController.navigate(Screen.Profile.route) { popUpTo(Screen.Profile.route) { inclusive = true } } }
-                )
-            }
-        }
-
-        composable(
-            route = Screen.UserTopArtists.route,
-            arguments = listOf(navArgument("yearMonth") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val yearMonthString = backStackEntry.arguments?.getString("yearMonth") ?: YearMonth.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"))
-
-            val sessionUserId = sessionManager.getUserId()
-            if (sessionUserId <= 0 && tokenManager.isLoggedIn()) {
-                LaunchedEffect(Unit) {
-                    tokenManager.clearTokens(); sessionManager.clearSession()
-                    navController.navigate(Screen.Login.route) { popUpTo(navController.graph.startDestinationId) { inclusive = true }; launchSingleTop = true }
-                }
-            } else if (!tokenManager.isLoggedIn()){
-                LaunchedEffect(Unit) {
-                    navController.navigate(Screen.Login.route) { popUpTo(navController.graph.startDestinationId) { inclusive = true }; launchSingleTop = true }
-                }
-            }
-            else {
-                UserTopArtistsScreen(
-                    profileViewModel = profileViewModel,
-                    songViewModel = songViewModel,
-                    playerViewModel = playerViewModel,
-                    audioOutputViewModel = audioOutputViewModel,
-                    yearMonthString = yearMonthString,
-                    onBack = { navController.popBackStack() },
-                    onNavigateToHome = { navController.navigate(Screen.Home.route) { popUpTo(Screen.Home.route) { inclusive = true } } },
-                    onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
-                    onNavigateToProfile = { navController.navigate(Screen.Profile.route) { popUpTo(Screen.Profile.route) { inclusive = true } } }
-                )
-            }
-        }
-
-        composable(
-            route = Screen.UserTopPlayedSongs.route,
-            arguments = listOf(navArgument("yearMonth") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val yearMonthString = backStackEntry.arguments?.getString("yearMonth") ?: YearMonth.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"))
-
-            val sessionUserId = sessionManager.getUserId()
-            if (sessionUserId <= 0 && tokenManager.isLoggedIn()) {
-                LaunchedEffect(Unit) {
-                    tokenManager.clearTokens(); sessionManager.clearSession()
-                    navController.navigate(Screen.Login.route) { popUpTo(navController.graph.startDestinationId) { inclusive = true }; launchSingleTop = true }
-                }
-            } else if (!tokenManager.isLoggedIn()){
-                LaunchedEffect(Unit) {
-                    navController.navigate(Screen.Login.route) { popUpTo(navController.graph.startDestinationId) { inclusive = true }; launchSingleTop = true }
-                }
-            } else {
-                UserTopSongsScreen(
-                    profileViewModel = profileViewModel,
-                    songViewModel = songViewModel,
-                    playerViewModel = playerViewModel,
-                    audioOutputViewModel = audioOutputViewModel,
-                    yearMonthString = yearMonthString,
-                    onBack = { navController.popBackStack() },
-                    onNavigateToHome = { navController.navigate(Screen.Home.route) { popUpTo(Screen.Home.route) { inclusive = true } } },
-                    onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
-                    onNavigateToProfile = { navController.navigate(Screen.Profile.route) { popUpTo(Screen.Profile.route) { inclusive = true } } }
-                )
-            }
-        }
-
-        composable(
-            route = Screen.UserTopArtists.route,
-            arguments = listOf(navArgument("yearMonth") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val yearMonthString = backStackEntry.arguments?.getString("yearMonth") ?: YearMonth.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"))
-
-            val sessionUserId = sessionManager.getUserId()
-            if (sessionUserId <= 0 && tokenManager.isLoggedIn()) {
-                LaunchedEffect(Unit) {
-                    tokenManager.clearTokens(); sessionManager.clearSession()
-                    navController.navigate(Screen.Login.route) { popUpTo(navController.graph.startDestinationId) { inclusive = true }; launchSingleTop = true }
-                }
-            } else if (!tokenManager.isLoggedIn()){
-                LaunchedEffect(Unit) {
-                    navController.navigate(Screen.Login.route) { popUpTo(navController.graph.startDestinationId) { inclusive = true }; launchSingleTop = true }
+                val sessionUserId = sessionManager.getUserId()
+                if (sessionUserId <= 0 && tokenManager.isLoggedIn()) {
+                    LaunchedEffect(Unit) {
+                        tokenManager.clearTokens(); sessionManager.clearSession()
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }; launchSingleTop = true
+                        }
+                    }
+                } else if (!tokenManager.isLoggedIn()) {
+                    LaunchedEffect(Unit) {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }; launchSingleTop = true
+                        }
+                    }
+                } else {
+                    UserTopSongsScreen(
+                        profileViewModel = profileViewModel,
+                        songViewModel = songViewModel,
+                        playerViewModel = playerViewModel,
+                        audioOutputViewModel = audioOutputViewModel,
+                        yearMonthString = yearMonthString,
+                        onBack = { navController.popBackStack() },
+                        onNavigateToHome = {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(
+                                    Screen.Home.route
+                                ) { inclusive = true }
+                            }
+                        },
+                        onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
+                        onNavigateToProfile = {
+                            navController.navigate(Screen.Profile.route) {
+                                popUpTo(
+                                    Screen.Profile.route
+                                ) { inclusive = true }
+                            }
+                        }
+                    )
                 }
             }
-            else {
-                UserTopArtistsScreen(
-                    profileViewModel = profileViewModel,
-                    songViewModel = songViewModel,
-                    playerViewModel = playerViewModel,
-                    audioOutputViewModel = audioOutputViewModel,
-                    yearMonthString = yearMonthString,
-                    onBack = { navController.popBackStack() },
-                    onNavigateToHome = { navController.navigate(Screen.Home.route) { popUpTo(Screen.Home.route) { inclusive = true } } },
-                    onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
-                    onNavigateToProfile = { navController.navigate(Screen.Profile.route) { popUpTo(Screen.Profile.route) { inclusive = true } } }
-                )
+
+            composable(
+                route = Screen.UserTopArtists.route,
+                arguments = listOf(navArgument("yearMonth") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val yearMonthString =
+                    backStackEntry.arguments?.getString("yearMonth") ?: YearMonth.now()
+                        .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"))
+
+                val sessionUserId = sessionManager.getUserId()
+                if (sessionUserId <= 0 && tokenManager.isLoggedIn()) {
+                    LaunchedEffect(Unit) {
+                        tokenManager.clearTokens(); sessionManager.clearSession()
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }; launchSingleTop = true
+                        }
+                    }
+                } else if (!tokenManager.isLoggedIn()) {
+                    LaunchedEffect(Unit) {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }; launchSingleTop = true
+                        }
+                    }
+                } else {
+                    UserTopArtistsScreen(
+                        profileViewModel = profileViewModel,
+                        songViewModel = songViewModel,
+                        playerViewModel = playerViewModel,
+                        audioOutputViewModel = audioOutputViewModel,
+                        yearMonthString = yearMonthString,
+                        onBack = { navController.popBackStack() },
+                        onNavigateToHome = {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(
+                                    Screen.Home.route
+                                ) { inclusive = true }
+                            }
+                        },
+                        onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
+                        onNavigateToProfile = {
+                            navController.navigate(Screen.Profile.route) {
+                                popUpTo(
+                                    Screen.Profile.route
+                                ) { inclusive = true }
+                            }
+                        }
+                    )
+                }
+            }
+
+            composable(
+                route = Screen.UserTopPlayedSongs.route,
+                arguments = listOf(navArgument("yearMonth") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val yearMonthString =
+                    backStackEntry.arguments?.getString("yearMonth") ?: YearMonth.now()
+                        .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"))
+
+                val sessionUserId = sessionManager.getUserId()
+                if (sessionUserId <= 0 && tokenManager.isLoggedIn()) {
+                    LaunchedEffect(Unit) {
+                        tokenManager.clearTokens(); sessionManager.clearSession()
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }; launchSingleTop = true
+                        }
+                    }
+                } else if (!tokenManager.isLoggedIn()) {
+                    LaunchedEffect(Unit) {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }; launchSingleTop = true
+                        }
+                    }
+                } else {
+                    UserTopSongsScreen(
+                        profileViewModel = profileViewModel,
+                        songViewModel = songViewModel,
+                        playerViewModel = playerViewModel,
+                        audioOutputViewModel = audioOutputViewModel,
+                        yearMonthString = yearMonthString,
+                        onBack = { navController.popBackStack() },
+                        onNavigateToHome = {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(
+                                    Screen.Home.route
+                                ) { inclusive = true }
+                            }
+                        },
+                        onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
+                        onNavigateToProfile = {
+                            navController.navigate(Screen.Profile.route) {
+                                popUpTo(
+                                    Screen.Profile.route
+                                ) { inclusive = true }
+                            }
+                        }
+                    )
+                }
+            }
+
+            composable(
+                route = Screen.UserTopArtists.route,
+                arguments = listOf(navArgument("yearMonth") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val yearMonthString =
+                    backStackEntry.arguments?.getString("yearMonth") ?: YearMonth.now()
+                        .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"))
+
+                val sessionUserId = sessionManager.getUserId()
+                if (sessionUserId <= 0 && tokenManager.isLoggedIn()) {
+                    LaunchedEffect(Unit) {
+                        tokenManager.clearTokens(); sessionManager.clearSession()
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }; launchSingleTop = true
+                        }
+                    }
+                } else if (!tokenManager.isLoggedIn()) {
+                    LaunchedEffect(Unit) {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }; launchSingleTop = true
+                        }
+                    }
+                } else {
+                    UserTopArtistsScreen(
+                        profileViewModel = profileViewModel,
+                        songViewModel = songViewModel,
+                        playerViewModel = playerViewModel,
+                        audioOutputViewModel = audioOutputViewModel,
+                        yearMonthString = yearMonthString,
+                        onBack = { navController.popBackStack() },
+                        onNavigateToHome = {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(
+                                    Screen.Home.route
+                                ) { inclusive = true }
+                            }
+                        },
+                        onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
+                        onNavigateToProfile = {
+                            navController.navigate(Screen.Profile.route) {
+                                popUpTo(
+                                    Screen.Profile.route
+                                ) { inclusive = true }
+                            }
+                        }
+                    )
+                }
             }
         }
     }

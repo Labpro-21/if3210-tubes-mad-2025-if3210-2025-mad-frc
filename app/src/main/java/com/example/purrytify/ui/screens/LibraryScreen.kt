@@ -300,7 +300,7 @@ fun LibraryScreenWithBottomNav(
                 onBack = onBack,
                 songViewModel = songViewModel,
                 playerViewModel = playerViewModel,
-                audioOutputViewModel = audioOutputViewModel,,
+                audioOutputViewModel = audioOutputViewModel,
                 isOnline = isOnline
             )
         }
