@@ -67,7 +67,7 @@ import com.example.purrytify.viewmodel.PlayerViewModelFactory
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewModel: SongViewModel, playerViewModel: PlayerViewModel) {
+fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewModel: SongViewModel, playerViewModel: PlayerViewModel, isOnline : Boolean) {
     val context = LocalContext.current
 
 
@@ -166,7 +166,8 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
                 }
                 setSelectedSong(allSongs[currentSongId])
             },
-            playerViewModel = playerViewModel
+            playerViewModel = playerViewModel,
+            isOnline
         )
         songViewModel.setCurrentSong(song)
 
@@ -247,7 +248,8 @@ fun LibraryScreenWithBottomNav(
     onBack: () -> Unit,
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isOnline: Boolean
 ) {
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
     val isPlaying by playerViewModel.isPlaying.collectAsState()
@@ -270,7 +272,8 @@ fun LibraryScreenWithBottomNav(
                 songViewModel.setCurrentSong(allSongs[newSongId])
                            },
             playerViewModel = playerViewModel,
-            sheetState = sheetState
+            sheetState = sheetState,
+            isOnline =isOnline
         )
     }
 
@@ -302,7 +305,8 @@ fun LibraryScreenWithBottomNav(
             LibraryScreen(
                 onBack = onBack,
                 songViewModel = songViewModel,
-                playerViewModel = playerViewModel
+                playerViewModel = playerViewModel,
+                isOnline = isOnline
             )
         }
     }

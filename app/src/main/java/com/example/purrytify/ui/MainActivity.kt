@@ -12,6 +12,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.viewModels // Import untuk by viewModels
 import androidx.lifecycle.ViewModelProvider // Bisa juga pakai ini
 import androidx.core.net.toUri
+import androidx.lifecycle.lifecycleScope
 import com.example.purrytify.data.AppDatabase
 import com.example.purrytify.repository.SongRepository
 import com.example.purrytify.ui.navigation.AppNavigation
@@ -31,9 +32,9 @@ import kotlinx.coroutines.launch
 
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
+import javax.inject.Inject
 
 class MainActivity : ComponentActivity() {
-
     // Gunakan by viewModels untuk cara yang lebih bersih dan direkomendasikan
     private val songViewModel: SongViewModel by viewModels {
         val sm = SessionManager(applicationContext)
@@ -66,7 +67,6 @@ class MainActivity : ComponentActivity() {
         Log.d("ViewModelInstance", "MainActivity - SongViewModel hash: ${System.identityHashCode(songViewModel)}")
         Log.d("ViewModelInstance", "MainActivity - PlayerViewModel hash: ${System.identityHashCode(playerViewModel)}")
         Log.d("ViewModelInstance", "MainActivity - OnlineSongViewModel hash: ${System.identityHashCode(onlineSongViewModel)}")
-
 
         qrScanLauncher = registerForActivityResult(ScanContract()) { result ->
             if (result.contents == null) {

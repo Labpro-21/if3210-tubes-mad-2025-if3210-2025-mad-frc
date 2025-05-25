@@ -4,7 +4,6 @@ import android.app.Application
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -64,8 +63,11 @@ import com.example.purrytify.viewmodel.PlayerViewModelFactory
 import com.example.purrytify.viewmodel.SongViewModel
 import com.example.purrytify.ui.LockScreenOrientation
 import android.content.pm.ActivityInfo
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.runtime.mutableStateOf
 import com.example.purrytify.utils.shareServerSong
+import androidx.compose.runtime.*
 
 
 @Composable
@@ -75,11 +77,12 @@ fun PlayerScreen(
     onPrevious: () -> Unit,
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
-    isOnlineSong: Boolean = false
 ) {
+
     val context = LocalContext.current
 
     val currentSong by songViewModel.current_song.collectAsState()
+
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     val isLooping by playerViewModel.isLooping.collectAsState()
     val currentPositionSeconds by playerViewModel.currentPositionSeconds
@@ -104,13 +107,9 @@ fun PlayerScreen(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = {}) {
-                Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Minimize Player")
-            }
-
             SongSettingsModal(songViewModel,playerViewModel, isOnlineSong = currentSong?.audioPath?.startsWith("http") == true)
         }
 
@@ -257,7 +256,8 @@ fun PlayerModalBottomSheet(
     song: Song,
     songViewModel: SongViewModel,
     onSongChange: (Int) -> Unit,
-    playerViewModel: PlayerViewModel
+    playerViewModel: PlayerViewModel,
+    isOnline: Boolean
 ) {
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
     val shouldClose by playerViewModel.shouldClosePlayerSheet.collectAsState()
@@ -279,7 +279,7 @@ fun PlayerModalBottomSheet(
                 onNext = { onSongChange(1) },      // Kirim +1 untuk next
                 onPrevious = { onSongChange(-1) }, // Kirim -1 untuk previous,
                 songViewModel = songViewModel,
-                playerViewModel = playerViewModel
+                playerViewModel = playerViewModel,
             )
         }
     }
