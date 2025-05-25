@@ -13,11 +13,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
-import com.example.purrytify.data.AppDatabase
-import com.example.purrytify.model.Song
-import com.example.purrytify.model.PlayHistory
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,13 +34,28 @@ class PlayerViewModel @Inject constructor(
 
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
+    val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
 
     private val _progress = MutableStateFlow(0f) // Default ke 0f
     val progress: StateFlow<Float> = _progress.asStateFlow()
 
     val isLooping = MutableStateFlow(false)
     private var currentUri: Uri? = null
-    private var currentPlayerListener: Player.Listener? = null // Untuk me-manage listener
+    private var currentPlayerListener: Player.Listener? = null // Untuk me-manage listener    private var progressUpdateJob: Job? = null
+    private var onSongCompleteCallback: (() -> Unit)? = null
+
+    var onPlaybackSecondTick: (() -> Unit)? = null // Callback untuk SongViewModel
+
+    private val _shouldClosePlayerSheet = MutableStateFlow(false)
+    val shouldClosePlayerSheet: StateFlow<Boolean> = _shouldClosePlayerSheet.asStateFlow() // Pastikan expose sebagai StateFlow
+
+    fun closePlayerSheet() {
+        _shouldClosePlayerSheet.value = true
+    }
+
+    fun resetCloseSheetFlag() {
+        _shouldClosePlayerSheet.value = false
+    }
 
     init {
         _exoPlayer = ExoPlayer.Builder(context).build().apply {
@@ -165,6 +176,9 @@ class PlayerViewModel @Inject constructor(
         } else {
             if (_exoPlayer.playbackState == Player.STATE_IDLE && _exoPlayer.currentMediaItem != null) {
                 _exoPlayer.prepare()
+            }
+            if (_exoPlayer.playbackState == Player.STATE_ENDED) { // Jika lagu sudah selesai dan ingin play lagi
+                _exoPlayer.seekTo(0)
             }
             _exoPlayer.play()
             Log.d("PlayerViewModel", "Player play initiated.")

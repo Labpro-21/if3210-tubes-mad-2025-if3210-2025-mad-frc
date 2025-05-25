@@ -142,6 +142,7 @@ class SongViewModel(private val repository: SongRepository, private val userId: 
     fun setCurrentSong(songData: Song) {
         viewModelScope.launch {
             val effectiveUserId = this@SongViewModel.userId
+            val previousSongPath = _current_song.value?.audioPath // Simpan path lagu sebelumnya
             Log.i("SongViewModel_setCurrentSong", "START: Setting current song: ${songData.title} (Original ID: ${songData.id}, Path: ${songData.audioPath}) for user $effectiveUserId")
 
             if (_current_song.value?.audioPath != songData.audioPath || _current_song.value == null) {
@@ -151,71 +152,61 @@ class SongViewModel(private val repository: SongRepository, private val userId: 
 
             var fullyProcessedSong: Song? = null
 
-            if (songData.audioPath.startsWith("http")) { // Online song
-                var localCopy = repository.getSongByAudioPathAndUserId(songData.audioPath, effectiveUserId)
-
-                if (localCopy == null) {
-                    Log.i("SongViewModel_setCurrentSong", "Online song '${songData.title}' not in local DB. Inserting...")
-                    val entryForDb = songData.copy(
-                        id = 0, // Untuk ID lokal baru
-                        userId = effectiveUserId,
-                        addedDate = Date(),
-                        lastPlayed = null,
-                        liked = false,
-                        isExplicitlyAdded = false
-                    )
-                    val newLocalId = repository.insertSong(entryForDb)
-                    if (newLocalId > 0) {
-                        localCopy = repository.getSong(newLocalId.toInt())
-                        if (localCopy != null) {
-                            Log.i("SongViewModel_setCurrentSong", "Online song inserted. Local ID: ${localCopy.id}, Title: ${localCopy.title}")
-                            fullyProcessedSong = localCopy
+            // ... (Logika untuk mendapatkan fullyProcessedSong dari DB atau insert baru, SAMA SEPERTI SEBELUMNYA)
+            // Ini adalah logika inti untuk memastikan fullyProcessedSong valid dari DB dengan ID lokal.
+                if (songData.audioPath.startsWith("http")) {
+                    var localCopy = repository.getSongByAudioPathAndUserId(songData.audioPath, effectiveUserId)
+                    if (localCopy == null) {
+                        // ... (insert new online song, get localCopy with local ID) ...
+                        // (Pastikan localCopy di-set di sini jika berhasil)
+                        val newEntry = songData.copy(id = 0, userId = effectiveUserId, addedDate = Date(), lastPlayed = null, liked = false, isExplicitlyAdded = false)
+                        val newLocalId = repository.insertSong(newEntry)
+                        if (newLocalId > 0) {
+                            localCopy = repository.getSong(newLocalId.toInt())
+                            if (localCopy != null) {
+                                Log.i("SongViewModel_setCurrentSong", "Online song inserted. Local ID: ${localCopy.id}, Title: ${localCopy.title}")
+                                fullyProcessedSong = localCopy
+                            } else {
+                                Log.e("SongViewModel_setCurrentSong", "CRITICAL ERROR: Failed to retrieve song from DB after insert. Generated ID: $newLocalId")
+                            }
                         } else {
-                            Log.e("SongViewModel_setCurrentSong", "CRITICAL ERROR: Failed to retrieve song from DB after insert. Generated ID: $newLocalId")
+                            Log.e("SongViewModel_setCurrentSong", "CRITICAL ERROR: InsertSong returned invalid ID ($newLocalId) for online song.")
                         }
                     } else {
-                        Log.e("SongViewModel_setCurrentSong", "CRITICAL ERROR: InsertSong returned invalid ID ($newLocalId) for online song.")
+                        Log.i("SongViewModel_setCurrentSong", "Online song '${songData.title}' found in local DB. Local ID: ${localCopy.id}")
+                        fullyProcessedSong = localCopy
                     }
-                } else {
-                    Log.i("SongViewModel_setCurrentSong", "Online song '${songData.title}' found in local DB. Local ID: ${localCopy.id}")
-                    fullyProcessedSong = localCopy
+                } else { // Local song
+                    val localSongFromDb = repository.getSong(songData.id)
+                    if (localSongFromDb != null && localSongFromDb.userId == effectiveUserId) {
+                        Log.i("SongViewModel_setCurrentSong", "Local song '${localSongFromDb.title}' (ID: ${localSongFromDb.id}) found.")
+                        fullyProcessedSong = localSongFromDb
+                    } else {
+                        Log.e("SongViewModel_setCurrentSong", "Local song ID ${songData.id} not found or wrong user.")
+                    }
                 }
-            } else { 
-                val localSongFromDb = repository.getSong(songData.id)
-                if (localSongFromDb != null && localSongFromDb.userId == effectiveUserId) {
-                    Log.i("SongViewModel_setCurrentSong", "Local song '${localSongFromDb.title}' (ID: ${localSongFromDb.id}) found.")
-                    fullyProcessedSong = localSongFromDb
-                } else {
-                    Log.e("SongViewModel_setCurrentSong", "Local song ID ${songData.id} not found or wrong user.")
-                }
-            }
+            // Akhir dari logika mendapatkan fullyProcessedSong
 
             if (fullyProcessedSong != null && fullyProcessedSong.id != 0) {
                 val isFirstTimePlayedLocally = fullyProcessedSong.lastPlayed == null
-                
-                Log.i("SongViewModel_setCurrentSong", "Updating lastPlayed for song ID: ${fullyProcessedSong.id}")
                 repository.updateLastPlayed(fullyProcessedSong.id, Date())
-
                 if (isFirstTimePlayedLocally) {
-                    Log.i("SongViewModel_setCurrentSong", "Incrementing listened songs for user $effectiveUserId (song ID: ${fullyProcessedSong.id})")
                     repository.incrementListenedSongs(fullyProcessedSong.userId)
                 }
-
-                val finalSongToShow = repository.getSong(fullyProcessedSong.id)
-                _current_song.value = finalSongToShow
-                if (finalSongToShow != null) {
-                    Log.i("SongViewModel_setCurrentSong", "SUCCESS: _current_song.value FINALIZED to ID: ${finalSongToShow.id}, Title: ${finalSongToShow.title}, Path: ${finalSongToShow.audioPath}")
+                // Set _current_song dengan instance yang sudah diproses dan divalidasi
+                _current_song.value = repository.getSong(fullyProcessedSong.id) // Re-fetch untuk data paling baru
+                if (_current_song.value != null) {
+                    Log.i("SongViewModel_setCurrentSong", "SUCCESS: _current_song.value set to ID: ${_current_song.value!!.id}, Title: ${_current_song.value!!.title}")
                 } else {
-                    Log.e("SongViewModel_setCurrentSong", "ERROR: finalSongToShow is null. _current_song.value set to null.")
-                    _current_song.value = null
+                    Log.e("SongViewModel_setCurrentSong", "ERROR: _current_song.value became null after fetching final song ID ${fullyProcessedSong.id}")
                 }
             } else {
-                Log.e("SongViewModel_setCurrentSong", "Could not obtain valid local song. _current_song.value set/remains null.")
-                 _current_song.value = null
+                Log.e("SongViewModel_setCurrentSong", "Failed to obtain valid local song for ${songData.title}. Setting _current_song to null.")
+                _current_song.value = null // Jika tidak ada lagu valid yang bisa diproses, _current_song harus null
             }
 
-            loadSongs(effectiveUserId)
-            Log.i("SongViewModel_setCurrentSong", "END: setCurrentSong for ${songData.title}")
+            loadSongs(effectiveUserId) // Panggil loadSongs setelah _current_song di-set
+            Log.i("SongViewModel_setCurrentSong", "END: setCurrentSong for ${songData.title}. Final _current_song: ${_current_song.value?.title}")
         }
     }
 
