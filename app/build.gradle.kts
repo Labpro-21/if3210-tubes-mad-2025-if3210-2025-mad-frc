@@ -5,7 +5,8 @@ plugins {
     alias(libs.plugins.ksp)
 
     alias(libs.plugins.hilt)
-    kotlin("kapt") 
+    kotlin("kapt") // Tambahkan ini untuk annotation processing
+    id("kotlin-parcelize")
 }
 
 android {
@@ -85,11 +86,16 @@ dependencies {
 
 
     implementation(libs.androidx.activity.compose.v161)
-    implementation(libs.hilt.android.v249)
-    kapt(libs.dagger.hilt.compiler)
-    implementation(libs.androidx.hilt.navigation.compose)
-    implementation(libs.androidx.lifecycle.viewmodel.compose.v287)
-    implementation (libs.androidx.security.crypto.v110alpha07)
+    implementation("com.google.dagger:hilt-android:2.49")
+    kapt("com.google.dagger:hilt-android-compiler:2.48")
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    implementation ("androidx.security:security-crypto:1.1.0-alpha07")
+    implementation("androidx.media3:media3-ui:1.3.1")
+    implementation("androidx.media3:media3-exoplayer:1.3.1")
+    implementation ("androidx.media3:media3-session:1.3.1")
+
+    implementation ("androidx.media:media:1.6.0")
 
 
     implementation(libs.androidx.room.runtime)

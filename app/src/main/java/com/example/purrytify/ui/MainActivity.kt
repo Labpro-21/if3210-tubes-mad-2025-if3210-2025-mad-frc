@@ -1,10 +1,11 @@
 package com.example.purrytify
 
+import android.content.pm.PackageManager
+import android.os.Bundle
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.content.Intent
 import android.net.Uri
-import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -40,6 +41,10 @@ import android.content.IntentFilter
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.os.Build
+import androidx.core.content.ContextCompat
+import androidx.activity.result.contract.ActivityResultContracts
+import android.Manifest
+import com.example.purrytify.utils.MusicServiceManager
 import com.example.purrytify.viewmodel.RecommendationViewModel
 import com.example.purrytify.viewmodel.RecommendationViewModelFactory
 import javax.inject.Inject
@@ -49,15 +54,12 @@ class MainActivity : ComponentActivity() {
 
     private val songViewModel: SongViewModel by viewModels {
         val sm = SessionManager(applicationContext)
-
-
-
-
-        val userIdForFactory = sm.getUserId().let { if (it <= 0) 0 else it }
+        val userIdForFactory = sm.getUserId().let { if (it <= 0) 0 else it } // Default ke 0 jika tidak valid
         Log.d("MainActivity_VM", "MainActivity creating SongViewModel with factory for userId: $userIdForFactory")
         SongViewModelFactory(
             SongRepository(AppDatabase.getDatabase(applicationContext).songDao(), AppDatabase.getDatabase(applicationContext).userDao()),
-            userIdForFactory
+            userIdForFactory,
+            application,
         )
     }
     
@@ -70,7 +72,7 @@ class MainActivity : ComponentActivity() {
     private val onlineSongViewModel: OnlineSongViewModel by viewModels {
         val tm = TokenManager(applicationContext)
         val sm = SessionManager(applicationContext)
-        OnlineSongViewModelFactory(RetrofitClient.create(tm), sm)
+        OnlineSongViewModelFactory(RetrofitClient.create(tm), sm,application)
     }
 
     private val audioOutputViewModel: AudioOutputViewModel by viewModels {
@@ -152,6 +154,26 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (!isGranted) {
+            Toast.makeText(this, "Notifikasi dinonaktifkan", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -186,8 +208,8 @@ class MainActivity : ComponentActivity() {
 
 
 
-            if (songViewModel.current_song.value != null && songViewModel.current_song.value!!.id != 0) {
-                Log.d("MainActivity_Ticker", "Playback tick received from PlayerViewModel. Calling SongViewModel.recordPlayTick(). Current song: ${songViewModel.current_song.value?.title}")
+            if (songViewModel.currentSong.value != null && songViewModel.currentSong.value!!.id != 0) {
+                Log.d("MainActivity_Ticker", "Playback tick received from PlayerViewModel. Calling SongViewModel.recordPlayTick(). Current song: ${songViewModel.currentSong.value?.title}")
                 songViewModel.recordPlayTick()
             } else {
                 Log.w("MainActivity_Ticker", "Playback tick received, but SongViewModel.current_song is null or invalid. Skipping recordPlayTick.")
@@ -204,6 +226,8 @@ class MainActivity : ComponentActivity() {
                     recommendationViewModel = this.recommendationViewModel,
                     onScanQrClicked = { launchQrScanner() }
                 )
+                requestNotificationPermission()
+
             }
         }
         handleIntent(intent)
@@ -238,7 +262,7 @@ class MainActivity : ComponentActivity() {
     private fun handleScannedQrCode(scannedData: String) {
         Log.d("MainActivity_DeepLink", "Scanned QR Data: $scannedData")
         try {
-            val scannedUri = Uri.parse(scannedData)
+            val scannedUri = scannedData.toUri()
             if (scannedUri.scheme == "purrytify" && scannedUri.host == "song") {
                 val intent = Intent(Intent.ACTION_VIEW, scannedUri)
                 handleIntent(intent)
@@ -279,8 +303,16 @@ class MainActivity : ComponentActivity() {
                                 songToPlay.audioPath.let { audioPathString ->
                                     try {
                                         val audioUri = audioPathString.toUri()
-                                        playerViewModel.prepareAndPlay(audioUri) {}
+                                        if (songToPlay.isExplicitlyAdded == false){
+                                            onlineSongViewModel.sendSongsToMusicService()
+                                            playerViewModel.prepareAndPlay(onlineSongViewModel.getSongIndex(songToPlay))
 
+                                        }else{
+                                            songViewModel.sendSongsToMusicService()
+                                            playerViewModel.prepareAndPlay(songViewModel.getSongIndex(songToPlay))
+
+                                        }
+                                        // TODO: Secara otomatis tampilkan UI player
                                     } catch (e: Exception) {
                                         Log.e("MainActivity_DeepLink", "Invalid audio path URI: $audioPathString", e)
                                         Toast.makeText(this@MainActivity, "Error playing song: Invalid audio path", Toast.LENGTH_SHORT).show()

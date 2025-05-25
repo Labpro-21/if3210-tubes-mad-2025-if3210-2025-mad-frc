@@ -1,6 +1,7 @@
 package com.example.purrytify.viewmodel
 
 import android.app.Application
+import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -33,6 +34,17 @@ class RecommendationViewModel(
         if (userId > 0) {
             refreshDailyMix()
         }
+    }
+
+    fun sendSongsToMusicService() {
+        val songList = _dailyMix.value
+        Log.d("SongViewModel", "Sending Playlist of ${songList.size} length")
+        val intent = Intent(application, com.example.purrytify.service.MusicService::class.java).apply {
+            action = "ACTION_SET_PLAYLIST"
+            putParcelableArrayListExtra("playlist", ArrayList(songList))
+            Log.d("SongViewModel", "Sending Playlist of ${ArrayList(songList).size} length")
+        }
+        application.startService(intent)
     }
 
     fun refreshDailyMix() {

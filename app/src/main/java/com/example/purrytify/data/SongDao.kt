@@ -2,11 +2,9 @@ package com.example.purrytify.data
 
 import androidx.room.ColumnInfo
 import androidx.room.Dao
-import androidx.room.Embedded
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Relation
 import com.example.purrytify.model.PlayHistory
 import com.example.purrytify.model.Song
 import kotlinx.coroutines.flow.Flow
@@ -61,7 +59,7 @@ interface SongDao {
     @Query("UPDATE Song SET liked = NOT liked WHERE id = :songId")
     suspend fun toggleLike(songId: Int)
 
-    @Query("SELECT * FROM Song WHERE user_id = :userId ORDER BY addedDate DESC LIMIT 5")
+    @Query("SELECT * FROM Song WHERE user_id = :userId AND isExplicitlyAdded = 1 ORDER BY addedDate DESC LIMIT 5")
     fun getNewSongs(userId:Int): Flow<List<Song>>
 
     @Query("SELECT * FROM Song WHERE lastPlayed IS NOT NULL AND user_id = :userId ORDER BY lastPlayed DESC LIMIT 5")
@@ -108,4 +106,13 @@ interface SongDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM song WHERE user_id = :userId AND audioPath = :audioPath LIMIT 1)")
     suspend fun existsByAudioPath(userId: Int, audioPath: String): Boolean
+
+    @Query("""
+    SELECT EXISTS(
+      SELECT 1 FROM song
+       WHERE server_id = :serverId
+         AND isExplicitlyAdded = 1
+    )
+  """)
+    suspend fun existsByServerIdExplicitlyAdded(serverId: Int?): Boolean
 }

@@ -67,7 +67,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.runtime.mutableStateOf
 import com.example.purrytify.utils.shareServerSong
-import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.VolumeUp // Contoh ikon untuk output device
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -91,13 +92,16 @@ fun PlayerScreen(
 
     val context = LocalContext.current
 
-    val currentSong by songViewModel.current_song.collectAsState()
-
+    val currentSong by songViewModel.currentSong.collectAsState()
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     val isLooping by playerViewModel.isLooping.collectAsState()
-    val currentPositionSeconds by playerViewModel.currentPositionSeconds.collectAsState(initial = 0f)
     val activeAudioDevice by playerViewModel.activeAudioDevice.collectAsState()
+    val progress by playerViewModel.progress.collectAsState()
 
+    LaunchedEffect(currentSong) {
+        currentSong?.let { Log.d("PlayerScreen", "Current song changed to: ${it.title}") }
+    }
+    
     val songUri = currentSong?.audioPath?.toUri()
 
     var showAudioOutputSelector by remember { mutableStateOf(false) }
@@ -105,16 +109,11 @@ fun PlayerScreen(
 
     val activeDeviceState by playerViewModel.activeAudioDevice.collectAsState()
 
-    LaunchedEffect(songUri) {
-        songUri?.let {
-            playerViewModel.prepareAndPlay(it, onSongComplete = onNext)
-        }
-    }
-
     if (showAudioOutputSelector) {
         AudioOutputSelectorBottomSheet(
             playerViewModel = playerViewModel,
-            onDismiss = { showAudioOutputSelector = false }
+            onDismiss = { showAudioOutputSelector = false },
+            audioOutputViewModel = audioOutputViewModel
         )
     }
 
@@ -151,7 +150,7 @@ fun PlayerScreen(
                 IconButton(onClick = { showAudioOutputSelector = true }) {
                     Icon(Icons.Default.VolumeUp, contentDescription = "Select Output Device")
                 }
-                SongSettingsModal(songViewModel, playerViewModel)
+                SongSettingsModal(songViewModel, playerViewModel, isOnlineSong = currentSong?.audioPath?.startsWith("http") == true)
             }
         }
 
@@ -223,7 +222,7 @@ fun PlayerScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Slider(
-            value = currentPositionSeconds,
+            value = progress ?: 0f,
             onValueChange = { playerViewModel.seekTo(it) },
             valueRange = 0f..((currentSong?.duration ?: 1000) / 1000f),
             modifier = Modifier.fillMaxWidth(),
@@ -238,7 +237,7 @@ fun PlayerScreen(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                formatDuration(currentPositionSeconds.toLong() * 1000),
+                formatDuration((progress ?: 0f).toLong() * 1000),
                 style = MaterialTheme.typography.labelSmall
             )
             Text(
@@ -319,8 +318,8 @@ fun PlayerModalBottomSheet(
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
         ) {
             PlayerScreen(
-                onNext = { onSongChange(1) },
-                onPrevious = { onSongChange(-1) },
+                onNext = { playerViewModel.skipNext() },
+                onPrevious = { playerViewModel.skipPrevious() },
                 songViewModel = songViewModel,
                 playerViewModel = playerViewModel,
                 audioOutputViewModel = audioOutputViewModel,

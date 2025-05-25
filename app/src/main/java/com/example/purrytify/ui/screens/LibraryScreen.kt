@@ -58,11 +58,11 @@ import com.example.purrytify.viewmodel.PlayerViewModel
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewModel: SongViewModel, playerViewModel: PlayerViewModel, audioOutputViewModel: AudioOutputViewModel, isOnline : Boolean) {
+fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewModel: SongViewModel, playerViewModel: PlayerViewModel, isOnline : Boolean, audioOutputViewModel: AudioOutputViewModel) {
     val context = LocalContext.current
 
 
-    val currentSong by songViewModel.current_song.collectAsState()
+    val currentSong by songViewModel.currentSong.collectAsState()
     val allSongs by songViewModel.songs.collectAsState()
     val likedSongs by songViewModel.likedSongs.collectAsState()
     var currentSongId by remember { mutableStateOf(0) }
@@ -123,9 +123,10 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
                 onSongClick = { song ->
                     val index = allSongs.indexOf(song)
                     currentSongId = index
-
                     songViewModel.setCurrentSong(song)
-                    playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
+                    songViewModel.sendSongsToMusicService()
+                    playerViewModel.prepareAndPlay(index)
+
                     setShowPlayer(true)
                 },
                 onToggleLike = { song ->
@@ -158,8 +159,8 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
                 setSelectedSong(allSongs[currentSongId])
             },
             playerViewModel = playerViewModel,
-            audioOutputViewModel = audioOutputViewModel,
-            isOnline
+            isOnline = isOnline,
+            audioOutputViewModel = audioOutputViewModel
         )
         songViewModel.setCurrentSong(song)
 
@@ -241,8 +242,8 @@ fun LibraryScreenWithBottomNav(
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
     modifier: Modifier = Modifier,
-    audioOutputViewModel: AudioOutputViewModel,
-    isOnline: Boolean
+    isOnline: Boolean,
+    audioOutputViewModel: AudioOutputViewModel
 ) {
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
     val isPlaying by playerViewModel.isPlaying.collectAsState()
@@ -257,7 +258,7 @@ fun LibraryScreenWithBottomNav(
         PlayerModalBottomSheet(
             showSheet = showPlayerSheet,
             onDismiss = { showPlayerSheet = false },
-            song = songViewModel.current_song.collectAsState(initial = null).value ?: return,
+            song = songViewModel.currentSong.collectAsState(initial = null).value ?: return,
             songViewModel = songViewModel,
             onSongChange = { newId ->
 
@@ -266,8 +267,8 @@ fun LibraryScreenWithBottomNav(
                            },
             playerViewModel = playerViewModel,
             sheetState = sheetState,
-            audioOutputViewModel = audioOutputViewModel,
-            isOnline =isOnline
+            isOnline =isOnline,
+            audioOutputViewModel = audioOutputViewModel
         )
     }
 
@@ -300,8 +301,8 @@ fun LibraryScreenWithBottomNav(
                 onBack = onBack,
                 songViewModel = songViewModel,
                 playerViewModel = playerViewModel,
+                isOnline = isOnline,
                 audioOutputViewModel = audioOutputViewModel,
-                isOnline = isOnline
             )
         }
     }

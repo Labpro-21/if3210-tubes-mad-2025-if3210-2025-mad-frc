@@ -31,12 +31,13 @@ import com.example.purrytify.viewmodel.SongViewModel
 import com.example.purrytify.utils.downloadSong
 import java.util.Date
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SongSettingsModal(
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
-    isOnlineSong: Boolean = false
+    isOnlineSong: Boolean
 ) {
     val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState()
@@ -58,11 +59,11 @@ fun SongSettingsModal(
                     .padding(16.dp)
             ) {
                 if (!isOnlineSong) {
-                    val currentSong by songViewModel.current_song.collectAsState()
+                    val currentSong by songViewModel.currentSong.collectAsState()
                     InsertSongPopUp(songViewModel,currentSong)
                     ConfirmDelete(songViewModel, playerViewModel)
                 } else {
-                    val currentSong by songViewModel.current_song.collectAsState()
+                    val currentSong by songViewModel.currentSong.collectAsState()
                     DownloadSongOption(context, songViewModel,session, currentSong)
                     ShareSongOption(context, currentSong)
                 }
@@ -160,7 +161,7 @@ private fun ConfirmDelete(
     playerViewModel: PlayerViewModel
 ) {
     var showDialog by remember { mutableStateOf(false) }
-    val currentSong by songViewModel.current_song.collectAsState()
+    val currentSong by songViewModel.currentSong.collectAsState()
 
     Row(
         modifier = Modifier

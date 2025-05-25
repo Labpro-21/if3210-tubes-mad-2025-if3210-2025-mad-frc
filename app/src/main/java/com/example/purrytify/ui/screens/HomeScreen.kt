@@ -47,6 +47,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import android.content.res.Configuration
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
@@ -59,10 +60,16 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Brush
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.purrytify.network.ApiService
+import com.example.purrytify.network.RetrofitClient
 import java.util.Date
 import com.example.purrytify.ui.components.SongSettingsModal
+import com.example.purrytify.utils.SessionManager
+import com.example.purrytify.utils.TokenManager
 import com.example.purrytify.utils.shareServerSong
 import com.example.purrytify.viewmodel.AudioOutputViewModel
+import com.example.purrytify.viewmodel.OnlineSongViewModelFactory
 import com.example.purrytify.viewmodel.RecommendationViewModel
 
 @Composable
@@ -91,7 +98,7 @@ fun HomeScreenContent(
 
     val dailyMixSongs by recommendationViewModel.dailyMix.collectAsState()
     val isLoadingRecommendations by recommendationViewModel.isLoading.collectAsState()
-    val currentPlayingSong by songViewModel.current_song.collectAsState()
+    val currentPlayingSong by songViewModel.currentSong.collectAsState()
 
     if (appContext == null) {
         Box(
@@ -127,7 +134,6 @@ fun HomeScreenContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-
         item {
             Text(
                 text = "Charts",
@@ -200,7 +206,12 @@ fun HomeScreenContent(
                             song = song,
                             onClick = {
                                 songViewModel.setCurrentSong(song)
-                                playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
+//                                playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
+                                val index = songViewModel.getSongIndex(song)
+                                Log.d("HomeScreen", "Picked SongId: ${index}")
+                                songViewModel.sendSongsToMusicService()
+                                playerViewModel.prepareAndPlay(index)
+
                             },
                             onMoreClick = {
                                 selectedSong = song
@@ -211,18 +222,6 @@ fun HomeScreenContent(
                 }
             }
         }
-
-
-        item {
-            Text(
-                text = "Recently played",
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
 
         item {
             Row(
@@ -274,28 +273,23 @@ fun HomeScreenContent(
                     contentPadding = PaddingValues(end = 16.dp)
                 ) {
                     items(dailyMixSongs, key = { it.audioPath }) { song ->
-
-
-
                         NewSongCard(
                             song = song,
                             onClick = {
                                 songViewModel.setCurrentSong(song)
-                                playerViewModel.prepareAndPlay(song.audioPath.toUri()) {
-
-                                    val currentIndex = dailyMixSongs.indexOf(song)
-                                    if (currentIndex != -1 && currentIndex < dailyMixSongs.size - 1) {
-                                        val nextSong = dailyMixSongs[currentIndex + 1]
-                                        songViewModel.setCurrentSong(nextSong)
-                                        playerViewModel.prepareAndPlay(nextSong.audioPath.toUri()) {/* rekursif atau handle akhir playlist */}
-                                    }
-                                }
+                                recommendationViewModel.sendSongsToMusicService()
+                                playerViewModel.prepareAndPlay(dailyMixSongs.indexOf(song))
+//                                playerViewModel.prepareAndPlay(song.audioPath.toUri()) {
+//
+//                                    val currentIndex = dailyMixSongs.indexOf(song)
+//                                    if (currentIndex != -1 && currentIndex < dailyMixSongs.size - 1) {
+//                                        val nextSong = dailyMixSongs[currentIndex + 1]
+//                                        songViewModel.setCurrentSong(nextSong)
+//                                        playerViewModel.prepareAndPlay(nextSong.audioPath.toUri()) {/* rekursif atau handle akhir playlist */}
+//                                    }
+//                                }
                             },
                             onMoreClick = {
-
-
-
-
                                 Toast.makeText(context, "More options for ${song.title}", Toast.LENGTH_SHORT).show()
                             },
 
@@ -306,7 +300,15 @@ fun HomeScreenContent(
             }
         }
 
-        item { Spacer(modifier = Modifier.height(60.dp)) }
+        item {
+            Text(
+                text = "Recently played",
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         if (recentlyPlayedFromDb.isEmpty()) {
             item {
@@ -323,7 +325,8 @@ fun HomeScreenContent(
                     song = song,
                     onClick = {
                         songViewModel.setCurrentSong(song)
-                        playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
+                        Log.d("HomeScreen", "Picked SongId: ${song.title}")
+                        playerViewModel.playSingleSong(song)
                     },
                     onMoreClick = {
                         selectedSong = song
@@ -506,17 +509,6 @@ fun RecentlyPlayedRow(
     }
 }
 
-
-private fun shareOnlineSong(context: Context, song: Song) {
-    val shareText = "Check out this song: ${song.title} by ${song.artist}\n${song.audioPath}"
-    val intent = Intent().apply {
-        action = Intent.ACTION_SEND
-        putExtra(Intent.EXTRA_TEXT, shareText)
-        type = "text/plain"
-    }
-    context.startActivity(Intent.createChooser(intent, "Share Song"))
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreenWithBottomNav(
@@ -545,13 +537,13 @@ fun HomeScreenWithBottomNav(
         PlayerModalBottomSheet(
             showSheet = showPlayerSheet,
             onDismiss = { showPlayerSheet = false },
-            song = songViewModel.current_song.collectAsState(initial = null).value ?: return,
+            song = songViewModel.currentSong.collectAsState(initial = null).value ?: return,
             songViewModel = songViewModel,
             onSongChange = { },
             playerViewModel = playerViewModel,
             sheetState = sheetState,
-            audioOutputViewModel = audioOutputViewModel,
-            isOnline = isConnected
+            isOnline = isConnected,
+            audioOutputViewModel = audioOutputViewModel
         )
     }
 
@@ -601,17 +593,25 @@ fun HomeScreenResponsive(
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
     onlineSongViewModel: OnlineSongViewModel,
-    audioOutputViewModel: AudioOutputViewModel,
     onNavigateToTopSong: (String) -> Unit = {},
     recommendationViewModel: RecommendationViewModel,
     isConnected: Boolean,
+    audioOutputViewModel: AudioOutputViewModel
 ) {
     val configuration = LocalConfiguration.current
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR)
     val context = LocalContext.current
-
     val newSongsFromDb by songViewModel.newSongs.collectAsState()
     val recentlyPlayedFromDb by songViewModel.recentlyPlayed.collectAsState()
+    val appContext = context.applicationContext as? Application
+    val api = remember<ApiService> {
+        RetrofitClient.create(tokenManager = TokenManager(context))
+    }
+    val session = remember<SessionManager> { SessionManager(context) }
+
+    val factory = remember<OnlineSongViewModelFactory> { OnlineSongViewModelFactory(api, session, appContext!!) }
+    val onlineViewModel: OnlineSongViewModel =
+        viewModel(factory = factory)
 
     if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
         Row(modifier = Modifier.fillMaxSize()) {
@@ -670,48 +670,4 @@ fun HomeScreenResponsive(
             isConnected = isConnected
         )
     }
-}
-
-private fun downloadSong(
-    context: Context,
-    networkSong: Song,
-    songVm: SongViewModel
-) {
-    val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-    val req = DownloadManager.Request(Uri.parse(networkSong.audioPath))
-        .setTitle(networkSong.title)
-        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-        .setDestinationInExternalFilesDir(
-            context, Environment.DIRECTORY_MUSIC, "${networkSong.title}.mp3"
-        )
-    val id = dm.enqueue(req)
-
-    val receiver = object : BroadcastReceiver() {
-        override fun onReceive(ctx: Context, intent: Intent) {
-            if (intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1) == id) {
-                val q = DownloadManager.Query().setFilterById(id)
-                dm.query(q).use { c ->
-                    if (c.moveToFirst()) {
-                        val idx = c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)
-                        if (idx >= 0) {
-                            val uri = c.getString(idx)
-                            val offline = networkSong.copy(
-                                id = 0,
-                                audioPath = uri,
-                                addedDate = Date(),
-                                lastPlayed = null
-                            )
-                            songVm.addSong(offline)
-                        }
-                    }
-                }
-                ctx.unregisterReceiver(this)
-            }
-        }
-    }
-    context.registerReceiver(
-        receiver,
-        IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
-        Context.RECEIVER_NOT_EXPORTED
-    )
 }

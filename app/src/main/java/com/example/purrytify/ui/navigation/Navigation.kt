@@ -78,6 +78,8 @@ fun AppNavigation(
     val songRepository = remember { SongRepository(db.songDao(), db.userDao()) }
     val userRepository = remember { UserRepository(db.userDao()) }
 
+    val userId = sessionManager.getUserId() ?: 0
+
 
     val networkViewModel: NetworkViewModel = viewModel()
     val isConnected by networkViewModel.isConnected.observeAsState(initial = true)
@@ -217,7 +219,7 @@ fun AppNavigation(
                         onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                         playerViewModel = playerViewModel,
                         isOnline = isConnected,
-                        audioOutputViewModel = audioOutputViewModel,
+                        audioOutputViewModel = audioOutputViewModel
                     )
                 }
             }
@@ -302,7 +304,7 @@ fun AppNavigation(
                     },
                     onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
                     onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                    audioOutputViewModel = audioOutputViewModel
+                    audioOutputViewModel = audioOutputViewModel,
                 )
             }
 

@@ -2,6 +2,7 @@ package com.example.purrytify.viewmodel
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.State
@@ -247,4 +248,16 @@ class ProfileViewModel(
             }
         }
     }
+
+    fun sendSongsToMusicService() {
+        val songList = _userTopPlayedSongs.value
+        Log.d("SongViewModel", "Sending Playlist of ${songList.size} length")
+        val intent = Intent(context, com.example.purrytify.service.MusicService::class.java).apply {
+            action = "ACTION_SET_PLAYLIST"
+            putParcelableArrayListExtra("playlist", ArrayList(songList))
+            Log.d("SongViewModel", "Sending Playlist of ${ArrayList(songList).size} length")
+        }
+        context.startService(intent)
+    }
+
 }
