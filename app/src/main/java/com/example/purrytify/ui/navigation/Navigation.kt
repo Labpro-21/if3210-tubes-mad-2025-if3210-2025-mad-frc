@@ -36,6 +36,7 @@ import com.example.purrytify.ui.screens.UserTopArtistsScreen
 import com.example.purrytify.ui.screens.UserTopSongsScreen
 import com.example.purrytify.viewmodel.ProfileViewModel
 import com.example.purrytify.viewmodel.ProfileViewModelFactory
+import com.example.purrytify.viewmodel.RecommendationViewModel
 import java.time.YearMonth
 
 sealed class Screen(val route: String) {
@@ -60,7 +61,8 @@ fun AppNavigation(
     playerViewModel: PlayerViewModel,
     onlineSongViewModel: OnlineSongViewModel,
     onScanQrClicked: () -> Unit,
-    audioOutputViewModel: AudioOutputViewModel
+    audioOutputViewModel: AudioOutputViewModel,
+    recommendationViewModel: RecommendationViewModel
 ) {
     val context = LocalContext.current
     val activity = LocalContext.current as ComponentActivity
@@ -152,9 +154,10 @@ fun AppNavigation(
                     onlineSongViewModel = onlineSongViewModel, // Gunakan instance yang diteruskan,
                     audioOutputViewModel = audioOutputViewModel,
                     onNavigateToTopSong = { chartType ->
-                    navController.navigate("top/$chartType")
-                }
-            )
+                        navController.navigate("top/$chartType")
+                    },
+                    recommendationViewModel = recommendationViewModel
+                )
             }
         }
         composable(Screen.Library.route) {

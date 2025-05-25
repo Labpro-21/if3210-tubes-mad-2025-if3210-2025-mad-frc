@@ -39,6 +39,8 @@ import android.content.IntentFilter
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.os.Build
+import com.example.purrytify.viewmodel.RecommendationViewModel
+import com.example.purrytify.viewmodel.RecommendationViewModelFactory
 
 class MainActivity : ComponentActivity() {
 
@@ -55,6 +57,10 @@ class MainActivity : ComponentActivity() {
             SongRepository(AppDatabase.getDatabase(applicationContext).songDao(), AppDatabase.getDatabase(applicationContext).userDao()),
             userIdForFactory
         )
+    }
+    
+    private val recommendationViewModel: RecommendationViewModel by viewModels {
+        RecommendationViewModelFactory(application, onlineSongViewModel)
     }
     private val playerViewModel: PlayerViewModel by viewModels {
         PlayerViewModelFactory(application)
@@ -193,8 +199,9 @@ class MainActivity : ComponentActivity() {
                     songViewModel = this.songViewModel,
                     playerViewModel = this.playerViewModel,
                     onlineSongViewModel = this.onlineSongViewModel,
-                    onScanQrClicked = { launchQrScanner() },
-                    audioOutputViewModel = this.audioOutputViewModel
+                    audioOutputViewModel = this.audioOutputViewModel,
+                    recommendationViewModel = this.recommendationViewModel,
+                    onScanQrClicked = { launchQrScanner() }
                 )
             }
         }

@@ -164,4 +164,13 @@ interface SongDao {
         AND s.artist IS NOT NULL AND s.artist != ''
     """)
     suspend fun getTotalDistinctArtistsForMonth(userId: Int, yearMonth: String): Int
+
+    @Query("SELECT * FROM song WHERE user_id = :userId AND isExplicitlyAdded = 1 ORDER BY RANDOM() LIMIT :limit")
+    suspend fun getRandomExplicitlyAddedSongs(userId: Int, limit: Int): List<Song>
+
+    @Query("SELECT * FROM song WHERE user_id = :userId AND liked = 1 ORDER BY RANDOM() LIMIT :limit")
+    suspend fun getRandomLikedSongs(userId: Int, limit: Int): List<Song>
+
+    @Query("SELECT EXISTS(SELECT 1 FROM song WHERE user_id = :userId AND audioPath = :audioPath LIMIT 1)")
+    suspend fun existsByAudioPath(userId: Int, audioPath: String): Boolean
 }

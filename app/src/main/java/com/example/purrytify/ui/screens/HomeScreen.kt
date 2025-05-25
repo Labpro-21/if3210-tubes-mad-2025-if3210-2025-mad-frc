@@ -47,18 +47,22 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import android.content.res.Configuration
+import android.widget.Toast
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.graphics.Brush
 import java.util.Date
 import com.example.purrytify.ui.components.SongSettingsModal
 import com.example.purrytify.utils.shareServerSong
 import com.example.purrytify.viewmodel.AudioOutputViewModel
+import com.example.purrytify.viewmodel.RecommendationViewModel
 
 @Composable
 fun HomeScreenContent(
@@ -71,6 +75,7 @@ fun HomeScreenContent(
     onlineSongViewModel: OnlineSongViewModel,
     songVm: SongViewModel,
     onNavigateToTopSong: (String) -> Unit,
+    recommendationViewModel: RecommendationViewModel
 ) {
     val context = LocalContext.current
     val appContext = if (!LocalInspectionMode.current)
@@ -81,6 +86,10 @@ fun HomeScreenContent(
     var showSongSettings by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var selectedSong by remember { mutableStateOf<Song?>(null) }
+
+    val dailyMixSongs by recommendationViewModel.dailyMix.collectAsState()
+    val isLoadingRecommendations by recommendationViewModel.isLoading.collectAsState()
+    val currentPlayingSong by songViewModel.current_song.collectAsState()
 
     if (appContext == null) {
         Box(
@@ -197,6 +206,91 @@ fun HomeScreenContent(
             )
             Spacer(modifier = Modifier.height(16.dp))
         }
+
+        // Section Rekomendasi "Daily Mix"
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Your Daily Mix",
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                if (!isLoadingRecommendations) {
+                    IconButton(onClick = { recommendationViewModel.refreshDailyMix() }) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Refresh Mix", tint = Color.White)
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        if (isLoadingRecommendations) {
+            item {
+                Box(modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = Color.White)
+                }
+            }
+        } else if (dailyMixSongs.isEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.DarkGray.copy(alpha = 0.3f))
+                ) {
+                    Text(
+                        text = "Tidak ada rekomendasi untukmu saat ini. Coba dengarkan lebih banyak lagu!",
+                        color = Color.Gray,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+            }
+        } else {
+            item {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(end = 16.dp) // Agar item terakhir tidak terpotong
+                ) {
+                    items(dailyMixSongs, key = { it.audioPath }) { song ->
+                        // Gunakan NewSongCard atau buat Composable Card khusus untuk rekomendasi
+                        // Jika menggunakan NewSongCard, pastikan onMoreClick dihandle dengan benar
+                        // atau tidak ditampilkan jika tidak relevan untuk item rekomendasi.
+                        NewSongCard(
+                            song = song,
+                            onClick = {
+                                songViewModel.setCurrentSong(song)
+                                playerViewModel.prepareAndPlay(song.audioPath.toUri()) {
+                                    // Logika jika lagu selesai, misal: putar lagu berikutnya dari dailyMix
+                                    val currentIndex = dailyMixSongs.indexOf(song)
+                                    if (currentIndex != -1 && currentIndex < dailyMixSongs.size - 1) {
+                                        val nextSong = dailyMixSongs[currentIndex + 1]
+                                        songViewModel.setCurrentSong(nextSong)
+                                        playerViewModel.prepareAndPlay(nextSong.audioPath.toUri()) {/* rekursif atau handle akhir playlist */}
+                                    }
+                                }
+                            },
+                            onMoreClick = {
+                                // Implementasi 'more options' untuk lagu rekomendasi (misal: tambahkan ke library, like)
+                                // Ini mungkin memerlukan logika tambahan karena lagu bisa dari server atau lokal.
+                                // selectedSong = song // (Anda perlu state `selectedSong` di HomeScreenContent)
+                                // showSongSettings = true // (Anda perlu state `showSongSettings` di HomeScreenContent)
+                                Toast.makeText(context, "More options for ${song.title}", Toast.LENGTH_SHORT).show()
+                            },
+                            // Tambahkan parameter untuk menandai apakah lagu sedang diputar
+                            // isPlaying = song.audioPath == currentPlayingSong?.audioPath
+                        )
+                    }
+                }
+            }
+        }
+        // Spacer untuk memberi ruang agar tidak tertutup BottomNavBar
+        item { Spacer(modifier = Modifier.height(60.dp)) }
 
         if (recentlyPlayedFromDb.isEmpty()) {
             item {
@@ -420,7 +514,8 @@ fun HomeScreenWithBottomNav(
     onlineSongViewModel: OnlineSongViewModel,
     songVm: SongViewModel,
     onNavigateToTopSong: (String) -> Unit,
-    audioOutputViewModel: AudioOutputViewModel
+    audioOutputViewModel: AudioOutputViewModel,
+    recommendationViewModel: RecommendationViewModel
 ) {
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     var showPlayerSheet by remember { mutableStateOf(false) }
@@ -473,7 +568,8 @@ fun HomeScreenWithBottomNav(
                 recentlyPlayedFromDb = recentlyPlayedFromDb,
                 onlineSongViewModel = onlineSongViewModel,
                 songVm = songViewModel,
-                onNavigateToTopSong = onNavigateToTopSong
+                onNavigateToTopSong = onNavigateToTopSong,
+                recommendationViewModel = recommendationViewModel
             )
         }
     }
@@ -487,7 +583,8 @@ fun HomeScreenResponsive(
     playerViewModel: PlayerViewModel,
     onlineSongViewModel: OnlineSongViewModel,
     audioOutputViewModel: AudioOutputViewModel,
-    onNavigateToTopSong: (String) -> Unit = {}
+    onNavigateToTopSong: (String) -> Unit = {},
+    recommendationViewModel: RecommendationViewModel,
 ) {
     val configuration = LocalConfiguration.current
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR)
@@ -532,7 +629,8 @@ fun HomeScreenResponsive(
                 onlineSongViewModel = onlineSongViewModel,
                 songVm = songViewModel,
                 onNavigateToTopSong = onNavigateToTopSong,
-                audioOutputViewModel = audioOutputViewModel
+                audioOutputViewModel = audioOutputViewModel,
+                recommendationViewModel = recommendationViewModel
             )
         }
     } else {
@@ -546,7 +644,8 @@ fun HomeScreenResponsive(
             onlineSongViewModel = onlineSongViewModel,
             songVm = songViewModel,
             audioOutputViewModel = audioOutputViewModel,
-            onNavigateToTopSong = onNavigateToTopSong
+            onNavigateToTopSong = onNavigateToTopSong,
+            recommendationViewModel = recommendationViewModel
         )
     }
 }
