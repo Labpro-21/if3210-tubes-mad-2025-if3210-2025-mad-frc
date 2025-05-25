@@ -1,6 +1,6 @@
 package com.example.purrytify.utils
 
-import com.example.purrytify.model.NetworkSong     // fijasi: model.NetworkSong data class
+import com.example.purrytify.model.NetworkSong
 import com.example.purrytify.model.Song
 import java.util.Date
 

@@ -4,7 +4,6 @@ import android.app.Application
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -64,17 +63,21 @@ import com.example.purrytify.viewmodel.PlayerViewModelFactory
 import com.example.purrytify.viewmodel.SongViewModel
 import com.example.purrytify.ui.LockScreenOrientation
 import android.content.pm.ActivityInfo
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.runtime.mutableStateOf
 import com.example.purrytify.utils.shareServerSong
+import androidx.compose.runtime.*
 import androidx.compose.material.icons.filled.VolumeUp // Contoh ikon untuk output device
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue // Pastikan ini ada
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.purrytify.ui.components.AudioOutputSelectorBottomSheet
 import com.example.purrytify.viewmodel.AudioOutputViewModel
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.*
 
 
 @Composable
@@ -85,8 +88,8 @@ fun PlayerScreen(
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
     audioOutputViewModel: AudioOutputViewModel,
-    isOnlineSong: Boolean = false
 ) {
+
     val context = LocalContext.current
 
     val currentSong by songViewModel.currentSong.collectAsState()
@@ -100,7 +103,7 @@ fun PlayerScreen(
     }
     
     val songUri = currentSong?.audioPath?.toUri()
-//    val artworkUri = currentSong?.artworkPath?.toUri()
+
     var showAudioOutputSelector by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
@@ -124,40 +127,30 @@ fun PlayerScreen(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = {}) {
-                Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Minimize Player")
-            }
-
-            SongSettingsModal(songViewModel,playerViewModel, isOnlineSong = currentSong?.audioPath?.startsWith("http") == true)
-
-            // Tampilkan nama perangkat aktif jika ada
             activeAudioDevice?.let { device ->
                 Text(
                     text = "Playing on: ${activeDeviceState?.let { audioOutputViewModel.getDeviceName(it) } ?: "Device Speaker"}",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray,
-                    modifier = Modifier.weight(1f).padding(horizontal = 8.dp), // Sesuaikan modifier jika perlu
+                    modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis // Tambahkan jika nama panjang
+                    overflow = TextOverflow.Ellipsis
                 )
             } ?: Text(
-                text = "Playing on: Device Speaker", // Default
+                text = "Playing on: Device Speaker",
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.Gray,
                 modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
             )
 
-
             Row {
-                // Tombol untuk memilih output device
                 IconButton(onClick = { showAudioOutputSelector = true }) {
                     Icon(Icons.Default.VolumeUp, contentDescription = "Select Output Device")
                 }
-                // Tombol Song Settings yang sudah ada
-                SongSettingsModal(songViewModel, playerViewModel) //
+                SongSettingsModal(songViewModel, playerViewModel, isOnlineSong = currentSong?.audioPath?.startsWith("http") == true)
             }
         }
 
@@ -208,7 +201,7 @@ fun PlayerScreen(
             }
 
             currentSong?.let { song ->
-                if (song.audioPath.startsWith("http") && !song.isExplicitlyAdded && song.serverId != null) { // Cek apakah lagu server (belum eksplisit jadi lokal)
+                if (song.audioPath.startsWith("http") && !song.isExplicitlyAdded && song.serverId != null) {
                     IconButton(onClick = { shareServerSong(context, song) }) {
                         Icon(Icons.Default.Share, contentDescription = "Share Song")
                     }
@@ -305,7 +298,8 @@ fun PlayerModalBottomSheet(
     songViewModel: SongViewModel,
     onSongChange: (Int) -> Unit,
     playerViewModel: PlayerViewModel,
-    audioOutputViewModel: AudioOutputViewModel
+    audioOutputViewModel: AudioOutputViewModel,
+    isOnline: Boolean
 ) {
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
     val shouldClose by playerViewModel.shouldClosePlayerSheet.collectAsState()
@@ -319,7 +313,7 @@ fun PlayerModalBottomSheet(
         }
         ModalBottomSheet(
             onDismissRequest = onDismiss,
-            sheetState = sheetState, // Control sheet expand/collapse
+            sheetState = sheetState,
             containerColor = MaterialTheme.colorScheme.background,
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
         ) {
@@ -328,7 +322,7 @@ fun PlayerModalBottomSheet(
                 onPrevious = { playerViewModel.skipPrevious() },
                 songViewModel = songViewModel,
                 playerViewModel = playerViewModel,
-                audioOutputViewModel = audioOutputViewModel
+                audioOutputViewModel = audioOutputViewModel,
             )
         }
     }

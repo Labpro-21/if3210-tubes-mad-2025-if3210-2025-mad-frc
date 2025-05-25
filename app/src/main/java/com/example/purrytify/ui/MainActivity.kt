@@ -14,6 +14,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.viewModels
 import androidx.core.net.toUri
+import androidx.lifecycle.lifecycleScope
 import com.example.purrytify.data.AppDatabase
 import com.example.purrytify.repository.SongRepository
 import com.example.purrytify.ui.navigation.AppNavigation
@@ -44,10 +45,13 @@ import androidx.core.content.ContextCompat
 import androidx.activity.result.contract.ActivityResultContracts
 import android.Manifest
 import com.example.purrytify.utils.MusicServiceManager
+import com.example.purrytify.viewmodel.RecommendationViewModel
+import com.example.purrytify.viewmodel.RecommendationViewModelFactory
+import javax.inject.Inject
 
 class MainActivity : ComponentActivity() {
 
-    // Gunakan by viewModels untuk cara yang lebih bersih dan direkomendasikan
+
     private val songViewModel: SongViewModel by viewModels {
         val sm = SessionManager(applicationContext)
         val userIdForFactory = sm.getUserId().let { if (it <= 0) 0 else it } // Default ke 0 jika tidak valid
@@ -57,6 +61,10 @@ class MainActivity : ComponentActivity() {
             userIdForFactory,
             application,
         )
+    }
+    
+    private val recommendationViewModel: RecommendationViewModel by viewModels {
+        RecommendationViewModelFactory(application, onlineSongViewModel)
     }
     private val playerViewModel: PlayerViewModel by viewModels {
         PlayerViewModelFactory(application)
@@ -74,7 +82,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var qrScanLauncher: ActivityResultLauncher<ScanOptions>
 
     private val audioDeviceChangeReceiver = object : BroadcastReceiver() {
-        @SuppressLint("MissingPermission") // Pastikan permission BLUETOOTH_CONNECT sudah dihandle
+        @SuppressLint("MissingPermission")
         override fun onReceive(context: Context?, intent: Intent?) {
             val action = intent?.action
             Log.d("MainActivityAudioReceiver", "Received action: $action")
@@ -95,28 +103,28 @@ class MainActivity : ComponentActivity() {
                     }
                     device?.let { connectedBluetoothDevice ->
                         Log.d("MainActivityAudioReceiver", "ACTION_ACL_CONNECTED: ${connectedBluetoothDevice.name}")
-                        // Sistem mungkin otomatis mengganti output. Kita coba update ViewModel.
-                        // Pertama, refresh daftar perangkat yang tersedia
+
+
                         audioOutputViewModel.loadAvailableOutputDevices()
 
-                        // Kemudian, cari AudioDeviceInfo yang sesuai dengan BluetoothDevice yang baru terhubung
+
                         val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
                         val allOutputDevices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
                         val correspondingAudioDevice = allOutputDevices.find { audioDevInfo ->
-                            // Mencocokkan berdasarkan alamat MAC atau nama jika alamat tidak tersedia/cocok
+
                             (audioDevInfo.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP || audioDevInfo.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO) &&
                                     (audioDevInfo.address == connectedBluetoothDevice.address || audioDevInfo.productName?.toString()?.equals(connectedBluetoothDevice.name, ignoreCase = true) == true)
                         }
 
                         if (correspondingAudioDevice != null) {
                             Log.d("MainActivityAudioReceiver", "Found AudioDeviceInfo for connected BT: ${correspondingAudioDevice.productName}. Setting as preferred.")
-                            // Update PlayerViewModel dengan perangkat yang baru terhubung ini
+
                             playerViewModel.setPreferredAudioOutput(correspondingAudioDevice)
-                            // Tidak perlu Toast di sini karena UI akan update
+
                         } else {
                             Log.w("MainActivityAudioReceiver", "Could not find matching AudioDeviceInfo for newly connected BT device: ${connectedBluetoothDevice.name}")
-                            // Jika tidak ketemu, mungkin biarkan sistem yang menangani atau coba revertToDefault jika ingin lebih eksplisit
-                            // playerViewModel.revertToDefaultAudioOutput() // Atau biarkan saja untuk melihat apakah sistem merutekannya dengan benar
+
+
                         }
                     }
                 }
@@ -130,7 +138,7 @@ class MainActivity : ComponentActivity() {
                     device?.let { disconnectedBluetoothDevice ->
                         Log.d("MainActivityAudioReceiver", "ACTION_ACL_DISCONNECTED: ${disconnectedBluetoothDevice.name}")
                         val currentActiveDevice = playerViewModel.activeAudioDevice.value
-                        // Cek apakah perangkat yang disconnect adalah yang sedang aktif
+
                         if (currentActiveDevice != null &&
                             (currentActiveDevice.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP || currentActiveDevice.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO) &&
                             (currentActiveDevice.address == disconnectedBluetoothDevice.address || currentActiveDevice.productName?.toString()?.equals(disconnectedBluetoothDevice.name, ignoreCase = true) == true)
@@ -174,7 +182,6 @@ class MainActivity : ComponentActivity() {
         Log.d("ViewModelInstance", "MainActivity - PlayerViewModel hash: ${System.identityHashCode(playerViewModel)}")
         Log.d("ViewModelInstance", "MainActivity - OnlineSongViewModel hash: ${System.identityHashCode(onlineSongViewModel)}")
 
-
         qrScanLauncher = registerForActivityResult(ScanContract()) { result ->
             if (result.contents == null) {
                 Log.d("MainActivity_QR", "QR Scan cancelled")
@@ -198,11 +205,11 @@ class MainActivity : ComponentActivity() {
         }
 
         playerViewModel.onPlaybackSecondTick = {
-            // Pastikan ada lagu yang sedang diputar di SongViewModel
-            // dan userId valid sebelum mencatat tick.
-            // SongViewModel.recordPlayTick() sendiri sudah punya pengecekan internal.
-            if (songViewModel.currentSong.value != null && songViewModel.currentSong.value!!.id != 0) {
-                Log.d("MainActivity_Ticker", "Playback tick received from PlayerViewModel. Calling SongViewModel.recordPlayTick(). Current song: ${songViewModel.currentSong.value?.title}")
+
+
+
+            if (songViewModel.current_song.value != null && songViewModel.current_song.value!!.id != 0) {
+                Log.d("MainActivity_Ticker", "Playback tick received from PlayerViewModel. Calling SongViewModel.recordPlayTick(). Current song: ${songViewModel.current_song.value?.title}")
                 songViewModel.recordPlayTick()
             } else {
                 Log.w("MainActivity_Ticker", "Playback tick received, but SongViewModel.current_song is null or invalid. Skipping recordPlayTick.")
@@ -215,8 +222,9 @@ class MainActivity : ComponentActivity() {
                     songViewModel = this.songViewModel,
                     playerViewModel = this.playerViewModel,
                     onlineSongViewModel = this.onlineSongViewModel,
-                    onScanQrClicked = { launchQrScanner() },
                     audioOutputViewModel = this.audioOutputViewModel,
+                    recommendationViewModel = this.recommendationViewModel,
+                    onScanQrClicked = { launchQrScanner() }
                 )
                 requestNotificationPermission()
 
@@ -234,7 +242,7 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         Log.d("MainActivity_Lifecycle", "onNewIntent called with intent: $intent")
         intent?.let {
-            setIntent(it) // Penting untuk update intent Activity jika dipanggil saat sudah berjalan
+            setIntent(it)
             handleIntent(it)
         }
     }
@@ -257,7 +265,7 @@ class MainActivity : ComponentActivity() {
             val scannedUri = scannedData.toUri()
             if (scannedUri.scheme == "purrytify" && scannedUri.host == "song") {
                 val intent = Intent(Intent.ACTION_VIEW, scannedUri)
-                handleIntent(intent) // Panggil handleIntent yang sudah ada
+                handleIntent(intent)
             } else {
                 Log.w("MainActivity_DeepLink", "Scanned QR is not a valid Purrytify song link: $scannedData")
                 Toast.makeText(this, "Invalid Purrytify QR Code", Toast.LENGTH_LONG).show()
@@ -288,10 +296,10 @@ class MainActivity : ComponentActivity() {
                     Log.i("MainActivity_DeepLink", "Processing song ID from deep link/QR: $songId")
                     CoroutineScope(Dispatchers.Main).launch {
                         try {
-                            val songToPlay = onlineSongViewModel.fetchSongById(songId) // Gunakan instance dari Activity
+                            val songToPlay = onlineSongViewModel.fetchSongById(songId)
                             if (songToPlay != null) {
                                 Log.i("MainActivity_DeepLink", "Song fetched: ${songToPlay.title}. Calling setCurrentSong on VM hash: ${System.identityHashCode(songViewModel)}")
-                                songViewModel.setCurrentSong(songToPlay) // Gunakan instance dari Activity
+                                songViewModel.setCurrentSong(songToPlay)
                                 songToPlay.audioPath.let { audioPathString ->
                                     try {
                                         val audioUri = audioPathString.toUri()

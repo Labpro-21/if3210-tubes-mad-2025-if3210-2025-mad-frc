@@ -38,16 +38,16 @@ fun TimeListenedScreen(
 ) {
     val dailyData by profileViewModel.dailyListenData.collectAsState()
     val selectedMonth by profileViewModel.selectedMonthData.collectAsState()
-//    val uiState by profileViewModel.uiState.collectAsState() // Untuk total bulanan jika diperlukan
 
-    // Panggil loadDailyListenDetailsForMonth saat screen pertama kali dibuat atau selectedMonth berubah
+
+
     LaunchedEffect(selectedMonth) {
         profileViewModel.loadDailyListenDetailsForMonth(selectedMonth)
     }
 
     val totalMinutesThisMonth = dailyData.sumOf { it.totalDurationMillis } / (1000 * 60)
     val daysInMonth = selectedMonth.lengthOfMonth()
-    val dailyAverageMinutes = if (dailyData.any { it.totalDurationMillis > 0 }) { // Hitung avg jika ada data
+    val dailyAverageMinutes = if (dailyData.any { it.totalDurationMillis > 0 }) {
         totalMinutesThisMonth / dailyData.count { it.totalDurationMillis > 0 }
     } else {
         0L
@@ -64,13 +64,13 @@ fun TimeListenedScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF121212), // Warna gelap seperti Spotify
+                    containerColor = Color(0xFF121212),
                     titleContentColor = Color.White,
                     navigationIconContentColor = Color.White
                 )
             )
         },
-        containerColor = Color(0xFF121212) // Background gelap
+        containerColor = Color(0xFF121212)
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -122,9 +122,9 @@ fun TimeListenedScreen(
 @OptIn(ExperimentalTextApi::class)
 @Composable
 fun DailyListenChart(dailyData: List<DailyListenDuration>, month: YearMonth) {
-    val maxDurationMinutes = (dailyData.maxOfOrNull { it.totalDurationMillis } ?: 1L) / (1000 * 60) // Maksimum durasi dalam menit
+    val maxDurationMinutes = (dailyData.maxOfOrNull { it.totalDurationMillis } ?: 1L) / (1000 * 60)
     val chartHeight = 200.dp
-    val barWidthFactor = 0.8f // Lebar bar relatif terhadap ruang yang tersedia per hari
+    val barWidthFactor = 0.8f
     val daysInMonth = month.lengthOfMonth()
     val textMeasurer = rememberTextMeasurer()
 
@@ -132,23 +132,23 @@ fun DailyListenChart(dailyData: List<DailyListenDuration>, month: YearMonth) {
         modifier = Modifier
             .fillMaxWidth()
             .height(chartHeight)
-            .background(Color(0xFF1A1A1A)) // Warna background chart
+            .background(Color(0xFF1A1A1A))
             .padding(vertical = 16.dp, horizontal = 8.dp)
     ) {
-        val availableWidthForBars = size.width - 30.dp.toPx() // Sedikit padding untuk label Y
+        val availableWidthForBars = size.width - 30.dp.toPx()
         val spacePerDay = availableWidthForBars / daysInMonth
         val actualBarWidth = spacePerDay * barWidthFactor
-        val barSpacing = spacePerDay * (1 - barWidthFactor) / 2 // Spasi di setiap sisi bar
+        val barSpacing = spacePerDay * (1 - barWidthFactor) / 2
 
-        // Garis horizontal dasar (sumbu X)
+
         drawLine(
             color = Color.DarkGray,
-            start = Offset(30.dp.toPx(), size.height - 20.dp.toPx()), // 20.dp untuk label X
+            start = Offset(30.dp.toPx(), size.height - 20.dp.toPx()),
             end = Offset(size.width, size.height - 20.dp.toPx()),
             strokeWidth = 1.dp.toPx()
         )
 
-        // Label sumbu Y (menit) - Sederhana
+
         drawText(
             textMeasurer = textMeasurer,
             text = "minutes",
@@ -163,10 +163,10 @@ fun DailyListenChart(dailyData: List<DailyListenDuration>, month: YearMonth) {
         )
 
 
-        // Garis putus-putus untuk rata-rata jika ada (opsional)
-        // val averageLineY = ...
 
-        // Data untuk chart (map tanggal ke durasi)
+
+
+
         val dataMap = dailyData.associate {
             LocalDate.parse(it.playDate, DateTimeFormatter.ISO_LOCAL_DATE).dayOfMonth to (it.totalDurationMillis / (1000 * 60))
         }
@@ -174,23 +174,23 @@ fun DailyListenChart(dailyData: List<DailyListenDuration>, month: YearMonth) {
         for (day in 1..daysInMonth) {
             val listenMinutes = dataMap[day] ?: 0L
             val barHeight = if (maxDurationMinutes > 0) {
-                (listenMinutes.toFloat() / maxDurationMinutes.toFloat()) * (size.height - 40.dp.toPx()) // 40.dp untuk padding atas/bawah
+                (listenMinutes.toFloat() / maxDurationMinutes.toFloat()) * (size.height - 40.dp.toPx())
             } else {
                 0f
             }
-            barHeight.coerceAtLeast(0f) // Pastikan tidak negatif
+            barHeight.coerceAtLeast(0f)
 
             val xOffset = 30.dp.toPx() + (day - 1) * spacePerDay + barSpacing
 
-            if (listenMinutes > 0) { // Hanya gambar bar jika ada durasi
+            if (listenMinutes > 0) {
                 drawRect(
-                    color = Color(0xFF1DB954), // Warna hijau Spotify
+                    color = Color(0xFF1DB954),
                     topLeft = Offset(xOffset, size.height - 20.dp.toPx() - barHeight),
                     size = androidx.compose.ui.geometry.Size(actualBarWidth, barHeight)
                 )
             }
 
-            // Label hari (misalnya setiap 5 hari)
+
             if (day == 1 || day % 7 == 0 || day == daysInMonth) {
                  val dayText = day.toString()
                  val textSize = textMeasurer.measure(AnnotatedString(dayText))
@@ -202,7 +202,7 @@ fun DailyListenChart(dailyData: List<DailyListenDuration>, month: YearMonth) {
                 )
             }
         }
-         // Label "day" untuk sumbu X
+
         drawText(
             textMeasurer = textMeasurer,
             text = "day",

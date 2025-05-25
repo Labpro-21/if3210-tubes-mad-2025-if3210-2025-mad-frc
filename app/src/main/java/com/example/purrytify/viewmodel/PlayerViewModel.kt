@@ -55,8 +55,8 @@ class PlayerViewModel @Inject constructor(
     private val _shouldClosePlayerSheet = MutableStateFlow(false)
     val shouldClosePlayerSheet: StateFlow<Boolean> = _shouldClosePlayerSheet.asStateFlow()
 
-    // State ini sekarang akan lebih mencerminkan perangkat yang *diminta*
-    // atau perangkat default setelah event sistem (seperti headset dicabut).
+
+
     private val _activeAudioDevice = MutableStateFlow<AudioDeviceInfo?>(null)
     val activeAudioDevice: StateFlow<AudioDeviceInfo?> = _activeAudioDevice.asStateFlow()
 

@@ -13,7 +13,7 @@ object ImageSharer {
 
     fun saveBitmapToCache(context: Context, bitmap: Bitmap, fileName: String = "purrytify_qr_song.png"): Uri? {
         val cachePath = File(context.cacheDir, "images")
-        cachePath.mkdirs() // Buat direktori jika belum ada
+        cachePath.mkdirs()
         return try {
             val stream = FileOutputStream("$cachePath/$fileName")
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)

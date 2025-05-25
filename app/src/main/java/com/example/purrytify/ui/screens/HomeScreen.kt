@@ -48,13 +48,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import android.content.res.Configuration
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Brush
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.purrytify.network.ApiService
@@ -66,6 +70,7 @@ import com.example.purrytify.utils.TokenManager
 import com.example.purrytify.utils.shareServerSong
 import com.example.purrytify.viewmodel.AudioOutputViewModel
 import com.example.purrytify.viewmodel.OnlineSongViewModelFactory
+import com.example.purrytify.viewmodel.RecommendationViewModel
 
 @Composable
 fun HomeScreenContent(
@@ -78,16 +83,22 @@ fun HomeScreenContent(
     onlineSongViewModel: OnlineSongViewModel,
     songVm: SongViewModel,
     onNavigateToTopSong: (String) -> Unit,
+    recommendationViewModel: RecommendationViewModel,
+    isConnected : Boolean
 ) {
     val context = LocalContext.current
     val appContext = if (!LocalInspectionMode.current)
         context.applicationContext as? Application
     else null
 
-    // State untuk modal/dialog
+
     var showSongSettings by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var selectedSong by remember { mutableStateOf<Song?>(null) }
+
+    val dailyMixSongs by recommendationViewModel.dailyMix.collectAsState()
+    val isLoadingRecommendations by recommendationViewModel.isLoading.collectAsState()
+    val currentPlayingSong by songViewModel.current_song.collectAsState()
 
     if (appContext == null) {
         Box(
@@ -106,6 +117,12 @@ fun HomeScreenContent(
 
     val onlineSongs by onlineSongViewModel.onlineSongs.collectAsState()
 
+    var showNoInternetDialog by remember { mutableStateOf(!isConnected) }
+
+    if (showNoInternetDialog) {
+        NoInternetDialog(onDismiss = { showNoInternetDialog = false })
+    }
+
     LaunchedEffect(Unit) {
         onlineSongViewModel.loadTopSongs(null)
     }
@@ -117,7 +134,6 @@ fun HomeScreenContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        // Charts Section
         item {
             Text(
                 text = "Charts",
@@ -130,29 +146,37 @@ fun HomeScreenContent(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Top 50 Global
+
                 ChartCard(
                     title = "Top 50",
                     subtitle = "GLOBAL",
                     colors = listOf(Color(0xFF0B4870), Color(0xFF16BFFD)),
-                    onClick = { 
-                        onNavigateToTopSong("global")
+                    onClick = {
+                        if (isConnected) {
+                            onNavigateToTopSong("global")
+                        } else {
+                            showNoInternetDialog = true
+                        }
                     }
                 )
                 
-                // Top 50 Indonesia
+
                 ChartCard(
                     title = "Top 10",
                     subtitle = "INDONESIA",
                     colors = listOf(Color(0xFFE34981), Color(0xFFFFB25E)),
-                    onClick = { 
-                        onNavigateToTopSong("id")
+                    onClick = {
+                        if (isConnected){
+                            onNavigateToTopSong("id")
+                        }else{
+                            showNoInternetDialog = true
+                        }
                     }
                 )
             }
         }
 
-        // New Songs Section
+
         item {
             Text(
                 text = "New songs",
@@ -199,7 +223,81 @@ fun HomeScreenContent(
             }
         }
 
-        // Recently Played Section
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Your Daily Mix",
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                if (!isLoadingRecommendations) {
+                    IconButton(onClick = { recommendationViewModel.refreshDailyMix() }) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Refresh Mix", tint = Color.White)
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        if (isLoadingRecommendations) {
+            item {
+                Box(modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = Color.White)
+                }
+            }
+        } else if (dailyMixSongs.isEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.DarkGray.copy(alpha = 0.3f))
+                ) {
+                    Text(
+                        text = "Tidak ada rekomendasi untukmu saat ini. Coba dengarkan lebih banyak lagu!",
+                        color = Color.Gray,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+            }
+        } else {
+            item {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(end = 16.dp)
+                ) {
+                    items(dailyMixSongs, key = { it.audioPath }) { song ->
+                        NewSongCard(
+                            song = song,
+                            onClick = {
+                                songViewModel.setCurrentSong(song)
+                                playerViewModel.prepareAndPlay(song.audioPath.toUri()) {
+
+                                    val currentIndex = dailyMixSongs.indexOf(song)
+                                    if (currentIndex != -1 && currentIndex < dailyMixSongs.size - 1) {
+                                        val nextSong = dailyMixSongs[currentIndex + 1]
+                                        songViewModel.setCurrentSong(nextSong)
+                                        playerViewModel.prepareAndPlay(nextSong.audioPath.toUri()) {/* rekursif atau handle akhir playlist */}
+                                    }
+                                }
+                            },
+                            onMoreClick = {
+                                Toast.makeText(context, "More options for ${song.title}", Toast.LENGTH_SHORT).show()
+                            },
+
+
+                        )
+                    }
+                }
+            }
+        }
+
         item {
             Text(
                 text = "Recently played",
@@ -237,14 +335,14 @@ fun HomeScreenContent(
         }
     }
 
-    // Modal Settings
+
     SongSettingsModal(
         song = selectedSong,
         visible = showSongSettings,
         onDismiss = { showSongSettings = false },
         onEdit = { 
             selectedSong?.let { song ->
-                // Implementasi edit logic
+
             }
          },
         onDelete = { 
@@ -333,7 +431,7 @@ fun NewSongCard(
         
         Spacer(modifier = Modifier.height(8.dp))
         
-        // Judul di bawah gambar
+
         Text(
             text = song.title,
             color = Color.White,
@@ -343,7 +441,7 @@ fun NewSongCard(
             overflow = TextOverflow.Ellipsis
         )
         
-        // Artist di bawah judul dengan text lebih kecil
+
         Text(
             text = song.artist,
             color = Color.Gray,
@@ -367,7 +465,7 @@ fun RecentlyPlayedRow(
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Gambar di paling kiri
+
         Image(
             painter = rememberAsyncImagePainter(song.artworkPath?.toUri()),
             contentDescription = song.title,
@@ -379,7 +477,7 @@ fun RecentlyPlayedRow(
         
         Spacer(modifier = Modifier.width(12.dp))
         
-        // Judul dan artist di kanan gambar
+
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = song.title,
@@ -389,7 +487,7 @@ fun RecentlyPlayedRow(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            // Artist di bawah judul
+
             Text(
                 text = song.artist,
                 color = Color.Gray,
@@ -409,17 +507,6 @@ fun RecentlyPlayedRow(
     }
 }
 
-// Helper function untuk share online song
-private fun shareOnlineSong(context: Context, song: Song) {
-    val shareText = "Check out this song: ${song.title} by ${song.artist}\n${song.audioPath}"
-    val intent = Intent().apply {
-        action = Intent.ACTION_SEND
-        putExtra(Intent.EXTRA_TEXT, shareText)
-        type = "text/plain"
-    }
-    context.startActivity(Intent.createChooser(intent, "Share Song"))
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreenWithBottomNav(
@@ -433,7 +520,9 @@ fun HomeScreenWithBottomNav(
     onlineSongViewModel: OnlineSongViewModel,
     songVm: SongViewModel,
     onNavigateToTopSong: (String) -> Unit,
-    audioOutputViewModel: AudioOutputViewModel
+    isConnected: Boolean,
+    audioOutputViewModel: AudioOutputViewModel,
+    recommendationViewModel: RecommendationViewModel
 ) {
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     var showPlayerSheet by remember { mutableStateOf(false) }
@@ -451,6 +540,7 @@ fun HomeScreenWithBottomNav(
             onSongChange = { },
             playerViewModel = playerViewModel,
             sheetState = sheetState,
+            isOnline = isConnected,
             audioOutputViewModel = audioOutputViewModel
         )
     }
@@ -486,7 +576,9 @@ fun HomeScreenWithBottomNav(
                 recentlyPlayedFromDb = recentlyPlayedFromDb,
                 onlineSongViewModel = onlineSongViewModel,
                 songVm = songViewModel,
-                onNavigateToTopSong = onNavigateToTopSong
+                onNavigateToTopSong = onNavigateToTopSong,
+                recommendationViewModel = recommendationViewModel,
+                isConnected = isConnected,
             )
         }
     }
@@ -499,8 +591,10 @@ fun HomeScreenResponsive(
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
     onlineSongViewModel: OnlineSongViewModel,
-    audioOutputViewModel: AudioOutputViewModel,
-    onNavigateToTopSong: (String) -> Unit = {}
+    onNavigateToTopSong: (String) -> Unit = {},
+    recommendationViewModel: RecommendationViewModel,
+    isConnected: Boolean,
+    audioOutputViewModel: AudioOutputViewModel
 ) {
     val configuration = LocalConfiguration.current
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR)
@@ -553,7 +647,9 @@ fun HomeScreenResponsive(
                 onlineSongViewModel = onlineSongViewModel,
                 songVm = songViewModel,
                 onNavigateToTopSong = onNavigateToTopSong,
-                audioOutputViewModel = audioOutputViewModel
+                isConnected = isConnected,
+                audioOutputViewModel = audioOutputViewModel,
+                recommendationViewModel = recommendationViewModel
             )
         }
     } else {
@@ -566,53 +662,10 @@ fun HomeScreenResponsive(
             recentlyPlayedFromDb = recentlyPlayedFromDb,
             onlineSongViewModel = onlineSongViewModel,
             songVm = songViewModel,
+            audioOutputViewModel = audioOutputViewModel,
             onNavigateToTopSong = onNavigateToTopSong,
-            audioOutputViewModel = audioOutputViewModel
+            recommendationViewModel = recommendationViewModel,
+            isConnected = isConnected
         )
     }
-}
-
-// helper untuk download + simpan ke DB
-private fun downloadSong(
-    context: Context,
-    networkSong: Song,
-    songVm: SongViewModel
-) {
-    val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-    val req = DownloadManager.Request(Uri.parse(networkSong.audioPath))
-        .setTitle(networkSong.title)
-        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-        .setDestinationInExternalFilesDir(
-            context, Environment.DIRECTORY_MUSIC, "${networkSong.title}.mp3"
-        )
-    val id = dm.enqueue(req)
-
-    val receiver = object : BroadcastReceiver() {
-        override fun onReceive(ctx: Context, intent: Intent) {
-            if (intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1) == id) {
-                val q = DownloadManager.Query().setFilterById(id)
-                dm.query(q).use { c ->
-                    if (c.moveToFirst()) {
-                        val idx = c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)
-                        if (idx >= 0) {
-                            val uri = c.getString(idx)
-                            val offline = networkSong.copy(
-                                id = 0,
-                                audioPath = uri,
-                                addedDate = Date(),
-                                lastPlayed = null
-                            )
-                            songVm.addSong(offline)
-                        }
-                    }
-                }
-                ctx.unregisterReceiver(this)
-            }
-        }
-    }
-    context.registerReceiver(
-        receiver,
-        IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
-        Context.RECEIVER_NOT_EXPORTED
-    )
 }

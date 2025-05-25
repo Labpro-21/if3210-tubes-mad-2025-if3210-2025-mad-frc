@@ -58,7 +58,7 @@ import com.example.purrytify.viewmodel.PlayerViewModel
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewModel: SongViewModel, playerViewModel: PlayerViewModel, audioOutputViewModel: AudioOutputViewModel) {
+fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewModel: SongViewModel, playerViewModel: PlayerViewModel, isOnline : Boolean, audioOutputViewModel: AudioOutputViewModel) {
     val context = LocalContext.current
 
 
@@ -67,10 +67,10 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
     val likedSongs by songViewModel.likedSongs.collectAsState()
     var currentSongId by remember { mutableStateOf(0) }
     val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = false, // allow partially expanded state
-        confirmValueChange = { true } // allow transition freely
+        skipPartiallyExpanded = false,
+        confirmValueChange = { true }
     )
-    // Tab state
+
     val tabs = listOf("All Songs", "Liked Songs")
     val (selectedTabIndex, setSelectedTabIndex) = remember { mutableIntStateOf(0) }
 
@@ -104,20 +104,20 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
         if (displayedSongs.isEmpty()) {
             Text("No songs found.", color = Color.Gray, modifier = Modifier.padding(16.dp))
         } else {
-//            LazyColumn {
-//                items(displayedSongs) { song ->
-//                    SongItem(
-//                        song = song,
-//                        onClick = {
-//                            songViewModel.setCurrentSong(song)
-//                            playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
-//                        },
-//                        onToggleLike = { song ->
-//                            songViewModel.toggleLikeSong(song)
-//                        }
-//                    )
-//                }
-//            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             SongRecyclerView(
                 songs = displayedSongs,
                 onSongClick = { song ->
@@ -148,17 +148,18 @@ fun LibraryScreen(modifier: Modifier = Modifier, onBack: () -> Unit, songViewMod
             onSongChange = { direction ->
                 when {
                     direction > 0 -> {
-                        // Next song
+
                         currentSongId = (currentSongId + 1) % allSongs.size
                     }
                     direction < 0 -> {
-                        // Previous song
+
                         currentSongId = if (currentSongId - 1 < 0) allSongs.size - 1 else currentSongId - 1
                     }
                 }
                 setSelectedSong(allSongs[currentSongId])
             },
             playerViewModel = playerViewModel,
+            isOnline = isOnline,
             audioOutputViewModel = audioOutputViewModel
         )
         songViewModel.setCurrentSong(song)
@@ -241,14 +242,15 @@ fun LibraryScreenWithBottomNav(
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
     modifier: Modifier = Modifier,
+    isOnline: Boolean,
     audioOutputViewModel: AudioOutputViewModel
 ) {
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     var showPlayerSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = false, // allow partially expanded state
-        confirmValueChange = { true } // allow transition freely
+        skipPartiallyExpanded = false,
+        confirmValueChange = { true }
     )
     val allSongs by songViewModel.songs.collectAsState()
 
@@ -265,6 +267,7 @@ fun LibraryScreenWithBottomNav(
                            },
             playerViewModel = playerViewModel,
             sheetState = sheetState,
+            isOnline =isOnline,
             audioOutputViewModel = audioOutputViewModel
         )
     }
@@ -279,7 +282,7 @@ fun LibraryScreenWithBottomNav(
                     onSectionClick = {
 
                         showPlayerSheet = true
-                    }  // Buka modal bottom sheet saat area diklik
+                    }
                 )
                 BottomNavBar(
                     currentRoute = "library",
@@ -298,6 +301,7 @@ fun LibraryScreenWithBottomNav(
                 onBack = onBack,
                 songViewModel = songViewModel,
                 playerViewModel = playerViewModel,
+                isOnline = isOnline,
                 audioOutputViewModel = audioOutputViewModel,
             )
         }

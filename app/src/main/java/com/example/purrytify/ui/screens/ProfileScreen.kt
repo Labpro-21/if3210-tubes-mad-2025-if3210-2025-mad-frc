@@ -41,26 +41,31 @@ import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import com.example.purrytify.viewmodel.PlayerViewModel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedButton
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.ui.text.style.TextOverflow
-import coil.compose.rememberAsyncImagePainter
+import java.time.YearMonth
 import java.util.Locale
+import android.content.Intent
+import android.widget.Toast
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.core.content.FileProvider
+import kotlinx.coroutines.launch
+import java.io.File
 
 @Composable
 fun ProfileScreen(
@@ -70,15 +75,15 @@ fun ProfileScreen(
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
     onScanQrClicked: () -> Unit,
-    onNavigateToTimeListenedDetail: () -> Unit
+    onNavigateToTimeListenedDetail: () -> Unit,
+    onNavigateToUserTopSongs: (YearMonth) -> Unit,
+    onNavigateToUserTopArtists: (YearMonth) -> Unit
 ) {
     val context = LocalContext.current
 
-    // Membuat TokenManager dari context
     val tokenManager = remember { TokenManager(context) }
     val sessionManager = remember { SessionManager(context) }
     val userRepository = remember { UserRepository(AppDatabase.getDatabase(context).userDao()) }
-    // Mendapatkan ProfileViewModel melalui factory agar dapat menyuntikkan TokenManager
     val profileViewModel: ProfileViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
         factory = ProfileViewModelFactory(context, tokenManager, userRepository, sessionManager)
     )
@@ -92,14 +97,12 @@ fun ProfileScreen(
         NoInternetDialog(onDismiss = { showNoInternetDialog = false })
     }
 
-    // Panggil API profile ketika komposisi pertama kali dijalankan
     LaunchedEffect(Unit) {
         profileViewModel.fetchUserProfile()
     }
 
     val uiState = profileViewModel.uiState.value
 
-    // Karena data negara tidak tersedia dalam uiState, gunakan contoh default ("Indonesia")
     ProfileContent(
         username = uiState.username,
         country = uiState.country,
@@ -115,14 +118,17 @@ fun ProfileScreen(
         analytics = analytics,
         playerViewModel = playerViewModel,
         onScanQrCodeClick = onScanQrClicked,
-        onNavigateToTimeListenedDetail = onNavigateToTimeListenedDetail
+        onNavigateToTimeListenedDetail = onNavigateToTimeListenedDetail,
+        onNavigateToUserTopSongs = onNavigateToUserTopSongs,
+        onNavigateToUserTopArtists = onNavigateToUserTopArtists,
+        profileViewModel = profileViewModel
     )
 }
 
 @Composable
 fun ProfileContent(
     username: String,
-    country: String, // negara asal
+    country: String,
     profilePhotoUrl: String?,
     songsAdded: Int,
     likedSongs: Int,
@@ -133,10 +139,12 @@ fun ProfileContent(
     analytics: SoundCapsule,
     playerViewModel: PlayerViewModel,
     onScanQrCodeClick: () -> Unit,
-    onNavigateToTimeListenedDetail: () -> Unit
+    onNavigateToTimeListenedDetail: () -> Unit,
+    onNavigateToUserTopSongs: (YearMonth) -> Unit,
+    onNavigateToUserTopArtists: (YearMonth) -> Unit,
+    profileViewModel: ProfileViewModel
 ) {
     LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
-    // Background gradasi dari #006175 ke #121212
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -154,7 +162,6 @@ fun ProfileContent(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(48.dp))
-            // Foto profil ditempatkan di tengah, tidak terlalu di atas
             if (!profilePhotoUrl.isNullOrEmpty()) {
                 AsyncImage(
                     model = profilePhotoUrl,
@@ -175,17 +182,14 @@ fun ProfileContent(
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
-            // Username dengan align center
             Text(
                 text = username,
                 style = TextStyle(
                     color = Color.White,
                     fontSize = 28.sp
-                    // Tambahkan fontFamily Poppins jika tersedia
                 ),
                 textAlign = TextAlign.Center
             )
-            // Teks negara dengan ukuran lebih kecil dan berwarna #B3B3B3
             Text(
                 text = country,
                 style = TextStyle(
@@ -195,31 +199,35 @@ fun ProfileContent(
                 modifier = Modifier.padding(top = 4.dp),
                 textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
+// Tombol Edit Profile (Outlined dengan Border dan Teks yang Lebih Jelas)
             OutlinedButton(
                 onClick = onEditProfile,
                 modifier = Modifier
-                    .fillMaxWidth(0.6f)
-                    .height(36.dp),
-                shape = RoundedCornerShape(18.dp),
-                border = BorderStroke(1.dp, Color.White),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                    .fillMaxWidth(0.7f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(24.dp),
+                border = BorderStroke(1.5.dp, Color.White), // Border lebih tebal
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = Color.White, // Teks dan ikon putih
+                    backgroundColor = Color.Transparent // Pastikan background transparan
+                )
             ) {
                 Icon(
                     imageVector = Icons.Default.Edit,
                     contentDescription = "Edit Profile",
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(ButtonDefaults.IconSize)
                 )
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Edit Profile",
-                    style = MaterialTheme.typography.subtitle2  // material-1 style
+                    fontWeight = FontWeight.SemiBold
                 )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            // Tombol Log Out dengan teks putih dan background #3E3F3F
+
             Button(
                 onClick = {
                     onLogout()
@@ -228,13 +236,19 @@ fun ProfileContent(
                 modifier = Modifier.fillMaxWidth(0.5f),
                 shape = RoundedCornerShape(24.dp),
                 colors = androidx.compose.material.ButtonDefaults.buttonColors(
-                    backgroundColor = Color(0xFF3E3F3F)
+                    backgroundColor = Color.DarkGray.copy(alpha = 0.5f), // Background sedikit berbeda dari layar
+                    contentColor = MaterialTheme.colors.error // Menggunakan warna error dari tema Material (merah)
                 )
             ) {
-                Text(text = "Log Out", color = Color.White)
+                Text(
+                    text = "Log Out",
+                    fontWeight = FontWeight.Medium,
+                    color = Color.White
+                )
             }
+
             Spacer(modifier = Modifier.height(32.dp))
-            // Statistik: Songs, Liked, Listened - sejajar secara horizontal
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -247,12 +261,9 @@ fun ProfileContent(
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = {
-                    // Panggil fungsi untuk memulai pemindaian QR
-                    // Kita akan menggunakan ActivityResultLauncher untuk ini
                     Log.d("ProfileContent", "Scan QR Button CLICKED")
                     onScanQrCodeClick()
                 },
-                // ... modifier dan style lainnya ...
             ) {
                 Icon(Icons.Filled.QrCodeScanner, contentDescription = "Scan QR Code", modifier = Modifier.size(ButtonDefaults.IconSize))
                 Spacer(Modifier.size(ButtonDefaults.IconSpacing))
@@ -265,7 +276,10 @@ fun ProfileContent(
                 onShareMonth = { /* share summary bulan ini */ },
                 playerViewModel = playerViewModel,
                 songViewModel = songViewModel,
-                onNavigateToTimeListenedDetail = onNavigateToTimeListenedDetail
+                onNavigateToTimeListenedDetail = onNavigateToTimeListenedDetail,
+                onNavigateToUserTopSongs = onNavigateToUserTopSongs,
+                onNavigateToUserTopArtists = onNavigateToUserTopArtists,
+                profileViewModel = profileViewModel
             )
         }
     }
@@ -302,7 +316,9 @@ fun ProfileScreenWithBottomNav(
     songViewModel: SongViewModel,
     playerViewModel: PlayerViewModel,
     onScanQrClicked: () -> Unit,
-    onNavigateToTimeListenedDetail: () -> Unit
+    onNavigateToTimeListenedDetail: () -> Unit,
+    onNavigateToUserTopSongs: (YearMonth) -> Unit,
+    onNavigateToUserTopArtists: (YearMonth) -> Unit
 ) {
     Scaffold(
         bottomBar = {
@@ -318,7 +334,17 @@ fun ProfileScreenWithBottomNav(
         }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
-            ProfileScreen(isConnected = isConnected, onLogout = onLogout, onEditProfile = onEditProfile, songViewModel = songViewModel, playerViewModel = playerViewModel, onScanQrClicked = onScanQrClicked, onNavigateToTimeListenedDetail = onNavigateToTimeListenedDetail)
+            ProfileScreen(
+                isConnected = isConnected,
+                onLogout = onLogout,
+                onEditProfile = onEditProfile,
+                songViewModel = songViewModel,
+                playerViewModel = playerViewModel,
+                onScanQrClicked = onScanQrClicked,
+                onNavigateToTimeListenedDetail = onNavigateToTimeListenedDetail,
+                onNavigateToUserTopSongs = onNavigateToUserTopSongs,
+                onNavigateToUserTopArtists = onNavigateToUserTopArtists
+            )
         }
     }
 }
@@ -327,46 +353,37 @@ fun ProfileScreenWithBottomNav(
 fun SoundCapsuleSection(
     analytics: SoundCapsule,
     onDownload: () -> Unit,
-    onShareMonth: () -> Unit, // Anda mungkin ingin men-share ringkasan teks dari sini
-    songViewModel: SongViewModel, // Tetap diperlukan untuk recordPlayTick
-    playerViewModel: PlayerViewModel, // Tetap diperlukan untuk status isPlaying
-    onNavigateToTimeListenedDetail: () -> Unit
+    onShareMonth: () -> Unit,
+    songViewModel: SongViewModel,
+    playerViewModel: PlayerViewModel,
+    onNavigateToTimeListenedDetail: () -> Unit,
+    onNavigateToUserTopSongs: (YearMonth) -> Unit,
+    onNavigateToUserTopArtists: (YearMonth) -> Unit,
+    profileViewModel: ProfileViewModel
 ) {
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     val baseMillis = analytics.timeListenedMillis ?: 0L
     var extraMillis by remember { mutableStateOf(0L) }
-
-//    LaunchedEffect(isPlaying) { // Re-launch jika isPlaying berubah
-//        while (isActive) {
-//            if (isPlaying) {
-//                // Log di sini SEBELUM memanggil recordPlayTick
-//                Log.d("ProfileScreen_Ticker", "isPlaying is true. Current song in SongVM: ${songViewModel.current_song.value?.title}")
-//                songViewModel.recordPlayTick()
-//            }
-//            delay(1_000L)
-//        }
-//    }
 
     val totalTimeListenedMillis = baseMillis + extraMillis
     val formattedTimeListened = run {
         val tot = totalTimeListenedMillis / 1000
         val hours = tot / 3600
         val minutes = (tot % 3600) / 60
-        // val seconds = tot % 60 // Detik mungkin tidak ditampilkan di sini
         if (hours > 0) {
             String.format(Locale.getDefault(), "%d jam %02d menit", hours, minutes)
         } else {
-            String.format(Locale.getDefault(), "%d menit", minutes) // Hanya menit jika kurang dari 1 jam
+            String.format(Locale.getDefault(), "%d menit", minutes)
         }
     }
-
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        // Header Section: "Your Sound Capsule" + download icon
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 8.dp), // Tambah padding atas
+                .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -374,9 +391,38 @@ fun SoundCapsuleSection(
                 text = "Your Sound Capsule",
                 color = Color.White,
                 fontSize = 20.sp,
-                fontWeight = FontWeight.Bold // Lebih tebal
+                fontWeight = FontWeight.Bold
             )
-            IconButton(onClick = onDownload, modifier = Modifier.size(28.dp)) { // Ukuran disesuaikan
+            IconButton(
+                onClick = {
+                    scope.launch {
+                        val csvFile = profileViewModel.prepareAndExportCsv()
+                        if (csvFile != null && csvFile.exists()) {
+                            try {
+                                val uri = FileProvider.getUriForFile(
+                                    context,
+                                    "${context.packageName}.fileprovider",
+                                    csvFile
+                                )
+                                val sendIntent: Intent = Intent().apply {
+                                    action = Intent.ACTION_SEND
+                                    putExtra(Intent.EXTRA_STREAM, uri)
+                                    type = "text/csv"
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+                                val shareIntent = Intent.createChooser(sendIntent, "Export Analytics As...")
+                                context.startActivity(shareIntent)
+                            } catch (e: Exception) {
+                                Log.e("ProfileScreen", "Error creating share intent for CSV", e)
+                                Toast.makeText(context, "Error: Could not share file. ${e.message}", Toast.LENGTH_LONG).show()
+                            }
+                        } else {
+                            Toast.makeText(context, "No analytics data to export for this month.", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                },
+                modifier = Modifier.size(28.dp)
+            ) {
                 Icon(
                     imageVector = Icons.Default.FileDownload,
                     contentDescription = "Download Analytics",
@@ -385,7 +431,6 @@ fun SoundCapsuleSection(
             }
         }
 
-        // Month header + share icon
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -394,35 +439,35 @@ fun SoundCapsuleSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = analytics.monthYear.ifEmpty { "Data Belum Tersedia" }, // Tampilkan bulan dan tahun
-                color = Color(0xFFB3B3B3), // Warna abu-abu
+                text = analytics.monthYear.ifEmpty { "Data Belum Tersedia" },
+                color = Color(0xFFB3B3B3),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium
             )
             IconButton(
-                onClick = onShareMonth, // Fungsi untuk share ringkasan bulan ini
+                onClick = onShareMonth,
                 modifier = Modifier.size(24.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Share,
                     contentDescription = "Share Monthly Recap",
-                    tint = Color(0xFFB3B3B3) // Warna abu-abu
+                    tint = Color(0xFFB3B3B3)
                 )
             }
         }
         Spacer(Modifier.height(12.dp))
 
-        // Time listened card
+
         Card(
-            backgroundColor = Color(0xFF1A1A1A), // Warna card sedikit lebih gelap
-            shape = RoundedCornerShape(12.dp),    // Corner lebih bulat
+            backgroundColor = Color(0xFF1A1A1A),
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier
               .fillMaxWidth()
               .padding(horizontal = 16.dp)
               .clickable { onNavigateToTimeListenedDetail() }
         ) {
             Row(
-              modifier = Modifier.padding(horizontal = 16.dp, vertical = 20.dp), // Padding lebih besar
+              modifier = Modifier.padding(horizontal = 16.dp, vertical = 20.dp),
               verticalAlignment = Alignment.CenterVertically,
               horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -430,53 +475,58 @@ fun SoundCapsuleSection(
                     Text(
                         text = "Time listened",
                         color = Color(0xFFB3B3B3),
-                        fontSize = 13.sp // Sedikit lebih kecil
+                        fontSize = 13.sp
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
                         text = formattedTimeListened,
-                        color = Color(0xFF1DB954), // Warna hijau Spotify
-                        fontSize = 22.sp, // Sedikit lebih kecil
+                        color = Color(0xFF1DB954),
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
                 Icon(
-                    imageVector = Icons.Default.ArrowForward, // Atau Icons.AutoMirrored.Filled.ArrowForward
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                     contentDescription = "View Details",
                     tint = Color(0xFFB3B3B3)
                 )
             }
         }
 
-        Spacer(Modifier.height(16.dp)) // Jarak antar card
+        Spacer(Modifier.height(16.dp))
 
-        // Row: Top artist & Top song
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Top Artist Card
+
             Card(
                 backgroundColor = Color(0xFF1A1A1A),
                 shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable {
+                        analytics.month?.let { month ->
+                            onNavigateToUserTopArtists(month)
+                        }
+                    }
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Ganti AsyncImage dengan rememberAsyncImagePainter jika lebih familiar
                     if (!analytics.topArtistImageUrl.isNullOrEmpty()) {
                         AsyncImage(
                             model = analytics.topArtistImageUrl,
                             contentDescription = "Top Artist Artwork",
                             modifier = Modifier
-                                .size(40.dp) // Artwork lebih besar
+                                .size(40.dp)
                                 .clip(CircleShape),
                             contentScale = ContentScale.Crop,
-                            error = painterResource(id = R.drawable.profile_placeholder) // Fallback
+                            error = painterResource(id = R.drawable.profile_placeholder)
                         )
                     } else {
                          Icon(painterResource(id = R.drawable.profile_placeholder), contentDescription = "Top Artist Placeholder", modifier = Modifier.size(40.dp).clip(CircleShape), tint = Color.Gray)
@@ -490,23 +540,29 @@ fun SoundCapsuleSection(
                         )
                         Text(
                             text = analytics.topArtist ?: "-",
-                            color = Color.White, // Warna putih untuk nama
-                            fontSize = 15.sp, // Lebih besar
-                            fontWeight = FontWeight.SemiBold, // Lebih tebal
+                            color = Color.White,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
-                    // Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = Color(0xFFB3B3B3), modifier = Modifier.size(18.dp))
                 }
             }
-            // Top Song Card
+
+
             Card(
                 backgroundColor = Color(0xFF1A1A1A),
                 shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable {
+                        analytics.month?.let { month ->
+                            onNavigateToUserTopSongs(month)
+                        }
+                    }
             ) {
-                 Row(
+                Row(
                     modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -516,7 +572,7 @@ fun SoundCapsuleSection(
                             contentDescription = "Top Song Artwork",
                             modifier = Modifier
                                 .size(40.dp)
-                                .clip(RoundedCornerShape(4.dp)), // Bisa juga CircleShape atau RoundedCornerShape
+                                .clip(RoundedCornerShape(4.dp)),
                             contentScale = ContentScale.Crop,
                             error = painterResource(id = R.drawable.placeholder_music)
                         )
@@ -539,17 +595,16 @@ fun SoundCapsuleSection(
                             overflow = TextOverflow.Ellipsis
                         )
                     }
-                    // Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = Color(0xFFB3B3B3), modifier = Modifier.size(18.dp))
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "View Top Songs", tint = Color(0xFFB3B3B3), modifier = Modifier.size(18.dp).align(Alignment.CenterVertically))
                 }
             }
         }
 
         Spacer(Modifier.height(16.dp))
 
-        // Streak Card
         if (analytics.longestDayStreak != null && analytics.longestDayStreak > 0) {
             Card(
-                backgroundColor = Color(0xFF1A1A1A), // Atau warna lain yang menarik
+                backgroundColor = Color(0xFF1A1A1A),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -558,17 +613,16 @@ fun SoundCapsuleSection(
                 Column {
                     if (!analytics.streakSongArtworkPath.isNullOrEmpty()) {
                         AsyncImage(
-                            model = analytics.streakSongArtworkPath, // Gunakan artwork lagu streak
+                            model = analytics.streakSongArtworkPath,
                             contentDescription = "Streak Song Artwork",
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(160.dp) // Tinggi disesuaikan
+                                .height(160.dp)
                                 .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)),
                             contentScale = ContentScale.Crop,
-                            error = painterResource(id = R.drawable.placeholder_music) // Fallback jika error
+                            error = painterResource(id = R.drawable.placeholder_music)
                         )
                     } else {
-                        // Placeholder jika tidak ada artwork
                         Box(modifier = Modifier.fillMaxWidth().height(160.dp).background(Color.DarkGray).clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)))
                     }
 
@@ -576,27 +630,26 @@ fun SoundCapsuleSection(
                         Text(
                             text = "You had a ${analytics.longestDayStreak}-day streak",
                             color = Color.White,
-                            fontSize = 18.sp, // Lebih besar
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(Modifier.height(6.dp))
                         Text(
-                            text = analytics.streakDescriptionText, // Deskripsi dinamis dari SoundCapsule
+                            text = analytics.streakDescriptionText,
                             color = Color(0xFFB3B3B3),
                             fontSize = 13.sp,
-                            lineHeight = 18.sp // Atur line height jika perlu
+                            lineHeight = 18.sp
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = analytics.streakPeriodText, // Periode dinamis dari SoundCapsule
-                            color = Color(0xFF808080), // Warna lebih redup
+                            text = analytics.streakPeriodText,
+                            color = Color(0xFF808080),
                             fontSize = 12.sp
                         )
                     }
                 }
             }
         } else {
-            // Tampilan jika tidak ada streak
              Card(
                 backgroundColor = Color(0xFF1A1A1A),
                 shape = RoundedCornerShape(12.dp),
@@ -613,11 +666,6 @@ fun SoundCapsuleSection(
                 )
             }
         }
-        Spacer(Modifier.height(24.dp)) // Padding bawah
+        Spacer(Modifier.height(24.dp))
     }
 }
-
-//@Composable
-//fun IconButton(onClick: () -> Unit, content: @Composable () -> Icon) {
-//    TODO("Not yet implemented")
-//}

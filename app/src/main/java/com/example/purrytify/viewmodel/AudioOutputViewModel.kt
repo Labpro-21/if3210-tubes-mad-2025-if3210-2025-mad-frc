@@ -2,13 +2,13 @@ package com.example.purrytify.viewmodel
 
 import android.annotation.SuppressLint
 import android.app.Application
-// import android.bluetooth.BluetoothAdapter // Tidak digunakan secara langsung di sini lagi
-// import android.bluetooth.BluetoothDevice // Tidak digunakan secara langsung di sini lagi
-// import android.bluetooth.BluetoothManager // Tidak digunakan secara langsung di sini lagi
+
+
+
 import android.content.Context
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
-// import android.os.Build // Tidak digunakan secara langsung di sini lagi
+
 import androidx.lifecycle.AndroidViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,62 +27,62 @@ class AudioOutputViewModel(application: Application) : AndroidViewModel(applicat
         loadAvailableOutputDevices()
     }
 
-    @SuppressLint("MissingPermission") // Pastikan permission sudah dihandle
+    @SuppressLint("MissingPermission")
     fun loadAvailableOutputDevices() {
         val allOutputDevices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
         val relevantDevices = mutableListOf<AudioDeviceInfo>()
 
-        // 1. Tambahkan Speaker Internal Perangkat (TYPE_BUILTIN_SPEAKER)
+
         allOutputDevices.find { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER && it.isSink }?.let {
             relevantDevices.add(it)
         }
 
-        // 2. Tambahkan Perangkat Bluetooth (prioritaskan A2DP)
+
         val bluetoothDevicesA2DP = allOutputDevices.filter {
             it.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP && it.isSink
         }
-        // Jika ada A2DP, kita biasanya tidak perlu SCO untuk media.
-        // Jika Anda ingin menggabungkan berdasarkan nama:
+
+
         val distinctBluetoothNames = bluetoothDevicesA2DP.mapNotNull { it.productName?.toString() }.distinct()
         distinctBluetoothNames.forEach { name ->
             bluetoothDevicesA2DP.firstOrNull { it.productName?.toString() == name }?.let {
                 relevantDevices.add(it)
             }
         }
-        // Jika tidak ada A2DP, baru pertimbangkan SCO jika perlu (umumnya tidak untuk musik)
-        // val bluetoothDevicesSCO = allOutputDevices.filter { it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO && it.isSink }
-        // ... (logika tambahan jika ingin SCO)
 
-        // 3. Tambahkan Headphone/Headset Kabel
+
+
+
+
         val wiredHeadphones = allOutputDevices.filter {
             (it.type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES || it.type == AudioDeviceInfo.TYPE_WIRED_HEADSET) && it.isSink
         }
         relevantDevices.addAll(wiredHeadphones)
 
-        // 4. Opsional: Tambahkan perangkat USB jika relevan
-        // val usbDevices = allOutputDevices.filter {
-        //    (it.type == AudioDeviceInfo.TYPE_USB_DEVICE || it.type == AudioDeviceInfo.TYPE_USB_HEADSET) && it.isSink
-        // }
-        // relevantDevices.addAll(usbDevices)
 
 
-        // Pastikan unik berdasarkan ID, meskipun filter di atas seharusnya sudah cukup baik
+
+
+
+
+
+
         _availableOutputDevices.value = relevantDevices.distinctBy { it.id }
         Log.d("AudioOutputVM", "Filtered devices: ${_availableOutputDevices.value.joinToString { (it.productName?.toString() ?: "ID: ${it.id}") + " Type: " + getDeviceTypeString(it) }}")
     }
 
     fun getDeviceName(deviceInfo: AudioDeviceInfo): String {
         return when (deviceInfo.type) {
-            AudioDeviceInfo.TYPE_BUILTIN_SPEAKER -> "Device Speaker" // Nama kustom
+            AudioDeviceInfo.TYPE_BUILTIN_SPEAKER -> "Device Speaker"
             AudioDeviceInfo.TYPE_BLUETOOTH_A2DP -> deviceInfo.productName?.toString() ?: "Bluetooth Device"
-            AudioDeviceInfo.TYPE_WIRED_HEADPHONES -> "Wired Headphones" // Bisa juga productName jika tersedia dan lebih baik
-            AudioDeviceInfo.TYPE_WIRED_HEADSET -> "Wired Headset"   // Bisa juga productName
-            // Tambahkan nama kustom lain jika perlu
+            AudioDeviceInfo.TYPE_WIRED_HEADPHONES -> "Wired Headphones"
+            AudioDeviceInfo.TYPE_WIRED_HEADSET -> "Wired Headset"
+
             else -> deviceInfo.productName?.toString() ?: "Unknown Device ${deviceInfo.id}"
         }
     }
 
-    fun getDeviceTypeString(deviceInfo: AudioDeviceInfo): String { // Helper untuk logging/debug
+    fun getDeviceTypeString(deviceInfo: AudioDeviceInfo): String {
         return when (deviceInfo.type) {
             AudioDeviceInfo.TYPE_BLUETOOTH_A2DP -> "BT A2DP"
             AudioDeviceInfo.TYPE_BLUETOOTH_SCO -> "BT SCO"

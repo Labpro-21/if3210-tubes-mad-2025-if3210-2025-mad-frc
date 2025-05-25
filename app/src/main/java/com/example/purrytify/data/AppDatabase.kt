@@ -9,7 +9,7 @@ import com.example.purrytify.model.Song
 import com.example.purrytify.model.User
 import com.example.purrytify.model.PlayHistory
 
-import com.example.purrytify.utils.Converters // or the correct path to your Converters.kt
+import com.example.purrytify.utils.Converters
 
 @Database(entities = [Song::class,User::class,PlayHistory::class], version = 4)
 @TypeConverters(Converters::class)
