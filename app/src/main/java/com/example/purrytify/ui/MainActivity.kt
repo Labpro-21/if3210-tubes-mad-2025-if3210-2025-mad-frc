@@ -215,7 +215,7 @@ class MainActivity : ComponentActivity() {
                     playerViewModel = this.playerViewModel,
                     onlineSongViewModel = this.onlineSongViewModel,
                     onScanQrClicked = { launchQrScanner() },
-                    audioOutputViewModel = this.audioOutputViewModel
+                    audioOutputViewModel = this.audioOutputViewModel,
                 )
                 requestNotificationPermission()
 

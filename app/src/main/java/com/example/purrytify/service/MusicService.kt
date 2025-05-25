@@ -124,6 +124,9 @@ class MusicService : Service() {
 
                 exoPlayer.setPreferredAudioDevice(selectedDevice)
             }
+            "ACTION_PLAY_SONG" ->{
+
+            }
             MyApp.ACTION_PLAY -> {
                 if (exoPlayer.isPlaying) {
                     pause()

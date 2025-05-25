@@ -106,6 +106,23 @@ class PlayerViewModel @Inject constructor(
 
     }
 
+    fun playSingleSong(song: Song){
+        val songList = listOf<Song>(song)
+        val intent = Intent(context, MusicService::class.java).apply {
+            action = "ACTION_SET_PLAYLIST"
+            putParcelableArrayListExtra("playlist", ArrayList(songList))
+            Log.d("PlayerViewModel", "Sending Playlist of ${ArrayList(songList).size} length")
+        }
+        context.startService(intent)
+
+        val intent2 = Intent(context, MusicService::class.java).apply {
+            action = MyApp.ACTION_PLAY
+            putExtra("SONG_ID", 0)
+            Log.d("PlayerViewModel", "Playing ${ArrayList(songList).size} length")
+        }
+        context.startService(intent2)
+
+    }
 
 
 //    override fun onCleared() {

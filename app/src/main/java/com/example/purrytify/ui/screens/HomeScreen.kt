@@ -225,12 +225,8 @@ fun HomeScreenContent(
                     song = song,
                     onClick = {
                         songViewModel.setCurrentSong(song)
-//                        playerViewModel.prepareAndPlay(song.audioPath.toUri()) { }
-                        val index = songViewModel.getSongIndex(song)
-                        songViewModel.sendSongsToMusicService()
-                        Log.d("HomeScreen", "Picked SongId: ${index}")
-                        playerViewModel.prepareAndPlay(index)
-
+                        Log.d("HomeScreen", "Picked SongId: ${song.title}")
+                        playerViewModel.playSingleSong(song)
                     },
                     onMoreClick = {
                         selectedSong = song

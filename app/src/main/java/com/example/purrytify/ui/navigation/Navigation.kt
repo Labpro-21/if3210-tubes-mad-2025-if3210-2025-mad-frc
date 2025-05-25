@@ -57,7 +57,7 @@ fun AppNavigation(
     playerViewModel: PlayerViewModel,
     onlineSongViewModel: OnlineSongViewModel,
     onScanQrClicked: () -> Unit,
-    audioOutputViewModel: AudioOutputViewModel
+    audioOutputViewModel: AudioOutputViewModel,
 ) {
     val context = LocalContext.current
     val activity = LocalContext.current as ComponentActivity
@@ -69,10 +69,7 @@ fun AppNavigation(
     val userRepository      = remember { UserRepository(db.userDao()) }
 
     val userId = sessionManager.getUserId() ?: 0
-    val songViewModel: SongViewModel = viewModel(
-        key = "songViewModel_${userId}",
-        factory = SongViewModelFactory(songRepository, userId, (context as ComponentActivity).application)
-    )
+
 
     // NetworkViewModel masih bisa dibuat di sini jika hanya digunakan oleh AppNavigation/UI
     val networkViewModel: NetworkViewModel = viewModel()
@@ -80,8 +77,6 @@ fun AppNavigation(
 
     val currentSessionUserId = sessionManager.getUserId()
     Log.d("AppNavigation", "SessionManager userId: $currentSessionUserId. Received SongViewModel hash: ${System.identityHashCode(songViewModel)}")
-
-    val userIdForViewModel = currentSessionUserId.takeIf { it > 0 } ?: 0
 
 
     val profileViewModel: ProfileViewModel = viewModel(
@@ -116,15 +111,8 @@ fun AppNavigation(
         Log.d("AppNavigation_Recompose", "Recomposing. SessionUserId: $currentSessionUserId, IsLoggedIn: ${tokenManager.isLoggedIn()}")
     }
 
-    val playerViewModel: PlayerViewModel = viewModel<PlayerViewModel>(
-        factory = PlayerViewModelFactory(context.application)
-    )
-
     // Tambahkan OnlineSongViewModel
     val api = remember { RetrofitClient.create(tokenManager) }
-    val onlineViewModel: OnlineSongViewModel = viewModel(
-        factory = OnlineSongViewModelFactory(api, sessionManager,context.application)
-    )
 
     NavHost(navController = navController, startDestination = startDestination) {
         composable(Screen.Login.route) {
